@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer,)
 from .services import get_or_create_user
 from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
 
 
 # аутентификация пользователя по мейлу
@@ -34,6 +35,18 @@ class UserViewSet(viewsets.ModelViewSet):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			oauth_token = serializer.validated_data['oauth_token']
-			data = get_or_create_user(oauth_token)
-			return Response(data)
+			response_data = get_or_create_user(oauth_token)
+			print(response_data)
+			user_id = response_data.get('id')
+			user = User.objects.get(id=user_id)
+			token = Token.objects.get(user=user)
+			print(token)
+			response_data.update({'token': token.key})
+			response = {
+				"status": status.HTTP_200_OK,
+				"message": "Авторизация прошла успешно",
+				"data": response_data
+			}
+			return Response(response, status=status.HTTP_200_OK)
+
 		return serializer.errors
