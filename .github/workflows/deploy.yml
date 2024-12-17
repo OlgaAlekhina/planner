@@ -46,7 +46,6 @@ jobs:
             IdentityFile ~/.ssh/github_key
             LogLevel ERROR
             StrictHostKeyChecking no
-
       - name: Run deploy
         env:
           REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
