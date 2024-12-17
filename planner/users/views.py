@@ -38,7 +38,6 @@ class UserViewSet(viewsets.ModelViewSet):
 		if serializer.is_valid():
 			oauth_token = serializer.validated_data['oauth_token']
 			response_data = get_or_create_user(oauth_token)
-			print(response_data)
 			user_id = response_data.get('id')
 			user = User.objects.get(id=user_id)
 			token = Token.objects.get(user=user)
