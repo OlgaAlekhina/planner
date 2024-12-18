@@ -53,6 +53,8 @@ jobs:
           REGISTRY_PASS: ${{ secrets.REGISTRY_PASS }}
         run: |
           ssh target "cd ~/planner_docker && 
+          docker-compose down &&
+          docker rmi $REGISTRY_USER/planner:app-1.0 &&
           docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
           docker pull $REGISTRY_USER/planner:app-1.0 &&
           docker-compose up -d"
