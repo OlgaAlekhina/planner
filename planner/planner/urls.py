@@ -38,10 +38,10 @@ router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', RedirectView.as_view(pattern_name='schema-swagger-ui', permanent=True)),
-    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('api-auth/', include('rest_framework.urls')),
-    path('api/', include(router.urls)),
-    path('add_missing_profiles/', add_missing_profiles, name='add_missing_profiles'),
+    path('planner/admin/', admin.site.urls),
+    path('planner/', RedirectView.as_view(pattern_name='schema-swagger-ui', permanent=True)),
+    path('planner/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('planner/api-auth/', include('rest_framework.urls')),
+    path('planner/api/', include(router.urls)),
+    path('planner/add_missing_profiles/', add_missing_profiles, name='add_missing_profiles'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
