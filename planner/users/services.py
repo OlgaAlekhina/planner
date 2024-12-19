@@ -31,15 +31,19 @@ def get_or_create_user(token):
 				birthday = response_data.get('birthday')
 				first_name = response_data.get('first_name')
 				last_name = response_data.get('last_name')
-				sex = response_data.get('sex')
-				if not sex:
-					sex = 'M'
+				gender = response_data.get('gender')
+				if gender == 'male':
+					gender = 'M'
+				elif gender == 'female':
+					gender = 'F'
+				else:
+					gender = 'N'
 				user = User.objects.create_user(username=email, email=email, first_name=first_name, last_name=last_name)
 				user_id = user.id
 				profile = UserProfile.objects.get(user=user)
 				profile.ya_login = ya_login
 				# profile.birthday = birthday
-				profile.sex = sex
+				profile.gender = gender
 				profile.save()
 				user = User.objects.get(id=user_id)
 				return UserLoginSerializer(user).data

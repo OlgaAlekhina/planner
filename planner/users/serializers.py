@@ -13,11 +13,11 @@ class UserLoginSerializer(serializers.ModelSerializer):
 	avatar = serializers.ImageField(source='userprofile.avatar')
 	ya_login = serializers.CharField(source='userprofile.ya_login')
 	birthday = serializers.CharField(source='userprofile.birthday')
-	sex = serializers.CharField(source='userprofile.sex')
+	gender = serializers.CharField(source='userprofile.get_gender_display')
 
 	class Meta:
 		model = User
-		fields = ('id', 'email', 'first_name', 'last_name', 'ya_login', 'birthday', 'sex', 'avatar')
+		fields = ('id', 'email', 'first_name', 'last_name', 'ya_login', 'birthday', 'gender', 'avatar')
 
 
 
