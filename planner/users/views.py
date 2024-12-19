@@ -1,8 +1,9 @@
 from django.contrib.auth.models import User
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
-from .serializers import (YandexAuthSerializer,)
+from .serializers import (YandexAuthSerializer, UserLoginSerializer)
 from .services import get_or_create_user
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -31,26 +32,33 @@ class UserViewSet(viewsets.ModelViewSet):
 	def get_serializer_class(self):
 		if self.action == 'yandex_auth':
 			return YandexAuthSerializer
+		else:
+			return UserLoginSerializer
 
 	@action(detail=False, methods=['post'])
+	@swagger_auto_schema(responses={200: UserLoginSerializer()},
+						 operation_summary="Авторизация пользователей через Яндекс")
 	def yandex_auth(self, request):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			oauth_token = serializer.validated_data['oauth_token']
 			response_data = get_or_create_user(oauth_token)
-			user_id = response_data.get('id')
-			user = User.objects.get(id=user_id)
-			token = Token.objects.get(user=user)
-			print(token)
-			response_data.update({'token': token.key})
-			response = {
-				"status": status.HTTP_200_OK,
-				"message": "Авторизация прошла успешно",
-				"data": response_data
-			}
-			return Response(response, status=status.HTTP_200_OK)
+			print(response_data)
+			if response_data[1] == 200:
+				response_data = response_data[0]
+				user_id = response_data.get('id')
+				user = User.objects.get(id=user_id)
+				token = Token.objects.get(user=user)
+				response_data.update({'token': token.key})
+				response = {
+					"status": status.HTTP_200_OK,
+					"message": "Авторизация прошла успешно",
+					"data": response_data
+				}
+				return Response(response, status=status.HTTP_200_OK)
+			return Response(response_data[0], status=response_data[1])
 
-		return serializer.errors
+		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def add_missing_profiles(request):

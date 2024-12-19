@@ -23,7 +23,7 @@ def get_or_create_user(token):
 				# получить все данные по юзеру, включая токен и группу/группы
 				user_data = UserLoginSerializer(user[0]).data
 				print('data: ', user_data)
-				return user_data
+				return user_data, 200
 			else:
 				# зарегистрировать юзера в БД и вернуть все его данные
 				ya_login = response_data.get('login')
@@ -46,7 +46,7 @@ def get_or_create_user(token):
 				profile.gender = gender
 				profile.save()
 				user = User.objects.get(id=user_id)
-				return UserLoginSerializer(user).data
+				return UserLoginSerializer(user).data, 200
 		else:
 			return None
 
