@@ -1,8 +1,6 @@
 import requests
 from requests.exceptions import RequestException, HTTPError
 from django.contrib.auth.models import User
-from django.contrib.auth import login
-
 from .models import UserProfile
 from .serializers import (UserLoginSerializer,)
 
@@ -42,7 +40,10 @@ def get_or_create_user(token):
 				user_id = user.id
 				profile = UserProfile.objects.get(user=user)
 				profile.ya_login = ya_login
-				# profile.birthday = birthday
+				if birthday:
+					profile.birthday = birthday
+				if avatar:
+					profile.avatar = f'https://avatars.yandex.net/get-yapic/{avatar}/islands-75'
 				profile.gender = gender
 				profile.save()
 				user = User.objects.get(id=user_id)

@@ -11,7 +11,7 @@ USER_SEX = [
 
 class UserProfile(models.Model):
 	user = models.OneToOneField(User, on_delete=models.CASCADE)
-	avatar = models.ImageField(upload_to="avatars", blank=True)
+	avatar = models.CharField(max_length=200, blank=True)
 	gender = models.CharField(max_length=1, choices=USER_SEX, blank=True)
 	birthday = models.DateField(blank=True, null=True)
 	ya_login = models.CharField(max_length=50, blank=True)

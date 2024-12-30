@@ -3,7 +3,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
-from .serializers import (YandexAuthSerializer, UserLoginSerializer)
+from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer)
 from .services import get_or_create_user
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -36,7 +36,7 @@ class UserViewSet(viewsets.ModelViewSet):
 			return UserLoginSerializer
 
 	@action(detail=False, methods=['post'])
-	@swagger_auto_schema(responses={200: UserLoginSerializer()},
+	@swagger_auto_schema(responses={200: LoginResponseSerializer()},
 						 operation_summary="Авторизация пользователей через Яндекс")
 	def yandex_auth(self, request):
 		serializer = self.get_serializer(data=request.data)
@@ -49,11 +49,10 @@ class UserViewSet(viewsets.ModelViewSet):
 				user_id = response_data.get('id')
 				user = User.objects.get(id=user_id)
 				token = Token.objects.get(user=user)
-				response_data.update({'token': token.key})
 				response = {
 					"status": status.HTTP_200_OK,
 					"message": "Авторизация прошла успешно",
-					"data": response_data
+					"data": {"user_data": response_data, "user_auth_token": token.key}
 				}
 				return Response(response, status=status.HTTP_200_OK)
 			return Response(response_data[0], status=response_data[1])
