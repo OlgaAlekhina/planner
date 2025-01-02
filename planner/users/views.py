@@ -11,18 +11,6 @@ from .models import UserProfile
 from django.http import JsonResponse, HttpResponse
 
 
-# аутентификация пользователя по мейлу
-def authenticate_user(email, password):
-    try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return None
-    else:
-        if user.check_password(password) and user.is_active:
-            return user
-    return None
-
-
 # endpoints for users
 class UserViewSet(viewsets.ModelViewSet):
 	queryset = User.objects.all()
@@ -43,7 +31,6 @@ class UserViewSet(viewsets.ModelViewSet):
 		if serializer.is_valid():
 			oauth_token = serializer.validated_data['oauth_token']
 			response_data = get_or_create_user(oauth_token)
-			print(response_data)
 			if response_data[1] == 200:
 				response_data = response_data[0]
 				user_id = response_data.get('id')
@@ -60,6 +47,7 @@ class UserViewSet(viewsets.ModelViewSet):
 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# функция для добавления отсутствующих профилей пользователей
 def add_missing_profiles(request):
 	users = User.objects.all()
 	for user in users:

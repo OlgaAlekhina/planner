@@ -29,6 +29,7 @@ from users.views import UserViewSet, add_missing_profiles
 schema_view = get_schema_view(
     openapi.Info(
         title="Planner API",
+        description="Planner API",
         default_version='v1',),
     public=True,
     permission_classes=(permissions.AllowAny,),
