@@ -5,7 +5,7 @@ from .models import UserProfile
 
 class YandexAuthSerializer(serializers.Serializer):
 	""" Сериализатор для OAuth токена от Яндекса """
-	oauth_token = serializers.CharField(max_length=500)
+	oauth_token = serializers.CharField(max_length=2000)
 
 
 class UserLoginSerializer(serializers.ModelSerializer):
