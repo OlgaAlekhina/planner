@@ -14,7 +14,7 @@ class UserProfile(models.Model):
 	avatar = models.CharField(max_length=200, blank=True)
 	gender = models.CharField(max_length=1, choices=USER_SEX, blank=True)
 	birthday = models.DateField(blank=True, null=True)
-	ya_login = models.CharField(max_length=50, blank=True)
+	nickname = models.CharField(max_length=50, blank=True)
 
 	def __str__(self):
 		return self.user.username

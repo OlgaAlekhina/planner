@@ -11,13 +11,18 @@ class YandexAuthSerializer(serializers.Serializer):
 class UserLoginSerializer(serializers.ModelSerializer):
 	""" Сериализатор для ответа на запрос авторизации через Яндекс """
 	avatar = serializers.CharField(source='userprofile.avatar')
-	ya_login = serializers.CharField(source='userprofile.ya_login')
-	birthday = serializers.CharField(source='userprofile.birthday')
-	gender = serializers.CharField(source='userprofile.get_gender_display')
+	nickname = serializers.CharField(source='userprofile.nickname')
+	birthday = serializers.CharField(source='userprofile.birthday', required=False)
+	gender = serializers.CharField(source='userprofile.get_gender_display', required=False)
 
 	class Meta:
 		model = User
-		fields = ('id', 'email', 'first_name', 'last_name', 'ya_login', 'birthday', 'gender', 'avatar')
+		fields = ('id', 'email', 'first_name', 'last_name', 'nickname', 'birthday', 'gender', 'avatar')
+		extra_kwargs = {
+						'first_name': {'required': True},
+						'last_name': {'required': True},
+						'email': {'required': True},
+						}
 
 
 class LoginResponseSerializer(serializers.Serializer):

@@ -15,7 +15,7 @@ def get_or_create_user(token):
 		response_data = response.json()
 		if response_data:
 			email = response_data.get('default_email')
-			ya_login = response_data.get('login')
+			nickname = response_data.get('login')
 			avatar = response_data.get('default_avatar_id')
 			birthday = response_data.get('birthday')
 			first_name = response_data.get('first_name')
@@ -34,7 +34,7 @@ def get_or_create_user(token):
 			)
 			user_id = user.id
 			profile = UserProfile.objects.get(user=user)
-			profile.ya_login = ya_login
+			profile.nickname = nickname
 			if birthday:
 				profile.birthday = birthday
 			if avatar:
