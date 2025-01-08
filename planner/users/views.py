@@ -3,12 +3,14 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
-from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer)
+from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
+						  ErrorResponseSerializer)
 from .services import get_or_create_user
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .models import UserProfile
 from django.http import JsonResponse, HttpResponse
+from drf_yasg import openapi
 
 
 # endpoints for users
@@ -24,8 +26,14 @@ class UserViewSet(viewsets.ModelViewSet):
 			return UserLoginSerializer
 
 	@action(detail=False, methods=['post'])
-	@swagger_auto_schema(responses={200: LoginResponseSerializer()},
-						 operation_summary="Авторизация пользователей через Яндекс")
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", examples={"application/json": {"field_name": ["error_messages"]}}),
+			401: openapi.Response(description="Ошибка авторизации в сервисе Яндекса", schema=ErrorResponseSerializer()),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", schema=ErrorResponseSerializer())
+		},
+		operation_summary="Авторизация пользователей через Яндекс")
 	def yandex_auth(self, request):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
@@ -37,8 +45,7 @@ class UserViewSet(viewsets.ModelViewSet):
 				user = User.objects.get(id=user_id)
 				token = Token.objects.get(user=user)
 				response = {
-					"status": status.HTTP_200_OK,
-					"message": "Авторизация прошла успешно",
+					"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
 					"data": {"user_data": response_data, "user_auth_token": token.key}
 				}
 				return Response(response, status=status.HTTP_200_OK)

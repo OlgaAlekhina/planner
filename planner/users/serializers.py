@@ -3,6 +3,17 @@ from django.contrib.auth.models import User
 from .models import UserProfile
 
 
+class DetailSerializer(serializers.Serializer):
+	""" Сериализатор для деталей ответа """
+	code = serializers.CharField()
+	message = serializers.CharField()
+
+
+class ErrorResponseSerializer(serializers.Serializer):
+    """ Сериализатор для общего ответа об ошибке """
+    detail = DetailSerializer()
+
+
 class YandexAuthSerializer(serializers.Serializer):
 	""" Сериализатор для OAuth токена от Яндекса """
 	oauth_token = serializers.CharField(max_length=2000)
@@ -25,10 +36,16 @@ class UserLoginSerializer(serializers.ModelSerializer):
 						}
 
 
-class LoginResponseSerializer(serializers.Serializer):
-	""" Сериализатор для ответа сервера при авторизации """
+class LoginDataResponseSerializer(serializers.Serializer):
+	""" Сериализатор данных пользователя для ответа сервера при авторизации """
 	user_data = UserLoginSerializer()
 	user_auth_token = serializers.UUIDField()
+
+
+class LoginResponseSerializer(serializers.Serializer):
+	""" Сериализатор для ответа сервера при авторизации """
+	detail = DetailSerializer()
+	data = LoginDataResponseSerializer()
 
 
 # class ProfileSerializer(serializers.ModelSerializer):
