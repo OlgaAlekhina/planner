@@ -31,6 +31,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 
+VK_CLIENT_ID = os.getenv('VK_CLIENT_ID')
 
 # Application definition
 

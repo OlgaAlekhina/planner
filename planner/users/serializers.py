@@ -19,6 +19,14 @@ class YandexAuthSerializer(serializers.Serializer):
 	oauth_token = serializers.CharField(max_length=2000)
 
 
+class VKAuthSerializer(serializers.Serializer):
+	""" Сериализатор для входных данных при авторизации через VK ID """
+	code_verifier = serializers.CharField(max_length=150)
+	code = serializers.CharField(max_length=500)
+	device_id = serializers.CharField(max_length=500)
+	state = serializers.CharField(max_length=500)
+
+
 class UserLoginSerializer(serializers.ModelSerializer):
 	""" Сериализатор для ответа на запрос авторизации через Яндекс """
 	avatar = serializers.CharField(source='userprofile.avatar')
