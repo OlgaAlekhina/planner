@@ -21,8 +21,8 @@ class YandexAuthSerializer(serializers.Serializer):
 
 class VKAuthSerializer(serializers.Serializer):
 	""" Сериализатор для входных данных при авторизации через VK ID """
-	code_verifier = serializers.CharField(max_length=150)
-	code = serializers.CharField(max_length=500)
+	code_verifier = serializers.CharField(required=False, max_length=150)
+	code = serializers.CharField(required=False, max_length=500)
 	device_id = serializers.CharField(max_length=500)
 	state = serializers.CharField(max_length=500)
 

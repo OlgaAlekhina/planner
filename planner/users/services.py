@@ -66,27 +66,35 @@ def get_user_from_yandex(token):
 	except RequestException as err:
 		result_data = {
 			"detail": {
-				"code": "REQUEST_ERROR - 500",
+				"code": f"REQUEST_ERROR - {response.status_code}" if response else 'REQUEST_ERROR - 500',
 				"message": str(err)
 			}
 		}
-		return result_data, 500
+		return result_data, response.status_code if response else 500
 
 
 def get_user_from_vk(code_verifier, code, device_id, state):
-	url = "https://id.vk.com/oauth2/auth"
+	url_1 = "https://id.vk.com/oauth2/auth"
+	url_2 = "https://id.vk.com/oauth2/user_info"
 	headers = {"Content-Type": "application/x-www-form-urlencoded"}
-	data = {"grant_type": "authorization_code", "code_verifier": code_verifier, "code": code, "client_id": client_id,
-			"device_id": device_id, "state": state}
+	data = {
+			"grant_type": "authorization_code",
+			"code_verifier": code_verifier,
+			"code": code,
+			"client_id": client_id,
+			"device_id": device_id,
+			"state": state
+	}
+	print('data: ', data)
 	try:
-		response = requests.post(url, headers=headers, json=data)
+		response = requests.post(url_1, headers=headers, json=data)
+		print('response: ', response)
 		response.raise_for_status()
 		response_data = response.json()
 		access_token = response_data.get("access_token")
-		url = "https://id.vk.com/oauth2/user_info"
-		headers = {"Content-Type": "application/x-www-form-urlencoded"}
 		data = {"client_id": client_id, "access_token": access_token}
-		response = requests.post(url, headers=headers, json=data)
+		print('data: ', data)
+		response = requests.post(url_2, headers=headers, json=data)
 		response.raise_for_status()
 		response_data = response.json().get('user')
 		email = response_data.get('email')
@@ -96,28 +104,8 @@ def get_user_from_vk(code_verifier, code, device_id, state):
 		first_name = response_data.get('first_name')
 		last_name = response_data.get('last_name')
 		gender = response_data.get('sex')
-		if gender == 2:
-			gender = 'M'
-		elif gender == 1:
-			gender = 'F'
-		else:
-			gender = 'N'
-		user, created = User.objects.update_or_create(
-			email=email,
-			defaults={"first_name": first_name, "last_name": last_name},
-			create_defaults={"username": email, "email": email, "first_name": first_name, "last_name": last_name},
-		)
-		user_id = user.id
-		profile = UserProfile.objects.get(user=user)
-		profile.nickname = nickname
-		if birthday:
-			profile.birthday = birthday
-		if avatar:
-			profile.avatar = f'https://avatars.yandex.net/get-yapic/{avatar}/islands-75'
-		profile.gender = gender
-		profile.save()
-		user = User.objects.get(id=user_id)
-		return UserLoginSerializer(user).data, 200
+		user_data = update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar)
+		return user_data, 200
 	except HTTPError as http_err:
 		result_data = {
 			"detail": {
@@ -129,10 +117,10 @@ def get_user_from_vk(code_verifier, code, device_id, state):
 	except RequestException as err:
 		result_data = {
 			"detail": {
-				"code": "REQUEST_ERROR - 500",
+				"code": f"REQUEST_ERROR - {response.status_code}" if response else 'REQUEST_ERROR - 500',
 				"message": str(err)
 			}
 		}
-		return result_data, 500
+		return result_data, response.status_code if response else 500
 
 

@@ -58,33 +58,31 @@ class UserViewSet(viewsets.ModelViewSet):
 	@swagger_auto_schema(
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
-			400: openapi.Response(description="Ошибка при валидации входных данных",
-								  examples={"application/json": {"field_name": ["error_messages"]}}),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Ошибка авторизации в сервисе Яндекса", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", schema=ErrorResponseSerializer())
 		},
-		operation_summary="Авторизация пользователей через VK ID")
+		operation_summary="Авторизация пользователей через VK")
 	def vk_auth(self, request):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
-			code_verifier = serializer.validated_data['code_verifier']
-			code = serializer.validated_data['code']
+			code_verifier = serializer.validated_data['code_verifier'] if 'code_verifier' in serializer.validated_data else None
+			code = serializer.validated_data['code'] if 'code' in serializer.validated_data else None
 			device_id = serializer.validated_data['device_id']
 			state = serializer.validated_data['state']
 			response_data = get_user_from_vk(code_verifier, code, device_id, state)
 			if response_data[1] == 200:
-				response_data = response_data[0]
-				user_id = response_data.get('id')
-				user = User.objects.get(id=user_id)
-				token = Token.objects.get(user=user)
 				response = {
 					"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
-					"data": {"user_data": response_data, "user_auth_token": token.key}
+					"data": response_data[0]
 				}
 				return Response(response, status=status.HTTP_200_OK)
 			return Response(response_data[0], status=response_data[1])
-
-		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
 # функция для добавления отсутствующих профилей пользователей
