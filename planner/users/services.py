@@ -1,13 +1,17 @@
+import os
+
 import requests
-from django.conf import settings
 from requests.exceptions import RequestException, HTTPError
 from django.contrib.auth.models import User
 from .models import UserProfile
 from .serializers import (UserLoginSerializer,)
 from rest_framework.authtoken.models import Token
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
-client_id = settings.VK_CLIENT_ID
+client_id = os.getenv('VK_CLIENT_ID')
 
 
 def update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar):
@@ -76,7 +80,7 @@ def get_user_from_yandex(token):
 def get_user_from_vk(code_verifier, code, device_id, state):
 	url_1 = "https://id.vk.com/oauth2/auth"
 	url_2 = "https://id.vk.com/oauth2/user_info"
-	headers = {"Content-Type": "application/x-www-form-urlencoded"}
+	headers = {"content-type": "application/x-www-form-urlencoded"}
 	data = {
 			"grant_type": "authorization_code",
 			"code_verifier": code_verifier,
@@ -85,18 +89,21 @@ def get_user_from_vk(code_verifier, code, device_id, state):
 			"device_id": device_id,
 			"state": state
 	}
-	print('data: ', data)
 	try:
-		response = requests.post(url_1, headers=headers, json=data)
-		print('response: ', response)
+		response = requests.post(url_1, headers=headers, data=data)
+		print('response: ', response.text)
 		response.raise_for_status()
 		response_data = response.json()
 		access_token = response_data.get("access_token")
+		if not access_token:
+			return {'detail': {'code': '400_BAD_REQUEST', 'message': response.json()}}, 400
 		data = {"client_id": client_id, "access_token": access_token}
-		print('data: ', data)
-		response = requests.post(url_2, headers=headers, json=data)
+		response = requests.post(url_2, headers=headers, data=data)
+		print('response2: ', response.json())
 		response.raise_for_status()
 		response_data = response.json().get('user')
+		if not response_data:
+			return {'detail': {'code': '400_BAD_REQUEST', 'message': response.json()}}, 400
 		email = response_data.get('email')
 		nickname = email.split('@')[0]
 		avatar = response_data.get('avatar')
