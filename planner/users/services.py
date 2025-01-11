@@ -77,7 +77,7 @@ def get_user_from_yandex(token):
 		return result_data, response.status_code if response else 500
 
 
-def get_user_from_vk(code_verifier, code, device_id, state):
+def get_user_from_vk(code_verifier, code, device_id, state, redirect_uri):
 	url_1 = "https://id.vk.com/oauth2/auth"
 	url_2 = "https://id.vk.com/oauth2/user_info"
 	headers = {"content-type": "application/x-www-form-urlencoded"}
@@ -87,7 +87,8 @@ def get_user_from_vk(code_verifier, code, device_id, state):
 			"code": code,
 			"client_id": client_id,
 			"device_id": device_id,
-			"state": state
+			"state": state,
+			"redirect_uri": redirect_uri
 	}
 	try:
 		response = requests.post(url_1, headers=headers, data=data)

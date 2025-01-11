@@ -25,6 +25,7 @@ class VKAuthSerializer(serializers.Serializer):
 	code = serializers.CharField(required=False, max_length=500)
 	device_id = serializers.CharField(max_length=500)
 	state = serializers.CharField(max_length=500)
+	redirect_uri = serializers.CharField(max_length=500)
 
 
 class UserLoginSerializer(serializers.ModelSerializer):
