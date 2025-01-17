@@ -77,7 +77,7 @@ def get_user_from_yandex(token):
 		return result_data, response.status_code if response else 500
 
 
-def get_user_from_vk(code_verifier, code, device_id, state, redirect_uri):
+def get_user_from_vk(code_verifier, code, device_id, state):
 	url_1 = "https://id.vk.com/oauth2/auth"
 	url_2 = "https://id.vk.com/oauth2/user_info"
 	headers = {"content-type": "application/x-www-form-urlencoded"}
@@ -88,16 +88,19 @@ def get_user_from_vk(code_verifier, code, device_id, state, redirect_uri):
 			"client_id": client_id,
 			"device_id": device_id,
 			"state": state,
-			"redirect_uri": redirect_uri
+			"redirect_uri": f"vk{client_id}://vk.com/blank.html"
 	}
+	print('data:', data)
 	try:
 		response = requests.post(url_1, headers=headers, data=data)
 		print('response: ', response.text)
+		print(response.request.body)
 		response.raise_for_status()
 		response_data = response.json()
 		access_token = response_data.get("access_token")
 		if not access_token:
 			return {'detail': {'code': '400_BAD_REQUEST', 'message': response.json()}}, 400
+		# access_token = '12345'
 		data = {"client_id": client_id, "access_token": access_token}
 		response = requests.post(url_2, headers=headers, data=data)
 		print('response2: ', response.json())
@@ -105,15 +108,16 @@ def get_user_from_vk(code_verifier, code, device_id, state, redirect_uri):
 		response_data = response.json().get('user')
 		if not response_data:
 			return {'detail': {'code': '400_BAD_REQUEST', 'message': response.json()}}, 400
-		email = response_data.get('email')
-		nickname = email.split('@')[0]
-		avatar = response_data.get('avatar')
-		birthday = response_data.get('birthday')
-		first_name = response_data.get('first_name')
-		last_name = response_data.get('last_name')
-		gender = response_data.get('sex')
-		user_data = update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar)
-		return user_data, 200
+		# email = response_data.get('email')
+		# nickname = email.split('@')[0]
+		# avatar = response_data.get('avatar')
+		# birthday = response_data.get('birthday')
+		# first_name = response_data.get('first_name')
+		# last_name = response_data.get('last_name')
+		# gender = response_data.get('sex')
+		# user_data = update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar)
+		# return user_data, 200
+		return response.json(), 200
 	except HTTPError as http_err:
 		result_data = {
 			"detail": {

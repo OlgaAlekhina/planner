@@ -70,8 +70,7 @@ class UserViewSet(viewsets.ModelViewSet):
 			code = serializer.validated_data['code'] if 'code' in serializer.validated_data else None
 			device_id = serializer.validated_data['device_id']
 			state = serializer.validated_data['state']
-			redirect_uri = serializer.validated_data['redirect_uri']
-			response_data = get_user_from_vk(code_verifier, code, device_id, state, redirect_uri)
+			response_data = get_user_from_vk(code_verifier, code, device_id, state)
 			if response_data[1] == 200:
 				response = {
 					"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
