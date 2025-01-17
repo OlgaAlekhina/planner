@@ -1,5 +1,6 @@
 import os
-
+from typing import Optional
+from datetime import datetime
 import requests
 from requests.exceptions import RequestException, HTTPError
 from django.contrib.auth.models import User
@@ -12,6 +13,12 @@ load_dotenv()
 
 
 client_id = os.getenv('VK_CLIENT_ID')
+
+
+def convert_date(date, date_format='%d.%m.%Y'):
+    if '-' not in date:
+        return datetime.strptime(date, date_format).date()
+    return date
 
 
 def update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar):
@@ -32,7 +39,7 @@ def update_or_create(email, first_name, last_name, nickname, gender, birthday, a
 	profile = UserProfile.objects.get(user=user)
 	profile.nickname = nickname
 	if birthday:
-		profile.birthday = birthday
+		profile.birthday = convert_date(birthday)
 	profile.gender = gender
 	profile.avatar = avatar
 	profile.save()
@@ -56,7 +63,7 @@ def get_user_from_yandex(token):
 		birthday = response_data.get('birthday')
 		first_name = response_data.get('first_name')
 		last_name = response_data.get('last_name')
-		gender = response_data.get('gender')
+		gender = response_data.get('sex')
 		user_data = update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar)
 		return user_data, 200
 	except HTTPError as http_err:
@@ -90,34 +97,28 @@ def get_user_from_vk(code_verifier, code, device_id, state):
 			"state": state,
 			"redirect_uri": f"vk{client_id}://vk.com/blank.html"
 	}
-	print('data:', data)
 	try:
 		response = requests.post(url_1, headers=headers, data=data)
-		print('response: ', response.text)
-		print(response.request.body)
 		response.raise_for_status()
 		response_data = response.json()
 		access_token = response_data.get("access_token")
 		if not access_token:
 			return {'detail': {'code': '400_BAD_REQUEST', 'message': response.json()}}, 400
-		# access_token = '12345'
 		data = {"client_id": client_id, "access_token": access_token}
 		response = requests.post(url_2, headers=headers, data=data)
-		print('response2: ', response.json())
 		response.raise_for_status()
 		response_data = response.json().get('user')
 		if not response_data:
 			return {'detail': {'code': '400_BAD_REQUEST', 'message': response.json()}}, 400
-		# email = response_data.get('email')
-		# nickname = email.split('@')[0]
-		# avatar = response_data.get('avatar')
-		# birthday = response_data.get('birthday')
-		# first_name = response_data.get('first_name')
-		# last_name = response_data.get('last_name')
-		# gender = response_data.get('sex')
-		# user_data = update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar)
-		# return user_data, 200
-		return response.json(), 200
+		email = response_data.get('email')
+		nickname = email.split('@')[0]
+		avatar = response_data.get('avatar')
+		birthday = response_data.get('birthday')
+		first_name = response_data.get('first_name')
+		last_name = response_data.get('last_name')
+		gender = response_data.get('sex')
+		user_data = update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar)
+		return user_data, 200
 	except HTTPError as http_err:
 		result_data = {
 			"detail": {

@@ -59,7 +59,6 @@ class UserViewSet(viewsets.ModelViewSet):
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
-			401: openapi.Response(description="Ошибка авторизации в сервисе Яндекса", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", schema=ErrorResponseSerializer())
 		},
 		operation_summary="Авторизация пользователей через VK")
