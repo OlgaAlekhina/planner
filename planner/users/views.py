@@ -31,17 +31,17 @@ class UserViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
-			204: openapi.Response(description="Успешный ответ", schema=ErrorResponseSerializer()),
+			204: openapi.Response(description="Успешный ответ"),
 			404: openapi.Response(description="Оъект не найден", examples={"application/json": {"detail": "string"}}),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
-		operation_summary="Авторизация пользователей через Яндекс")
+		operation_summary="Удаление пользователя по id")
 	def destroy(self, request, pk):
 		user = self.get_object()
-		print(user)
-		return Response('test')
+		user.delete()
+		return Response(status=204)
 
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
