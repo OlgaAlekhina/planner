@@ -139,5 +139,21 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SITE_ID = 1
 
 SWAGGER_SETTINGS = {
-    "DEFAULT_MODEL_RENDERING": "example"
+    'DEFAULT_MODEL_RENDERING': 'example',
+    'SECURITY_DEFINITIONS': {
+            'Auth_token': {
+                'type': 'apiKey',
+                'in': 'header',
+                'name': 'Authorization',
+            }
+
+        }
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # 'rest_framework.authentication.BasicAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
 }

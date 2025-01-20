@@ -11,6 +11,7 @@ from rest_framework.authtoken.models import Token
 from .models import UserProfile
 from django.http import JsonResponse, HttpResponse
 from drf_yasg import openapi
+from planner.permissions import UserPermission
 
 
 # endpoints for users
@@ -18,6 +19,7 @@ class UserViewSet(viewsets.ModelViewSet):
 	queryset = User.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
 	parser_classes = (JSONParser, MultiPartParser)
+	permission_classes = [UserPermission]
 
 	def get_serializer_class(self):
 		if self.action == 'yandex_auth':
@@ -26,6 +28,20 @@ class UserViewSet(viewsets.ModelViewSet):
 			return VKAuthSerializer
 		else:
 			return UserLoginSerializer
+
+	@swagger_auto_schema(
+		responses={
+			204: openapi.Response(description="Успешный ответ", schema=ErrorResponseSerializer()),
+			404: openapi.Response(description="Оъект не найден", examples={"application/json": {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Авторизация пользователей через Яндекс")
+	def destroy(self, request, pk):
+		user = self.get_object()
+		print(user)
+		return Response('test')
 
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
