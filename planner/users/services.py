@@ -7,12 +7,10 @@ from django.contrib.auth.models import User
 from .models import UserProfile
 from .serializers import (UserLoginSerializer,)
 from rest_framework.authtoken.models import Token
-from dotenv import load_dotenv
-
-load_dotenv()
+from django.conf import settings
 
 
-client_id = os.getenv('VK_CLIENT_ID')
+client_id = settings.VK_CLIENT_ID
 
 
 def convert_date(date, date_format='%d.%m.%Y'):
@@ -77,11 +75,11 @@ def get_user_from_yandex(token):
 	except RequestException as err:
 		result_data = {
 			"detail": {
-				"code": f"REQUEST_ERROR - {response.status_code}" if response else 'REQUEST_ERROR - 500',
+				"code": f"REQUEST_ERROR - {err.response.status_code}" if err.response else 'REQUEST_ERROR - 500',
 				"message": str(err)
 			}
 		}
-		return result_data, response.status_code if response else 500
+		return result_data, err.response.status_code if err.response else 500
 
 
 def get_user_from_vk(code_verifier, code, device_id, state):
@@ -97,6 +95,7 @@ def get_user_from_vk(code_verifier, code, device_id, state):
 			"state": state,
 			"redirect_uri": f"vk{client_id}://vk.com/blank.html"
 	}
+	print('data: ', data)
 	try:
 		response = requests.post(url_1, headers=headers, data=data)
 		response.raise_for_status()
@@ -130,10 +129,10 @@ def get_user_from_vk(code_verifier, code, device_id, state):
 	except RequestException as err:
 		result_data = {
 			"detail": {
-				"code": f"REQUEST_ERROR - {response.status_code}" if response else 'REQUEST_ERROR - 500',
+				"code": f"REQUEST_ERROR - {err.response.status_code}" if err.response else 'REQUEST_ERROR - 500',
 				"message": str(err)
 			}
 		}
-		return result_data, response.status_code if response else 500
+		return result_data, err.response.status_code if err.response else 500
 
 
