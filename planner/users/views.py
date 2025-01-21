@@ -4,7 +4,7 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
-						  ErrorResponseSerializer, VKAuthSerializer)
+						  ErrorResponseSerializer, VKAuthSerializer, UserCreateSerializer)
 from .services import get_user_from_yandex, get_user_from_vk
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -31,8 +31,26 @@ class UserViewSet(viewsets.ModelViewSet):
 			return YandexAuthSerializer
 		elif self.action == 'vk_auth':
 			return VKAuthSerializer
+		elif self.action == 'create':
+			return UserCreateSerializer
 		else:
 			return UserLoginSerializer
+
+	@swagger_auto_schema(
+		responses={
+			201: openapi.Response(description="Успешный ответ"),
+			404: openapi.Response(description="Оъект не найден", examples={"application/json": {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация",
+								  examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса",
+								  examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Регистрация пользователей по email")
+	def create(self, request):
+		user = self.get_object()
+		user.delete()
+		return Response(status=204)
 
 	@swagger_auto_schema(
 		responses={

@@ -62,6 +62,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
 	email = serializers.CharField(max_length=50, validators=[check_email, validate_email])
 	password = serializers.CharField(write_only=True, min_length=8, max_length=128, validators=[validate_password_symbols])
 
+	class Meta:
+		model = User
+		fields = ('email', 'password')
 
 # class ProfileSerializer(serializers.ModelSerializer):
 # 	""" Сериализатор для модели UserProfile """
