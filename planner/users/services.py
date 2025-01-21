@@ -14,9 +14,9 @@ client_id = settings.VK_CLIENT_ID
 
 
 def convert_date(date, date_format='%d.%m.%Y'):
-    if '-' not in date:
-        return datetime.strptime(date, date_format).date()
-    return date
+	if '-' not in date:
+		return datetime.strptime(date, date_format).date()
+	return date
 
 
 def update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar):

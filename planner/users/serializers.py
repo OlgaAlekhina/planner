@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from .validators import validate_password_symbols, validate_email, check_email
 from .models import UserProfile
 
 
@@ -10,8 +11,8 @@ class DetailSerializer(serializers.Serializer):
 
 
 class ErrorResponseSerializer(serializers.Serializer):
-    """ Сериализатор для общего ответа об ошибке """
-    detail = DetailSerializer()
+	""" Сериализатор для общего ответа об ошибке """
+	detail = DetailSerializer()
 
 
 class YandexAuthSerializer(serializers.Serializer):
@@ -54,6 +55,12 @@ class LoginResponseSerializer(serializers.Serializer):
 	""" Сериализатор для ответа сервера при авторизации """
 	detail = DetailSerializer()
 	data = LoginDataResponseSerializer()
+
+
+class UserCreateSerializer(serializers.ModelSerializer):
+	""" Сериализатор для регистрации пользователя по email """
+	email = serializers.CharField(max_length=50, validators=[check_email, validate_email])
+	password = serializers.CharField(write_only=True, min_length=8, max_length=128, validators=[validate_password_symbols])
 
 
 # class ProfileSerializer(serializers.ModelSerializer):

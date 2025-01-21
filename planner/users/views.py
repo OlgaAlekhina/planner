@@ -16,6 +16,11 @@ from planner.permissions import UserPermission
 
 # endpoints for users
 class UserViewSet(viewsets.ModelViewSet):
+	"""
+	delete: Удаляет учетную запись пользователя из базы данных по его id.
+            Условия доступа к эндпоинту: токен авторизации в формате 'Token 3fa85f64-5717-4562-b3fc-2c963f66afa6'
+            Пользователь может удалить только свой собственный профиль.
+	"""
 	queryset = User.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
 	parser_classes = (JSONParser, MultiPartParser)
@@ -31,7 +36,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
-			204: openapi.Response(description="Успешный ответ"),
+			204: openapi.Response(description="Успешное удаление"),
 			404: openapi.Response(description="Оъект не найден", examples={"application/json": {"detail": "string"}}),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
