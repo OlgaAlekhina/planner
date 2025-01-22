@@ -10,7 +10,9 @@ from .models import UserProfile
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance)
+        email = instance.email
+        nickname = email.split('@')[0]
+        UserProfile.objects.create(user=instance, nickname=nickname)
 
 
 @receiver(post_save, sender=User)

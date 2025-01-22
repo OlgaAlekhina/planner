@@ -95,7 +95,6 @@ def get_user_from_vk(code_verifier, code, device_id, state):
 			"state": state,
 			"redirect_uri": f"vk{client_id}://vk.com/blank.html"
 	}
-	print('data: ', data)
 	try:
 		response = requests.post(url_1, headers=headers, data=data)
 		response.raise_for_status()

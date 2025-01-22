@@ -38,19 +38,31 @@ class UserViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
-			201: openapi.Response(description="Успешный ответ"),
-			404: openapi.Response(description="Оъект не найден", examples={"application/json": {"detail": "string"}}),
-			401: openapi.Response(description="Требуется авторизация",
-								  examples={"application/json": {"detail": "string"}}),
-			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			201: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса",
 								  examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Регистрация пользователей по email")
 	def create(self, request):
-		user = self.get_object()
-		user.delete()
-		return Response(status=204)
+		serializer = UserCreateSerializer(data=request.data)
+		if serializer.is_valid():
+			email = serializer.validated_data['email']
+			password = serializer.validated_data['password']
+			user = User.objects.create_user(username=email, email=email, password=password)
+			token = Token.objects.get(user=user)
+			user_data = UserLoginSerializer(user).data
+			result = {"user_data": user_data, "user_auth_token": token.key}
+			response = {
+				"detail": {"code": "HTTP_201_CREATED", "message": "Регистрация прошла успешно"},
+				"data": result
+			}
+			return Response(response, status=status.HTTP_201_CREATED)
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 	@swagger_auto_schema(
 		responses={
