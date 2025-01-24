@@ -1,6 +1,6 @@
 import os
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 import requests
 from requests.exceptions import RequestException, HTTPError
 from django.contrib.auth.models import User
@@ -13,13 +13,36 @@ from django.conf import settings
 client_id = settings.VK_CLIENT_ID
 
 
-def convert_date(date, date_format='%d.%m.%Y'):
-	if '-' not in date:
-		return datetime.strptime(date, date_format).date()
-	return date
+def convert_date(birthday: str, date_format='%d.%m.%Y') -> date | str:
+	if '-' not in birthday:
+		return datetime.strptime(birthday, date_format).date()
+	return birthday
 
 
-def update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar):
+def get_or_create_user(email: str, password: str) -> tuple[dict, int]:
+	"""
+	создает нового пользователя или получает его данные из БД
+	возвращает данные пользователя и токен авторизации
+	"""
+	user = User.objects.filter(email=email)
+	if user:
+		user = user[0]
+		if not user.check_password(password):
+			return {"detail": {"code": "HTTP_400_BAD_REQUEST", "message": "Неправильный пароль"}}, 400
+	else:
+		user = User.objects.create_user(username=email, email=email, password=password)
+	token = Token.objects.get(user=user)
+	user_data = UserLoginSerializer(user).data
+	result = {"user_data": user_data, "user_auth_token": token.key}
+	return result, 200
+
+
+def update_or_create_user(email: str, first_name: str, last_name: str, nickname: str, gender: str, birthday: str, avatar: str) -> dict:
+	"""
+	создает нового пользователя или обновляет его данные в БД
+	используется для авторизации через яндекс и ВК
+	возвращает данные пользователя и токен авторизации
+	"""
 	if gender in ('male', 2):
 		gender = 'M'
 	elif gender in ('female', 1):
@@ -48,7 +71,12 @@ def update_or_create(email, first_name, last_name, nickname, gender, birthday, a
 	return result
 
 
-def get_user_from_yandex(token):
+def get_user_from_yandex(token: str) -> tuple[dict, int]:
+	"""
+	получает данные пользователя из Яндекса
+	создает нового пользователя или обновляет его данные в БД
+	возвращает данные пользователя и токен авторизации
+	"""
 	headers = {"Authorization": f"OAuth {token}"}
 	url = "https://login.yandex.ru/info"
 	try:
@@ -62,7 +90,7 @@ def get_user_from_yandex(token):
 		first_name = response_data.get('first_name')
 		last_name = response_data.get('last_name')
 		gender = response_data.get('sex')
-		user_data = update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar)
+		user_data = update_or_create_user(email, first_name, last_name, nickname, gender, birthday, avatar)
 		return user_data, 200
 	except HTTPError as http_err:
 		result_data = {
@@ -82,7 +110,12 @@ def get_user_from_yandex(token):
 		return result_data, err.response.status_code if err.response else 500
 
 
-def get_user_from_vk(code_verifier, code, device_id, state):
+def get_user_from_vk(code_verifier: str, code: str, device_id: str, state: str) -> tuple[dict, int]:
+	"""
+	получает данные пользователя из ВК
+	создает нового пользователя или обновляет его данные в БД
+	возвращает данные пользователя и токен авторизации
+	"""
 	url_1 = "https://id.vk.com/oauth2/auth"
 	url_2 = "https://id.vk.com/oauth2/user_info"
 	headers = {"content-type": "application/x-www-form-urlencoded"}
@@ -115,7 +148,7 @@ def get_user_from_vk(code_verifier, code, device_id, state):
 		first_name = response_data.get('first_name')
 		last_name = response_data.get('last_name')
 		gender = response_data.get('sex')
-		user_data = update_or_create(email, first_name, last_name, nickname, gender, birthday, avatar)
+		user_data = update_or_create_user(email, first_name, last_name, nickname, gender, birthday, avatar)
 		return user_data, 200
 	except HTTPError as http_err:
 		result_data = {
