@@ -33,7 +33,8 @@ def get_or_create_user(email: str, password: str) -> tuple[dict, int]:
 		user = User.objects.create_user(username=email, email=email, password=password)
 	token = Token.objects.get(user=user)
 	user_data = UserLoginSerializer(user).data
-	result = {"user_data": user_data, "user_auth_token": token.key}
+	result = {"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
+			  "data": {"user_data": user_data, "user_auth_token": token.key}}
 	return result, 200
 
 

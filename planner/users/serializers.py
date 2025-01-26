@@ -57,9 +57,9 @@ class LoginResponseSerializer(serializers.Serializer):
 	data = LoginDataResponseSerializer()
 
 
-class UserCreateSerializer(serializers.ModelSerializer):
+class MailAuthSerializer(serializers.ModelSerializer):
 	""" Сериализатор для регистрации пользователя по email """
-	email = serializers.CharField(max_length=50, validators=[check_email, validate_email])
+	email = serializers.CharField(max_length=50, validators=[validate_email])
 	password = serializers.CharField(write_only=True, min_length=8, max_length=128, validators=[validate_password_symbols])
 
 	class Meta:

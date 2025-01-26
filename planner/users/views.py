@@ -4,8 +4,8 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
-						  ErrorResponseSerializer, VKAuthSerializer, UserCreateSerializer)
-from .services import get_user_from_yandex, get_user_from_vk
+						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer)
+from .services import get_user_from_yandex, get_user_from_vk, get_or_create_user
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .models import UserProfile
@@ -16,11 +16,6 @@ from planner.permissions import UserPermission
 
 # endpoints for users
 class UserViewSet(viewsets.ModelViewSet):
-	"""
-	delete: Удаляет учетную запись пользователя из базы данных по его id.
-            Условия доступа к эндпоинту: токен авторизации в формате 'Token 3fa85f64-5717-4562-b3fc-2c963f66afa6'
-            Пользователь может удалить только свой собственный профиль.
-	"""
 	queryset = User.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
 	parser_classes = (JSONParser, MultiPartParser)
@@ -31,38 +26,10 @@ class UserViewSet(viewsets.ModelViewSet):
 			return YandexAuthSerializer
 		elif self.action == 'vk_auth':
 			return VKAuthSerializer
-		elif self.action == 'create':
-			return UserCreateSerializer
+		elif self.action == 'mail_auth':
+			return MailAuthSerializer
 		else:
 			return UserLoginSerializer
-
-	@swagger_auto_schema(
-		responses={
-			201: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
-			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса",
-								  examples={"application/json": {"detail": "string"}})
-		},
-		operation_summary="Регистрация пользователей по email")
-	def create(self, request):
-		serializer = UserCreateSerializer(data=request.data)
-		if serializer.is_valid():
-			email = serializer.validated_data['email']
-			password = serializer.validated_data['password']
-			user = User.objects.create_user(username=email, email=email, password=password)
-			token = Token.objects.get(user=user)
-			user_data = UserLoginSerializer(user).data
-			result = {"user_data": user_data, "user_auth_token": token.key}
-			response = {
-				"detail": {"code": "HTTP_201_CREATED", "message": "Регистрация прошла успешно"},
-				"data": result
-			}
-			return Response(response, status=status.HTTP_201_CREATED)
-		response = {'detail': {
-			"code": "BAD_REQUEST",
-			"message": serializer.errors
-		}}
-		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 	@swagger_auto_schema(
 		responses={
@@ -72,11 +39,36 @@ class UserViewSet(viewsets.ModelViewSet):
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
-		operation_summary="Удаление пользователя по id")
+		operation_summary="Удаление пользователей по id",
+		operation_description="Удаляет учетную запись пользователя из базы данных по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
+							  "формате 'Token 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может удалить только свой собственный профиль.")
 	def destroy(self, request, pk):
 		user = self.get_object()
 		user.delete()
 		return Response(status=204)
+
+	@action(detail=False, methods=['post'])
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Авторизация пользователей по email",
+		# operation_description="Регистрация и авторизация пользователей через email и пароль"
+	)
+	def mail_auth(self, request):
+		serializer = MailAuthSerializer(data=request.data)
+		if serializer.is_valid():
+			email = serializer.validated_data['email']
+			password = serializer.validated_data['password']
+			response_data = get_or_create_user(email, password)
+			return Response(response_data[0], status=response_data[1])
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
