@@ -20,3 +20,23 @@ class UserProfile(models.Model):
 		return self.user.username
 
 
+class Group(models.Model):
+	admin = models.ForeignKey(User, on_delete=models.CASCADE)
+
+	def __str__(self):
+		return f"group-{self.id}"
+
+
+class UserGroup(models.Model):
+	user = models.ForeignKey(User, on_delete=models.CASCADE)
+	group = models.ForeignKey(Group, on_delete=models.CASCADE)
+	user_name = models.CharField(max_length=30)
+	user_role = models.CharField(max_length=30, blank=True)
+	user_color = models.CharField(max_length=30)
+
+	def __str__(self):
+		return f"group-{self.group.id}, user-{self.user_name}"
+
+
+
+
