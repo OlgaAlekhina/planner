@@ -23,7 +23,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic.base import RedirectView
 from rest_framework import routers
-from users.views import UserViewSet, add_missing_profiles
+from users.views import UserViewSet, GroupViewSet, add_missing_profiles
 
 
 schema_view = get_schema_view(
@@ -37,6 +37,7 @@ schema_view = get_schema_view(
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
+router.register(r'groups', GroupViewSet)
 
 urlpatterns = [
     path('planner/admin/', admin.site.urls),

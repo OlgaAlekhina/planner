@@ -4,11 +4,11 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
-						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer)
+						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_or_create_user
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from .models import UserProfile
+from .models import UserProfile, Group
 from django.http import JsonResponse, HttpResponse
 from drf_yasg import openapi
 from planner.permissions import UserPermission
@@ -125,6 +125,24 @@ class UserViewSet(viewsets.ModelViewSet):
 			"message": serializer.errors
 		}}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+
+# endpoints for groups
+class GroupViewSet(viewsets.ModelViewSet):
+	queryset = Group.objects.all()
+	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
+	parser_classes = (JSONParser, MultiPartParser)
+	# permission_classes = [UserPermission]
+
+	def get_serializer_class(self):
+		# if self.action == 'yandex_auth':
+		# 	return YandexAuthSerializer
+		# elif self.action == 'vk_auth':
+		# 	return VKAuthSerializer
+		# elif self.action == 'mail_auth':
+		# 	return MailAuthSerializer
+		# else:
+		return GroupSerializer
 
 
 # функция для добавления отсутствующих профилей пользователей
