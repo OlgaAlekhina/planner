@@ -5,7 +5,7 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
-						  CodeSerializer)
+						  CodeSerializer, UserGroupSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_or_create_user
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -181,14 +181,14 @@ class GroupViewSet(viewsets.ModelViewSet):
 	# permission_classes = [UserPermission]
 
 	def get_serializer_class(self):
-		# if self.action == 'yandex_auth':
-		# 	return YandexAuthSerializer
+		if self.action == 'create':
+			return UserGroupSerializer
 		# elif self.action == 'vk_auth':
 		# 	return VKAuthSerializer
 		# elif self.action == 'mail_auth':
 		# 	return MailAuthSerializer
-		# else:
-		return GroupSerializer
+		else:
+			return GroupSerializer
 
 
 # функция для добавления отсутствующих профилей пользователей

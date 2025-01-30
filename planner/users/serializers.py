@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .validators import validate_password_symbols, validate_email, check_email
-from .models import UserProfile, Group, SignupCode
+from .models import UserProfile, Group, SignupCode, UserGroup
 
 
 class DetailSerializer(serializers.Serializer):
@@ -74,6 +74,15 @@ class GroupSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Group
 		fields = ('id', 'owner')
+
+
+class UserGroupSerializer(serializers.ModelSerializer):
+	""" Сериализатор для пользователей группы """
+	user_email = serializers.CharField(max_length=50, validators=[validate_email])
+
+	class Meta:
+		model = UserGroup
+		fields = ('user_name', 'user_role', 'user_color', 'user_email')
 
 
 class CodeSerializer(serializers.ModelSerializer):
