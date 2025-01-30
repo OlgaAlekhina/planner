@@ -38,5 +38,11 @@ class UserGroup(models.Model):
 		return f"group-{self.group.id}, user-{self.user_name}"
 
 
+class SignupCode(models.Model):
+	code = models.IntegerField()
+	user = models.ForeignKey(User, on_delete=models.CASCADE)
+	code_time = models.DateTimeField(auto_now_add=True)
+
+
 
 
