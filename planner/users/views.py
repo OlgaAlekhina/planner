@@ -55,12 +55,14 @@ class UserViewSet(viewsets.ModelViewSet):
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
 		responses={
-			200: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
+			200: openapi.Response(description="Успешная авторизация", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			401: openapi.Response(description="Требуется подтвеждение авторизации по коду", examples={"application/json": {"code": "string", "detail": "string", "data": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Авторизация пользователей по email",
-		# operation_description="Регистрация и авторизация пользователей через email и пароль"
+		operation_description="Регистрация и авторизация пользователей через email и пароль.\n"
+							  "Если пользователь не найден в БД или он ранее регистрировался через соцсети, ему на почту высылается код подтверждения."
 	)
 	def mail_auth(self, request):
 		serializer = MailAuthSerializer(data=request.data)
