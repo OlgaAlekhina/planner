@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
 						  CodeSerializer, UserGroupSerializer)
-from .services import get_user_from_yandex, get_user_from_vk, get_or_create_user
+from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .models import UserProfile, Group, SignupCode
@@ -58,18 +58,19 @@ class UserViewSet(viewsets.ModelViewSet):
 			200: openapi.Response(description="Успешная авторизация", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется подтвеждение авторизации по коду", examples={"application/json": {"code": "string", "detail": "string", "data": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Авторизация пользователей по email",
-		operation_description="Регистрация и авторизация пользователей через email и пароль.\n"
-							  "Если пользователь не найден в БД или он ранее регистрировался через соцсети, ему на почту высылается код подтверждения."
+		operation_description="Авторизация пользователей через email и пароль.\n"
+							  "Если пользователь ранее регистрировался через соцсети, ему на почту высылается код подтверждения."
 	)
 	def mail_auth(self, request):
 		serializer = MailAuthSerializer(data=request.data)
 		if serializer.is_valid():
 			email = serializer.validated_data['email']
 			password = serializer.validated_data['password']
-			response_data = get_or_create_user(email, password)
+			response_data = get_user(email, password)
 			return Response(response_data[0], status=response_data[1])
 		response = {'detail': {
 			"code": "BAD_REQUEST",
@@ -146,13 +147,11 @@ class UserViewSet(viewsets.ModelViewSet):
 					user.save()
 					signup_code.delete()
 					token = Token.objects.get(user=user)
+					user_data = UserLoginSerializer(user).data
 					response = {
-						"status": status.HTTP_200_OK,
+						"code": "HTTP_200_OK",
 						"message": "Код подтвержден",
-						"data": {
-							"id": user.id,
-							"Token": token.key
-						}
+						"data": {"user_data": user_data, "user_auth_token": token.key}
 					}
 					return Response(response, status=status.HTTP_200_OK)
 				else:

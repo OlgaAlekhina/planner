@@ -36,7 +36,37 @@ def send_code(email: str, code: int) -> None:
 	msg.send()
 
 
-def get_or_create_user(email: str, password: str) -> tuple[dict, int]:
+def get_user(email: str, password: str) -> tuple[dict, int]:
+	"""
+	получает данные пользователя из БД
+	возвращает данные пользователя и токен авторизации
+	если у пользователя нет пароля (он регистрировался через соцсети), высылает код подтверждения на почту
+	"""
+	user = User.objects.filter(email=email)
+	# если не найдено пользователей с данным email адресом
+	if not user:
+		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email не зарегистрирован в приложении"}}, 403
+	user = user[0]
+	# если пароль не совпадает с записанным в БД
+	if not user.check_password(password):
+		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Неправильный пароль"}}, 403
+	# если в БД нет пароля, значит, пользователь регистрировался через соцсети, сохраняем переданный пароль и делаем профиль неактивным до подтверждения кода
+	if not user.password:
+		code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
+		send_code(email, code.code)
+		user.is_active = False
+		user.password = password
+		user.save()
+		return {"detail": {"code": "HTTP_401_UNAUTHORIZED", "message": "Выслан код подтверждения на электронную почту", "data": {"user_id": user.id}}}, 401
+	# при успешно пройденных проверках получаем данные пользователя и токен авторизации
+	token = Token.objects.get(user=user)
+	user_data = UserLoginSerializer(user).data
+	result = {"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
+			  "data": {"user_data": user_data, "user_auth_token": token.key}}
+	return result, 200
+
+
+def create_user(email: str, password: str) -> tuple[dict, int]:
 	"""
 	создает нового пользователя или получает его данные из БД
 	возвращает данные пользователя и токен авторизации
@@ -45,7 +75,6 @@ def get_or_create_user(email: str, password: str) -> tuple[dict, int]:
 	if user:
 		user = user[0]
 		if not user.password:
-			print('has no password')
 			code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 			send_code(email, code.code)
 			return {"detail": {"code": "HTTP_401_UNAUTHORIZED", "message": "Выслан код подтверждения на электронную почту", "data": {"user_id": user.id}}}, 401
