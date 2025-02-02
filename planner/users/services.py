@@ -68,30 +68,15 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 
 def create_user(email: str, password: str) -> tuple[dict, int]:
 	"""
-	создает нового пользователя или получает его данные из БД
-	возвращает данные пользователя и токен авторизации
+	создает нового пользователя в БД, но делает его неактивным до подтверждения кода
+	высылает код подтверждения на почту
 	"""
-	user = User.objects.filter(email=email)
-	if user:
-		user = user[0]
-		if not user.password:
-			code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
-			send_code(email, code.code)
-			return {"detail": {"code": "HTTP_401_UNAUTHORIZED", "message": "Выслан код подтверждения на электронную почту", "data": {"user_id": user.id}}}, 401
-		if not user.check_password(password):
-			return {"detail": {"code": "HTTP_400_BAD_REQUEST", "message": "Неправильный пароль"}}, 400
-		else:
-			token = Token.objects.get(user=user)
-			user_data = UserLoginSerializer(user).data
-			result = {"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
-					  "data": {"user_data": user_data, "user_auth_token": token.key}}
-			return result, 200
 	user = User.objects.create_user(username=email, email=email, password=password)
 	user.is_active = False
 	user.save()
 	code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 	send_code(email, code.code)
-	return {"detail": {"code": "HTTP_401_UNAUTHORIZED", "message": "Выслан код подтверждения на электронную почту", "data": {"user_id": user.id}}}, 401
+	return {"detail": {"code": "HTTP_201_CREATED", "message": "Пользователь зарегистрирован. На электронную почту выслан код подтверждения.", "data": {"user_id": user.id}}}, 201
 
 
 def update_or_create_user(email: str, first_name: str, last_name: str, nickname: str, gender: str, birthday: str, avatar: str) -> dict:

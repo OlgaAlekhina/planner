@@ -5,7 +5,7 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
-						  CodeSerializer, UserGroupSerializer)
+						  CodeSerializer, UserGroupSerializer, SignupSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -33,6 +33,8 @@ class UserViewSet(viewsets.ModelViewSet):
 			return MailAuthSerializer
 		elif self.action == 'verify_code':
 			return CodeSerializer
+		elif self.action == 'create':
+			return SignupSerializer
 		else:
 			return UserLoginSerializer
 
@@ -63,7 +65,9 @@ class UserViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Авторизация пользователей по email",
 		operation_description="Авторизация пользователей через email и пароль.\n"
-							  "Если пользователь ранее регистрировался через соцсети, ему на почту высылается код подтверждения."
+							  "Если пользователь ранее регистрировался через соцсети, ему на почту высылается код подтверждения, а в поле 'data' возвращается его id."
+							  "Полученный id следует передать в эндпоинте api/users/verify_code для верификации введенного пользователем кода.\n"
+							  "После успешной верификации в БД записывается введенный пароль и разрешается вход в приложение."
 	)
 	def mail_auth(self, request):
 		serializer = MailAuthSerializer(data=request.data)
@@ -71,6 +75,32 @@ class UserViewSet(viewsets.ModelViewSet):
 			email = serializer.validated_data['email']
 			password = serializer.validated_data['password']
 			response_data = get_user(email, password)
+			return Response(response_data[0], status=response_data[1])
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@swagger_auto_schema(
+		responses={
+			201: openapi.Response(description="Успешная регистрация", examples={"application/json": {"code": "string", "detail": "string", "data": "string"}}),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Регистрация пользователей по email",
+		operation_description="Регистрация пользователей через email и пароль.\n"
+							  "Создает нового пользователя в базе данных с неактивным статусом.\n"
+							  "Принимает email и пароль пользователя и при успешной регистрации возвращает его id.\n"
+							  "Полученный id следует передать в эндпоинте api/users/verify_code для верификации введенного пользователем кода.\n"
+							  "Регистрация разрешается, только если пользователя с таким email не существует в базе данных или его профиль не был активирован."
+	)
+	def create(self, request):
+		serializer = SignupSerializer(data=request.data)
+		if serializer.is_valid():
+			email = serializer.validated_data['email']
+			password = serializer.validated_data['password']
+			response_data = create_user(email, password)
 			return Response(response_data[0], status=response_data[1])
 		response = {'detail': {
 			"code": "BAD_REQUEST",
@@ -135,6 +165,17 @@ class UserViewSet(viewsets.ModelViewSet):
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 	@action(detail=True, methods=['post'])
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешное подтверждение регистрации", schema=LoginResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Подтверждение регистрации пользователя по коду",
+		operation_description="Эндпоинт для подтверждения кода, высланного по email при регистрации.\n"
+							  "Принимает id пользователя и код и при успешной проверке возвращает токен пользователя.\n"
+							  "Код работает в течение 1 часа, после чего выдается ошибка 'код устарел'."
+	)
 	def verify_code(self, request, pk=None):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
@@ -150,26 +191,25 @@ class UserViewSet(viewsets.ModelViewSet):
 					user_data = UserLoginSerializer(user).data
 					response = {
 						"code": "HTTP_200_OK",
-						"message": "Код подтвержден",
+						"message": "Код успешно подтвержден",
 						"data": {"user_data": user_data, "user_auth_token": token.key}
 					}
 					return Response(response, status=status.HTTP_200_OK)
 				else:
 					response = {
-						"status": status.HTTP_400_BAD_REQUEST,
+						"code": "HTTP_400_BAD_REQUEST",
 						"message": "Код устарел",
 					}
 					return Response(response, status=status.HTTP_400_BAD_REQUEST)
 			else:
 				response = {
-					"status": status.HTTP_400_BAD_REQUEST,
+					"code": "HTTP_400_BAD_REQUEST",
 					"message": "Код введен неверно",
 				}
 				return Response(response, status=status.HTTP_400_BAD_REQUEST)
 		response = {
-			"status": status.HTTP_400_BAD_REQUEST,
-			"message": "bad request",
-			"data": serializer.errors
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
 		}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
