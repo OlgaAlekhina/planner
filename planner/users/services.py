@@ -22,15 +22,19 @@ def convert_date(birthday: str, date_format='%d.%m.%Y') -> date | str:
 	return birthday
 
 
-def send_code(email: str, code: int) -> None:
+def send_letter(email: str, data: int, subject: str, template: str) -> None:
+	if subject == 'signup':
+		subject = 'Подтверждение авторизации/регистрации в приложении Family Planner'
+	elif subject == 'restore':
+		subject = 'Восстановление пароля в приложении Family Planner'
 	msg = EmailMultiAlternatives(
-		subject='Подтверждение авторизации/регистрации в приложении Family Planner',
+		subject={subject},
 		from_email='olga-olechka-5@yandex.ru',
 		to=[email, ]
 	)
 	html_content = render_to_string(
-		'signup_code.html',
-		{'code': code}
+		{template},
+		{'data': data}
 	)
 	msg.attach_alternative(html_content, "text/html")
 	msg.send()
@@ -42,10 +46,10 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 	возвращает данные пользователя и токен авторизации
 	если у пользователя нет пароля (он регистрировался через соцсети), высылает код подтверждения на почту
 	"""
-	user = User.objects.filter(email=email)
-	# если не найдено пользователей с данным email адресом
+	user = User.objects.filter(email=email, is_active=True)
+	# если не найдено активных пользователей с данным email адресом
 	if not user:
-		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email не зарегистрирован в приложении"}}, 403
+		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь не зарегистрирован в приложении"}}, 403
 	user = user[0]
 	# если пароль не совпадает с записанным в БД
 	if not user.check_password(password):
@@ -53,7 +57,7 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 	# если в БД нет пароля, значит, пользователь регистрировался через соцсети, сохраняем переданный пароль и делаем профиль неактивным до подтверждения кода
 	if not user.password:
 		code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
-		send_code(email, code.code)
+		send_letter(email, code.code, 'signup', 'signup_code.html')
 		user.is_active = False
 		user.password = password
 		user.save()
@@ -75,8 +79,20 @@ def create_user(email: str, password: str) -> tuple[dict, int]:
 	user.is_active = False
 	user.save()
 	code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
-	send_code(email, code.code)
+	send_letter(email, code.code, 'signup', 'signup_code.html')
 	return {"detail": {"code": "HTTP_201_CREATED", "message": "Пользователь зарегистрирован. На электронную почту выслан код подтверждения.", "data": {"user_id": user.id}}}, 201
+
+
+def send_password(email: str) -> tuple[dict, int]:
+	"""
+	создает нового пользователя в БД, но делает его неактивным до подтверждения кода
+	высылает код подтверждения на почту
+	"""
+	user = User.objects.filter(email=email, is_active=True).first()
+	if not user:
+		return {"detail": {"code": "HTTP_400_BAD_REQUEST", "message": "Пользователь с таким email адресом не зарегистрирован в приложении"}}, 400
+	send_letter(email, user.password, 'restore', 'restore_password.html')
+	return {"detail": {"code": "HTTP_200_OK", "message": "Пароль успешно отправлен пользователю"}}, 200
 
 
 def update_or_create_user(email: str, first_name: str, last_name: str, nickname: str, gender: str, birthday: str, avatar: str) -> dict:

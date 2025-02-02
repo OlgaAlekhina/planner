@@ -5,8 +5,8 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
-						  CodeSerializer, UserGroupSerializer, SignupSerializer)
-from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user
+						  CodeSerializer, UserGroupSerializer, SignupSerializer, RestorePasswordSerializer)
+from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .models import UserProfile, Group, SignupCode
@@ -35,6 +35,8 @@ class UserViewSet(viewsets.ModelViewSet):
 			return CodeSerializer
 		elif self.action == 'create':
 			return SignupSerializer
+		elif self.action == 'restore_password':
+			return RestorePasswordSerializer
 		else:
 			return UserLoginSerializer
 
@@ -70,7 +72,7 @@ class UserViewSet(viewsets.ModelViewSet):
 							  "После успешной верификации в БД записывается введенный пароль и разрешается вход в приложение."
 	)
 	def mail_auth(self, request):
-		serializer = MailAuthSerializer(data=request.data)
+		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			email = serializer.validated_data['email']
 			password = serializer.validated_data['password']
@@ -96,11 +98,35 @@ class UserViewSet(viewsets.ModelViewSet):
 							  "Регистрация разрешается, только если пользователя с таким email не существует в базе данных или его профиль не был активирован."
 	)
 	def create(self, request):
-		serializer = SignupSerializer(data=request.data)
+		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			email = serializer.validated_data['email']
 			password = serializer.validated_data['password']
 			response_data = create_user(email, password)
+			return Response(response_data[0], status=response_data[1])
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=False, methods=['post'])
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный запрос", schema=LoginResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса",
+								  examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Восстановление пароля пользователя",
+		operation_description="Восстановление пароля пользователя по email.\n"
+							  "Принимает email пользователя, и если такой email найден в БД, высылает на него пароль пользователя."
+	)
+	def restore_password(self, request):
+		serializer = self.get_serializer(data=request.data)
+		if serializer.is_valid():
+			email = serializer.validated_data['email']
+			response_data = send_password(email)
 			return Response(response_data[0], status=response_data[1])
 		response = {'detail': {
 			"code": "BAD_REQUEST",
