@@ -69,8 +69,8 @@ class MailAuthSerializer(serializers.ModelSerializer):
 
 class SignupSerializer(serializers.ModelSerializer):
 	""" Сериализатор для регистрации пользователя по email """
-	email = serializers.CharField(max_length=50, validators=[validate_email])
-	password = serializers.CharField(write_only=True, min_length=8, max_length=128, validators=[validate_password_symbols, check_email])
+	email = serializers.CharField(max_length=50, validators=[validate_email, check_email])
+	password = serializers.CharField(write_only=True, min_length=8, max_length=128, validators=[validate_password_symbols])
 
 	class Meta:
 		model = User

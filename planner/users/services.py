@@ -28,12 +28,12 @@ def send_letter(email: str, data: int, subject: str, template: str) -> None:
 	elif subject == 'restore':
 		subject = 'Восстановление пароля в приложении Family Planner'
 	msg = EmailMultiAlternatives(
-		subject={subject},
+		subject=subject,
 		from_email='olga-olechka-5@yandex.ru',
 		to=[email, ]
 	)
 	html_content = render_to_string(
-		{template},
+		f'{template}',
 		{'data': data}
 	)
 	msg.attach_alternative(html_content, "text/html")
