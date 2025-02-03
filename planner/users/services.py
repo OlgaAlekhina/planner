@@ -51,17 +51,17 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 	if not user:
 		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь не зарегистрирован в приложении"}}, 403
 	user = user[0]
-	# если пароль не совпадает с записанным в БД
-	if not user.check_password(password):
-		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Неправильный пароль"}}, 403
 	# если в БД нет пароля, значит, пользователь регистрировался через соцсети, сохраняем переданный пароль и делаем профиль неактивным до подтверждения кода
 	if not user.password:
 		code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 		send_letter(email, code.code, 'signup', 'signup_code.html')
 		user.is_active = False
-		user.password = password
+		user.set_password(password)
 		user.save()
 		return {"detail": {"code": "HTTP_401_UNAUTHORIZED", "message": "Выслан код подтверждения на электронную почту", "data": {"user_id": user.id}}}, 401
+	# если пароль не совпадает с записанным в БД
+	if not user.check_password(password):
+		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Неправильный пароль"}}, 403
 	# при успешно пройденных проверках получаем данные пользователя и токен авторизации
 	token = Token.objects.get(user=user)
 	user_data = UserLoginSerializer(user).data
