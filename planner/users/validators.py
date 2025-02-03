@@ -21,14 +21,5 @@ def validate_email(email):
         raise serializers.ValidationError("Некорректный адрес электронной почты")
 
 
-def check_email(email):
-    """ При регистрации бросает ошибку, если email существует в БД, или удаляет аккаунт с таким email, если он не был активирован """
-    user = User.objects.filter(email=email).first()
-    if user and not user.is_active:
-        user.delete()
-    if user and user.is_active:
-        raise serializers.ValidationError("Пользователь с таким email адресом уже зарегистрирован в приложении")
-    else:
-        return email
 
 

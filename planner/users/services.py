@@ -65,8 +65,7 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 	# при успешно пройденных проверках получаем данные пользователя и токен авторизации
 	token = Token.objects.get(user=user)
 	user_data = UserLoginSerializer(user).data
-	result = {"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
-			  "data": {"user_data": user_data, "user_auth_token": token.key}}
+	result = {"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"}, "data": {"user_data": user_data, "user_auth_token": token.key}}
 	return result, 200
 
 

@@ -102,6 +102,14 @@ class UserViewSet(viewsets.ModelViewSet):
 		if serializer.is_valid():
 			email = serializer.validated_data['email']
 			password = serializer.validated_data['password']
+			# проверяем, есть ли пользователь с таким email в БД
+			user = User.objects.filter(email=email).first()
+			# если найден пользователь с неактивным аккаунтом, то удаляем его
+			if user and not user.is_active:
+				user.delete()
+			# если найден пользователь с активным аккаунтом, запрещаем регистрацию
+			if user and user.is_active:
+				return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом уже зарегистрирован в приложении"}}, status=403)
 			response_data = create_user(email, password)
 			return Response(response_data[0], status=response_data[1])
 		response = {'detail': {
