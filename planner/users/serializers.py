@@ -77,7 +77,7 @@ class SignupSerializer(serializers.ModelSerializer):
 		fields = ('email', 'password')
 
 
-class RestorePasswordSerializer(serializers.ModelSerializer):
+class ResetPasswordSerializer(serializers.ModelSerializer):
 	""" Сериализатор для восстановления пароля пользователя по email """
 	email = serializers.CharField(max_length=50, validators=[validate_email])
 

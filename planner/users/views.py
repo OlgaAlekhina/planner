@@ -5,7 +5,7 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
-						  CodeSerializer, UserGroupSerializer, SignupSerializer, RestorePasswordSerializer)
+						  CodeSerializer, UserGroupSerializer, SignupSerializer, ResetPasswordSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -35,8 +35,8 @@ class UserViewSet(viewsets.ModelViewSet):
 			return CodeSerializer
 		elif self.action == 'create':
 			return SignupSerializer
-		elif self.action == 'restore_password':
-			return RestorePasswordSerializer
+		elif self.action == 'reset_password':
+			return ResetPasswordSerializer
 		else:
 			return UserLoginSerializer
 
@@ -66,7 +66,7 @@ class UserViewSet(viewsets.ModelViewSet):
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Авторизация пользователей по email",
-		operation_description="Авторизация пользователей через email и пароль.\n"
+		operation_description="Авторизация пользователей по email и пароль.\n"
 							  "Если пользователь ранее регистрировался через соцсети, ему на почту высылается код подтверждения, а в поле 'data' возвращается его id."
 							  "Полученный id следует передать в эндпоинте api/users/verify_code для верификации введенного пользователем кода.\n"
 							  "После успешной верификации в БД записывается введенный пароль и разрешается вход в приложение."
@@ -88,10 +88,11 @@ class UserViewSet(viewsets.ModelViewSet):
 		responses={
 			201: openapi.Response(description="Успешная регистрация", examples={"application/json": {"code": "string", "detail": "string", "data": "string"}}),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Регистрация пользователей по email",
-		operation_description="Регистрация пользователей через email и пароль.\n"
+		operation_description="Регистрация пользователей по email и пароль.\n"
 							  "Создает нового пользователя в базе данных с неактивным статусом.\n"
 							  "Принимает email и пароль пользователя и при успешной регистрации возвращает его id.\n"
 							  "Полученный id следует передать в эндпоинте api/users/verify_code для верификации введенного пользователем кода.\n"
@@ -123,14 +124,15 @@ class UserViewSet(viewsets.ModelViewSet):
 		responses={
 			200: openapi.Response(description="Успешный запрос", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса",
 								  examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Восстановление пароля пользователя",
 		operation_description="Восстановление пароля пользователя по email.\n"
-							  "Принимает email пользователя, и если такой email найден в БД, высылает на него пароль пользователя."
+							  "Принимает email пользователя, и если такой email найден в БД, высылает на него новый случайно сгенерированный пароль."
 	)
-	def restore_password(self, request):
+	def reset_password(self, request):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			email = serializer.validated_data['email']

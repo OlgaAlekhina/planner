@@ -1,4 +1,6 @@
 import os
+import random
+import string
 from random import randint
 from typing import Optional
 from datetime import datetime, date
@@ -22,10 +24,10 @@ def convert_date(birthday: str, date_format='%d.%m.%Y') -> date | str:
 	return birthday
 
 
-def send_letter(email: str, data: int, subject: str, template: str) -> None:
+def send_letter(email: str, data: int | str, subject: str, template: str) -> None:
 	if subject == 'signup':
 		subject = 'Подтверждение авторизации/регистрации в приложении Family Planner'
-	elif subject == 'restore':
+	elif subject == 'reset':
 		subject = 'Восстановление пароля в приложении Family Planner'
 	msg = EmailMultiAlternatives(
 		subject=subject,
@@ -84,14 +86,17 @@ def create_user(email: str, password: str) -> tuple[dict, int]:
 
 def send_password(email: str) -> tuple[dict, int]:
 	"""
-	создает нового пользователя в БД, но делает его неактивным до подтверждения кода
-	высылает код подтверждения на почту
+	проверяет, есть ли пользователь с таким email в БД
+	устанавливает новый пароль (случайно сгенерированный из 8 символов) и высылает его на почту
 	"""
 	user = User.objects.filter(email=email, is_active=True).first()
 	if not user:
-		return {"detail": {"code": "HTTP_400_BAD_REQUEST", "message": "Пользователь с таким email адресом не зарегистрирован в приложении"}}, 400
-	send_letter(email, user.password, 'restore', 'restore_password.html')
-	return {"detail": {"code": "HTTP_200_OK", "message": "Пароль успешно отправлен пользователю"}}, 200
+		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом не зарегистрирован в приложении"}}, 403
+	new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+	user.set_password(new_password)
+	user.save()
+	send_letter(email, new_password, 'reset', 'reset_password.html')
+	return {"detail": {"code": "HTTP_200_OK", "message": "Новый пароль успешно отправлен пользователю"}}, 200
 
 
 def update_or_create_user(email: str, first_name: str, last_name: str, nickname: str, gender: str, birthday: str, avatar: str) -> dict:
