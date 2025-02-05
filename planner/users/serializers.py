@@ -87,21 +87,27 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
-	""" Сериализатор для получения групп """
-	owner = serializers.CharField(source='admin.username')
+	""" Сериализатор для создания групп """
+	# owner = serializers.CharField(source='admin.username')
 
 	class Meta:
 		model = Group
-		fields = ('id', 'owner')
+		fields = ('id', 'name')
+
+
+class GroupResponseSerializer(serializers.Serializer):
+	""" Сериализатор ответа при создании групп """
+	detail = DetailSerializer()
+	data = GroupSerializer()
 
 
 class UserGroupSerializer(serializers.ModelSerializer):
 	""" Сериализатор для пользователей группы """
-	user_email = serializers.CharField(max_length=50, validators=[validate_email])
+	# user_email = serializers.CharField(max_length=50, validators=[validate_email])
 
 	class Meta:
 		model = UserGroup
-		fields = ('user_name', 'user_role', 'user_color', 'user_email')
+		fields = ('user_name', 'user_role', 'user_color')
 
 
 class CodeSerializer(serializers.ModelSerializer):

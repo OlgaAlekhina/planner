@@ -5,7 +5,8 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
-						  CodeSerializer, UserGroupSerializer, SignupSerializer, ResetPasswordSerializer)
+						  CodeSerializer, UserGroupSerializer, SignupSerializer, ResetPasswordSerializer,
+						  GroupResponseSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -15,6 +16,7 @@ from drf_yasg import openapi
 from planner.permissions import UserPermission
 from datetime import timedelta
 from django.utils import timezone
+from rest_framework.permissions import IsAuthenticated
 
 
 # endpoints for users
@@ -61,7 +63,7 @@ class UserViewSet(viewsets.ModelViewSet):
 		responses={
 			200: openapi.Response(description="Успешная авторизация", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
-			401: openapi.Response(description="Требуется подтвеждение авторизации по коду", examples={"application/json": {"code": "string", "detail": "string", "data": "string"}}),
+			401: openapi.Response(description="Требуется подтвеждение авторизации по коду", examples={"application/json": {"detail": {"code": "string", "message": "string"}, "data": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
@@ -86,7 +88,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
-			201: openapi.Response(description="Успешная регистрация", examples={"application/json": {"code": "string", "detail": "string", "data": "string"}}),
+			201: openapi.Response(description="Успешная регистрация", examples={"application/json": {"detail": {"code": "string", "message": "string"}, "data": "string"}}),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
@@ -226,8 +228,7 @@ class UserViewSet(viewsets.ModelViewSet):
 					token = Token.objects.get(user=user)
 					user_data = UserLoginSerializer(user).data
 					response = {
-						"code": "HTTP_200_OK",
-						"message": "Код успешно подтвержден",
+						"detail": {"code": "HTTP_200_OK", "message": "Код успешно подтвержден"},
 						"data": {"user_data": user_data, "user_auth_token": token.key}
 					}
 					return Response(response, status=status.HTTP_200_OK)
@@ -255,10 +256,10 @@ class GroupViewSet(viewsets.ModelViewSet):
 	queryset = Group.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
 	parser_classes = (JSONParser, MultiPartParser)
-	# permission_classes = [UserPermission]
+	permission_classes = [IsAuthenticated]
 
 	def get_serializer_class(self):
-		if self.action == 'create':
+		if self.action == 'add_user':
 			return UserGroupSerializer
 		# elif self.action == 'vk_auth':
 		# 	return VKAuthSerializer
@@ -266,6 +267,30 @@ class GroupViewSet(viewsets.ModelViewSet):
 		# 	return MailAuthSerializer
 		else:
 			return GroupSerializer
+
+	@swagger_auto_schema(
+		responses={
+			201: openapi.Response(description="Успешное создание группы", schema=GroupResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Создание новой группы",
+		operation_description="Создает новую группу для данного пользователя.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Token 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+	)
+	def create(self, request):
+		serializer = self.get_serializer(data=request.data)
+		if serializer.is_valid():
+			name = serializer.validated_data['name']
+			user = request.user
+			group = Group.objects.create(owner=user, name=name)
+			return Response({"detail": {"code": "HTTP_200_OK", "message": "Группа создана"}, "data": GroupSerializer(group).data}, status=201)
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
 # функция для добавления отсутствующих профилей пользователей

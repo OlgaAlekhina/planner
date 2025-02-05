@@ -21,7 +21,8 @@ class UserProfile(models.Model):
 
 
 class Group(models.Model):
-	admin = models.ForeignKey(User, on_delete=models.CASCADE)
+	owner = models.ForeignKey(User, on_delete=models.CASCADE)
+	name = models.CharField(max_length=100)
 
 	def __str__(self):
 		return f"group-{self.id}"

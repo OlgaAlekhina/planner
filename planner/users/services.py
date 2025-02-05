@@ -60,7 +60,7 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 		user.is_active = False
 		user.set_password(password)
 		user.save()
-		return {"detail": {"code": "HTTP_401_UNAUTHORIZED", "message": "Выслан код подтверждения на электронную почту", "data": {"user_id": user.id}}}, 401
+		return {"detail": {"code": "HTTP_401_UNAUTHORIZED", "message": "Выслан код подтверждения на электронную почту"}, "data": {"user_id": user.id}}, 401
 	# если пароль не совпадает с записанным в БД
 	if not user.check_password(password):
 		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Неправильный пароль"}}, 403
@@ -81,7 +81,7 @@ def create_user(email: str, password: str) -> tuple[dict, int]:
 	user.save()
 	code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 	send_letter(email, code.code, 'signup', 'signup_code.html')
-	return {"detail": {"code": "HTTP_201_CREATED", "message": "Пользователь зарегистрирован. На электронную почту выслан код подтверждения.", "data": {"user_id": user.id}}}, 201
+	return {"detail": {"code": "HTTP_201_CREATED", "message": "Пользователь зарегистрирован. На электронную почту выслан код подтверждения."}, "data": {"user_id": user.id}}, 201
 
 
 def send_password(email: str) -> tuple[dict, int]:
