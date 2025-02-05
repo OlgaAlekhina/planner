@@ -88,7 +88,7 @@ class UserViewSet(viewsets.ModelViewSet):
 		responses={
 			201: openapi.Response(description="Успешная регистрация", examples={"application/json": {"code": "string", "detail": "string", "data": "string"}}),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
-			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Регистрация пользователей по email",
@@ -122,11 +122,10 @@ class UserViewSet(viewsets.ModelViewSet):
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
 		responses={
-			200: openapi.Response(description="Успешный запрос", schema=LoginResponseSerializer()),
+			200: openapi.Response(description="Успешный запрос", schema=ErrorResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
-			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса",
-								  examples={"application/json": {"detail": "string"}})
+			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Восстановление пароля пользователя",
 		operation_description="Восстановление пароля пользователя по email.\n"
@@ -205,6 +204,7 @@ class UserViewSet(viewsets.ModelViewSet):
 		responses={
 			200: openapi.Response(description="Успешное подтверждение регистрации", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Подтверждение регистрации пользователя по коду",
@@ -233,13 +233,13 @@ class UserViewSet(viewsets.ModelViewSet):
 					return Response(response, status=status.HTTP_200_OK)
 				else:
 					response = {
-						"code": "HTTP_400_BAD_REQUEST",
+						"code": "HTTP_403_FORBIDDEN",
 						"message": "Код устарел",
 					}
 					return Response(response, status=status.HTTP_400_BAD_REQUEST)
 			else:
 				response = {
-					"code": "HTTP_400_BAD_REQUEST",
+					"code": "HTTP_403_FORBIDDEN",
 					"message": "Код введен неверно",
 				}
 				return Response(response, status=status.HTTP_400_BAD_REQUEST)
