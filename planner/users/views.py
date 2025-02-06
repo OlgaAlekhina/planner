@@ -304,7 +304,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Добавление участника в группу",
-		operation_description="Добавляет участника в группу.\n"
+		operation_description="Добавляет нового участника в группу.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Token 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
 	)
 	def add_user(self, request, pk):
@@ -319,7 +319,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 				username = f"{user_name}-{''.join(random.choices(string.ascii_letters + string.digits, k=8))}"
 				if not User.objects.filter(username=username):
 					break
+			# сначала создаем нового пользователя
 			user = User.objects.create_user(username=username)
+			# затем добавляем его в группу
 			group_user = GroupUser.objects.create(user=user, group=group, user_name=user_name, user_role=user_role, user_color=user_color)
 			return Response({"detail": {"code": "HTTP_201_OK", "message": "Участник добавлен в группу"}, "data": GroupUserSerializer(group_user).data}, status=201)
 		response = {'detail': {
