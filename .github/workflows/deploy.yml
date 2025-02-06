@@ -56,4 +56,7 @@ jobs:
           ssh target "cd ~/planner_docker && 
           docker-compose down &&
           docker rmi $REGISTRY_USER/planner:app-1.0 &&
-          docker-compose up -d"
+          docker-compose up -d &&
+          docker exec -t -i planner_docker_app_1 bash &&
+          python manage.py migrate &&
+          exit"
