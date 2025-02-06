@@ -28,7 +28,7 @@ class Group(models.Model):
 		return f"group-{self.id}"
 
 
-class UserGroup(models.Model):
+class GroupUser(models.Model):
 	user = models.ForeignKey(User, on_delete=models.CASCADE)
 	group = models.ForeignKey(Group, on_delete=models.CASCADE)
 	user_name = models.CharField(max_length=30)

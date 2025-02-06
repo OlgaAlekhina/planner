@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .validators import validate_password_symbols, validate_email
-from .models import UserProfile, Group, SignupCode, UserGroup
+from .models import UserProfile, Group, SignupCode, GroupUser
 
 
 class DetailSerializer(serializers.Serializer):
@@ -101,13 +101,19 @@ class GroupResponseSerializer(serializers.Serializer):
 	data = GroupSerializer()
 
 
-class UserGroupSerializer(serializers.ModelSerializer):
-	""" Сериализатор для пользователей группы """
+class GroupUserSerializer(serializers.ModelSerializer):
+	""" Сериализатор для участников группы """
 	# user_email = serializers.CharField(max_length=50, validators=[validate_email])
 
 	class Meta:
-		model = UserGroup
-		fields = ('user_name', 'user_role', 'user_color')
+		model = GroupUser
+		fields = ('id', 'user_name', 'user_role', 'user_color')
+
+
+class GroupUserResponseSerializer(serializers.Serializer):
+	""" Сериализатор ответа при создании групп """
+	detail = DetailSerializer()
+	data = GroupUserSerializer()
 
 
 class CodeSerializer(serializers.ModelSerializer):

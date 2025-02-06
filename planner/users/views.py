@@ -1,3 +1,6 @@
+import random
+import string
+
 from django.contrib.auth.models import User
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
@@ -5,12 +8,12 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
-						  CodeSerializer, UserGroupSerializer, SignupSerializer, ResetPasswordSerializer,
-						  GroupResponseSerializer)
+						  CodeSerializer, GroupUserSerializer, SignupSerializer, ResetPasswordSerializer,
+						  GroupResponseSerializer, GroupUserResponseSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from .models import UserProfile, Group, SignupCode
+from .models import UserProfile, Group, SignupCode, GroupUser
 from django.http import JsonResponse, HttpResponse
 from drf_yasg import openapi
 from planner.permissions import UserPermission
@@ -260,7 +263,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
 	def get_serializer_class(self):
 		if self.action == 'add_user':
-			return UserGroupSerializer
+			return GroupUserSerializer
 		# elif self.action == 'vk_auth':
 		# 	return VKAuthSerializer
 		# elif self.action == 'mail_auth':
@@ -285,7 +288,40 @@ class GroupViewSet(viewsets.ModelViewSet):
 			name = serializer.validated_data['name']
 			user = request.user
 			group = Group.objects.create(owner=user, name=name)
-			return Response({"detail": {"code": "HTTP_200_OK", "message": "Группа создана"}, "data": GroupSerializer(group).data}, status=201)
+			return Response({"detail": {"code": "HTTP_201_OK", "message": "Группа создана"}, "data": GroupSerializer(group).data}, status=201)
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=True, methods=['post'])
+	@swagger_auto_schema(
+		responses={
+			201: openapi.Response(description="Успешное добавление участника", schema=GroupUserResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Добавление участника в группу",
+		operation_description="Добавляет участника в группу.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Token 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+	)
+	def add_user(self, request, pk):
+		serializer = self.get_serializer(data=request.data)
+		if serializer.is_valid():
+			user_name = serializer.validated_data['user_name']
+			user_role = serializer.validated_data['user_role']
+			user_color = serializer.validated_data['user_color']
+			group = self.get_object()
+			# генерируем уникальное имя для создания нового пользователя и проверяем, что такого имени нет в БД
+			for _ in range(10):
+				username = f"{user_name}-{''.join(random.choices(string.ascii_letters + string.digits, k=8))}"
+				if not User.objects.filter(username=username):
+					break
+			user = User.objects.create_user(username=username)
+			group_user = GroupUser.objects.create(user=user, group=group, user_name=user_name, user_role=user_role, user_color=user_color)
+			return Response({"detail": {"code": "HTTP_201_OK", "message": "Участник добавлен в группу"}, "data": GroupUserSerializer(group_user).data}, status=201)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors

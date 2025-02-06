@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import UserProfile, Group, UserGroup
+from .models import UserProfile, Group, GroupUser
 
 admin.site.register(UserProfile)
 admin.site.register(Group)
-admin.site.register(UserGroup)
+admin.site.register(GroupUser)
