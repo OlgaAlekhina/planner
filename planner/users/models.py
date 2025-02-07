@@ -30,7 +30,7 @@ class Group(models.Model):
 
 class GroupUser(models.Model):
 	user = models.ForeignKey(User, on_delete=models.CASCADE)
-	group = models.ForeignKey(Group, on_delete=models.CASCADE)
+	group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='group_users')
 	user_name = models.CharField(max_length=30)
 	user_role = models.CharField(max_length=30, blank=True)
 	user_color = models.CharField(max_length=30)

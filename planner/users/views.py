@@ -16,14 +16,14 @@ from rest_framework.authtoken.models import Token
 from .models import UserProfile, Group, SignupCode, GroupUser
 from django.http import JsonResponse, HttpResponse
 from drf_yasg import openapi
-from planner.permissions import UserPermission
+from planner.permissions import UserPermission, GroupPermission
 from datetime import timedelta
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 
 
 class UserViewSet(viewsets.ModelViewSet):
-	""" Endpoints for users """
+	""" Эндпоинты для работы с пользователями """
 	queryset = User.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
 	parser_classes = (JSONParser, MultiPartParser)
@@ -48,9 +48,9 @@ class UserViewSet(viewsets.ModelViewSet):
 	@swagger_auto_schema(
 		responses={
 			204: openapi.Response(description="Успешное удаление пользователя"),
-			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Удаление пользователей по id",
@@ -210,6 +210,7 @@ class UserViewSet(viewsets.ModelViewSet):
 			200: openapi.Response(description="Успешное подтверждение регистрации", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
+			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Подтверждение регистрации пользователя по коду",
@@ -254,12 +255,12 @@ class UserViewSet(viewsets.ModelViewSet):
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
-# endpoints for groups
 class GroupViewSet(viewsets.ModelViewSet):
+	""" Эндпоинты для работы с группами """
 	queryset = Group.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
 	parser_classes = (JSONParser, MultiPartParser)
-	permission_classes = [IsAuthenticated]
+	permission_classes = [IsAuthenticated, GroupPermission]
 
 	def get_serializer_class(self):
 		if self.action == 'add_user':
@@ -298,17 +299,25 @@ class GroupViewSet(viewsets.ModelViewSet):
 	@swagger_auto_schema(
 		responses={
 			204: openapi.Response(description="Успешное удаление группы"),
-			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Удаление группы по id",
-		operation_description="Удаляет группу из базы данных по ее id.\nУсловия доступа к эндпоинту: токен авторизации в "
+		operation_description="Удаляет группу из базы данных по ее id и всех добавленных в нее пользователей с неактивными профилями.\nУсловия доступа к эндпоинту: токен авторизации в "
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может удалить только созданную им группу."
 	)
 	def destroy(self, request, pk):
 		group = self.get_object()
+		# получаем список участников группы
+		group_users = group.group_users.all()
+		# для каждого участника группы получаем его профиль, и если он не был активирован, то удаляем его из БД
+		for group_user in group_users:
+			user = group_user.user
+			if not user.is_active:
+				user.delete()
+		# удаляем группу
 		group.delete()
 		return Response(status=204)
 
@@ -318,6 +327,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			201: openapi.Response(description="Успешное добавление участника", schema=GroupUserResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Добавление участника в группу",
@@ -338,6 +348,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 					break
 			# сначала создаем нового пользователя
 			user = User.objects.create_user(username=username)
+			user.is_active = False
+			user.save()
 			# затем добавляем его в группу
 			group_user = GroupUser.objects.create(user=user, group=group, user_name=user_name, user_role=user_role, user_color=user_color)
 			return Response({"detail": {"code": "HTTP_201_OK", "message": "Участник добавлен в группу"}, "data": GroupUserSerializer(group_user).data}, status=201)
