@@ -22,8 +22,8 @@ from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 
 
-# endpoints for users
 class UserViewSet(viewsets.ModelViewSet):
+	""" Endpoints for users """
 	queryset = User.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
 	parser_classes = (JSONParser, MultiPartParser)
@@ -47,15 +47,15 @@ class UserViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
-			204: openapi.Response(description="Успешное удаление"),
-			404: openapi.Response(description="Оъект не найден", examples={"application/json": {"detail": "string"}}),
+			204: openapi.Response(description="Успешное удаление пользователя"),
+			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Удаление пользователей по id",
 		operation_description="Удаляет учетную запись пользователя из базы данных по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
-							  "формате 'Token 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может удалить только свой собственный профиль.")
+							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может удалить только свой собственный профиль.")
 	def destroy(self, request, pk):
 		user = self.get_object()
 		user.delete()
@@ -280,7 +280,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Создание новой группы",
 		operation_description="Создает новую группу для данного пользователя.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Token 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
 	)
 	def create(self, request):
 		serializer = self.get_serializer(data=request.data)
@@ -295,6 +295,23 @@ class GroupViewSet(viewsets.ModelViewSet):
 		}}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
+	@swagger_auto_schema(
+		responses={
+			204: openapi.Response(description="Успешное удаление группы"),
+			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Удаление группы по id",
+		operation_description="Удаляет группу из базы данных по ее id.\nУсловия доступа к эндпоинту: токен авторизации в "
+							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может удалить только созданную им группу."
+	)
+	def destroy(self, request, pk):
+		group = self.get_object()
+		group.delete()
+		return Response(status=204)
+
 	@action(detail=True, methods=['post'])
 	@swagger_auto_schema(
 		responses={
@@ -305,7 +322,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Добавление участника в группу",
 		operation_description="Добавляет нового участника в группу.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Token 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
 	)
 	def add_user(self, request, pk):
 		serializer = self.get_serializer(data=request.data)
