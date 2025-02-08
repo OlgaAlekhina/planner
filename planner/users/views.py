@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
 						  CodeSerializer, GroupUserSerializer, SignupSerializer, ResetPasswordSerializer,
-						  GroupResponseSerializer, GroupUserResponseSerializer)
+						  GroupResponseSerializer, GroupUserResponseSerializer, GroupUsersResponseSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -104,25 +104,28 @@ class UserViewSet(viewsets.ModelViewSet):
 							  "Регистрация разрешается, только если пользователя с таким email не существует в базе данных или его профиль не был активирован."
 	)
 	def create(self, request):
-		serializer = self.get_serializer(data=request.data)
-		if serializer.is_valid():
-			email = serializer.validated_data['email']
-			password = serializer.validated_data['password']
-			# проверяем, есть ли пользователь с таким email в БД
-			user = User.objects.filter(email=email).first()
-			# если найден пользователь с неактивным аккаунтом, то удаляем его
-			if user and not user.is_active:
-				user.delete()
-			# если найден пользователь с активным аккаунтом, запрещаем регистрацию
-			if user and user.is_active:
-				return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом уже зарегистрирован в приложении"}}, status=403)
-			response_data = create_user(email, password)
-			return Response(response_data[0], status=response_data[1])
-		response = {'detail': {
-			"code": "BAD_REQUEST",
-			"message": serializer.errors
-		}}
-		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+		try:
+			serializer = self.get_serializer(data=request.data)
+			if serializer.is_valid():
+				email = serializer.validated_data['email']
+				password = serializer.validated_data['password']
+				# проверяем, есть ли пользователь с таким email в БД
+				user = User.objects.filter(email=email).first()
+				# если найден пользователь с неактивным аккаунтом, то удаляем его
+				if user and not user.is_active:
+					user.delete()
+				# если найден пользователь с активным аккаунтом, запрещаем регистрацию
+				if user and user.is_active:
+					return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом уже зарегистрирован в приложении"}}, status=403)
+				response_data = create_user(email, password)
+				return Response(response_data[0], status=response_data[1])
+			response = {'detail': {
+				"code": "BAD_REQUEST",
+				"message": serializer.errors
+			}}
+			return Response(response, status=status.HTTP_400_BAD_REQUEST)
+		except:
+			return Response({"detail": "Внутренняя ошибка сервера"}, status=500)
 
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
@@ -327,12 +330,14 @@ class GroupViewSet(viewsets.ModelViewSet):
 			201: openapi.Response(description="Успешное добавление участника", schema=GroupUserResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
 		},
 		operation_summary="Добавление участника в группу",
 		operation_description="Добавляет нового участника в группу.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Добавить участника может только владелец группы."
 	)
 	def add_user(self, request, pk):
 		serializer = self.get_serializer(data=request.data)
@@ -358,6 +363,30 @@ class GroupViewSet(viewsets.ModelViewSet):
 			"message": serializer.errors
 		}}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=True, methods=['get'])
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=GroupUsersResponseSerializer),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Получение всех участников группы",
+		operation_description="Выводит всех участников группы.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+	)
+	def users(self, request, pk):
+		try:
+			group = self.get_object()
+			group_users = group.group_users.all()
+			response = []
+			for group_user in group_users:
+				response.append(GroupUserSerializer(group_user).data)
+				return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список участников группы"},
+								 "data": response}, status=200)
+		except:
+			return Response({"detail": "Внутренняя ошибка сервера"}, status=500)
 
 
 # функция для добавления отсутствующих профилей пользователей

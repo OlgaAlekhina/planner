@@ -141,7 +141,7 @@ SITE_ID = 1
 SWAGGER_SETTINGS = {
     'DEFAULT_MODEL_RENDERING': 'example',
     'SECURITY_DEFINITIONS': {
-            'Auth_token': {
+            'Bearer token': {
                 'type': 'apiKey',
                 'in': 'header',
                 'name': 'Authorization',

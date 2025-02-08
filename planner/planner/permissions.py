@@ -21,7 +21,7 @@ class GroupPermission(permissions.BasePermission):
         if request.user.is_superuser:
             return True
 
-        if view.action in ['destroy']:
+        if view.action in ['destroy', 'add_user']:
             return request.user.is_authenticated and obj.owner == request.user
 
         return True

@@ -116,6 +116,12 @@ class GroupUserResponseSerializer(serializers.Serializer):
 	data = GroupUserSerializer()
 
 
+class GroupUsersResponseSerializer(serializers.Serializer):
+	""" Сериализатор ответа при получении участников группы """
+	detail = DetailSerializer()
+	data = serializers.ListSerializer(child=GroupUserSerializer())
+
+
 class CodeSerializer(serializers.ModelSerializer):
 	""" Сериализатор для верификации кода """
 	code = serializers.IntegerField(max_value=9999)
