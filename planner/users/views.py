@@ -380,10 +380,11 @@ class GroupViewSet(viewsets.ModelViewSet):
 		try:
 			group = self.get_object()
 			group_users = group.group_users.all()
+			print('users: ', group_users)
 			response = []
 			for group_user in group_users:
 				response.append(GroupUserSerializer(group_user).data)
-				return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список участников группы"},
+			return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список участников группы"},
 								 "data": response}, status=200)
 		except:
 			return Response({"detail": "Внутренняя ошибка сервера"}, status=500)
