@@ -33,7 +33,7 @@ class GroupUser(models.Model):
 	group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='group_users')
 	user_name = models.CharField(max_length=30)
 	user_role = models.CharField(max_length=30, blank=True)
-	user_color = models.CharField(max_length=30)
+	user_color = models.CharField(max_length=30, blank=True)
 
 	def __str__(self):
 		return f"group-{self.group.id}, user-{self.user_name}"

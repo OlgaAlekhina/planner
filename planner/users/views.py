@@ -290,6 +290,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			name = serializer.validated_data['name']
 			user = request.user
 			group = Group.objects.create(owner=user, name=name)
+			GroupUser.objects.create(user=user, group=group, user_name=user.userprofile.nickname)
 			return Response({"detail": {"code": "HTTP_201_OK", "message": "Группа создана"}, "data": GroupSerializer(group).data}, status=201)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
