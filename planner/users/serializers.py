@@ -101,6 +101,12 @@ class GroupResponseSerializer(serializers.Serializer):
 	data = GroupSerializer()
 
 
+class GroupListResponseSerializer(serializers.Serializer):
+	""" Сериализатор ответа при получении всех групп пользователя """
+	detail = DetailSerializer()
+	data = serializers.ListSerializer(child=GroupSerializer())
+
+
 class GroupUserSerializer(serializers.ModelSerializer):
 	""" Сериализатор для участников группы """
 	# user_email = serializers.CharField(max_length=50, validators=[validate_email])

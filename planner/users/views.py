@@ -9,7 +9,8 @@ from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
 						  CodeSerializer, GroupUserSerializer, SignupSerializer, ResetPasswordSerializer,
-						  GroupResponseSerializer, GroupUserResponseSerializer, GroupUsersResponseSerializer)
+						  GroupResponseSerializer, GroupUserResponseSerializer, GroupUsersResponseSerializer,
+						  GroupListResponseSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -323,6 +324,24 @@ class GroupViewSet(viewsets.ModelViewSet):
 		# удаляем группу
 		group.delete()
 		return Response(status=204)
+
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=GroupListResponseSerializer()),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+		},
+		operation_summary="Получение списка групп пользователя",
+		operation_description="Выводит список всех групп пользователя.\nУсловия доступа к эндпоинту: токен авторизации в "
+							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+	)
+	def list(self, request):
+		user = request.user
+		group_users = user.users.all()
+		response = []
+		for group_user in group_users:
+			response.append(GroupSerializer(group_user.group).data)
+		return Response(response, status=200)
 
 	@action(detail=True, methods=['post'])
 	@swagger_auto_schema(
