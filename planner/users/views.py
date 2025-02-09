@@ -52,7 +52,7 @@ class UserViewSet(viewsets.ModelViewSet):
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Удаление пользователей по id",
 		operation_description="Удаляет учетную запись пользователя из базы данных по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
@@ -69,7 +69,7 @@ class UserViewSet(viewsets.ModelViewSet):
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется подтвеждение авторизации по коду", examples={"application/json": {"detail": {"code": "string", "message": "string"}, "data": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Авторизация пользователей по email",
 		operation_description="Авторизация пользователей по email и пароль.\n"
@@ -95,7 +95,7 @@ class UserViewSet(viewsets.ModelViewSet):
 			201: openapi.Response(description="Успешная регистрация", examples={"application/json": {"detail": {"code": "string", "message": "string"}, "data": "string"}}),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Регистрация пользователей по email",
 		operation_description="Регистрация пользователей по email и пароль.\n"
@@ -105,28 +105,25 @@ class UserViewSet(viewsets.ModelViewSet):
 							  "Регистрация разрешается, только если пользователя с таким email не существует в базе данных или его профиль не был активирован."
 	)
 	def create(self, request):
-		try:
-			serializer = self.get_serializer(data=request.data)
-			if serializer.is_valid():
-				email = serializer.validated_data['email']
-				password = serializer.validated_data['password']
-				# проверяем, есть ли пользователь с таким email в БД
-				user = User.objects.filter(email=email).first()
-				# если найден пользователь с неактивным аккаунтом, то удаляем его
-				if user and not user.is_active:
-					user.delete()
-				# если найден пользователь с активным аккаунтом, запрещаем регистрацию
-				if user and user.is_active:
-					return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом уже зарегистрирован в приложении"}}, status=403)
-				response_data = create_user(email, password)
-				return Response(response_data[0], status=response_data[1])
-			response = {'detail': {
-				"code": "BAD_REQUEST",
-				"message": serializer.errors
-			}}
-			return Response(response, status=status.HTTP_400_BAD_REQUEST)
-		except:
-			return Response({"detail": "Внутренняя ошибка сервера"}, status=500)
+		serializer = self.get_serializer(data=request.data)
+		if serializer.is_valid():
+			email = serializer.validated_data['email']
+			password = serializer.validated_data['password']
+			# проверяем, есть ли пользователь с таким email в БД
+			user = User.objects.filter(email=email).first()
+			# если найден пользователь с неактивным аккаунтом, то удаляем его
+			if user and not user.is_active:
+				user.delete()
+			# если найден пользователь с активным аккаунтом, запрещаем регистрацию
+			if user and user.is_active:
+				return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом уже зарегистрирован в приложении"}}, status=403)
+			response_data = create_user(email, password)
+			return Response(response_data[0], status=response_data[1])
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
@@ -134,7 +131,7 @@ class UserViewSet(viewsets.ModelViewSet):
 			200: openapi.Response(description="Успешный запрос", schema=ErrorResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Восстановление пароля пользователя",
 		operation_description="Восстановление пароля пользователя по email.\n"
@@ -215,7 +212,7 @@ class UserViewSet(viewsets.ModelViewSet):
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
 			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Подтверждение регистрации пользователя по коду",
 		operation_description="Эндпоинт для подтверждения кода, высланного по email при регистрации.\n"
@@ -281,7 +278,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			201: openapi.Response(description="Успешное создание группы", schema=GroupResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Создание новой группы",
 		operation_description="Создает новую группу для данного пользователя.\n"
@@ -306,7 +303,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Удаление группы по id",
 		operation_description="Удаляет группу из базы данных по ее id и всех добавленных в нее пользователей с неактивными профилями.\nУсловия доступа к эндпоинту: токен авторизации в "
@@ -329,7 +326,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=GroupListResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Получение списка групп пользователя",
 		operation_description="Выводит список всех групп пользователя.\nУсловия доступа к эндпоинту: токен авторизации в "
@@ -351,7 +348,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Добавление участника в группу",
 		operation_description="Добавляет нового участника в группу.\n"
@@ -389,7 +386,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			200: openapi.Response(description="Успешный ответ", schema=GroupUsersResponseSerializer),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"detail": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Получение всех участников группы",
 		operation_description="Выводит всех участников группы.\n"

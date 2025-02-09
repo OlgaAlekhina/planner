@@ -26,6 +26,9 @@ from rest_framework import routers
 from users.views import UserViewSet, GroupViewSet, add_missing_profiles
 
 
+# чтобы выводить 500 ошибку в формате JSON, а не HTML
+handler500 = 'rest_framework.exceptions.server_error'
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Planner API",
