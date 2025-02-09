@@ -329,7 +329,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
-		operation_summary="Получение списка групп пользователя",
+		operation_summary="Получение всех групп пользователя",
 		operation_description="Выводит список всех групп пользователя.\nУсловия доступа к эндпоинту: токен авторизации в "
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
 	)
@@ -339,7 +339,30 @@ class GroupViewSet(viewsets.ModelViewSet):
 		response = []
 		for group_user in group_users:
 			response.append(GroupSerializer(group_user.group).data)
-		return Response(response, status=200)
+		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
+						 "data": response}, status=200)
+
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=GroupUsersResponseSerializer),
+			401: openapi.Response(description="Требуется авторизация",
+								  examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса",
+								  examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Получение всех участников группы",
+		operation_description="Выводит всех участников группы.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+	)
+	def retrieve(self, request, pk):
+		group = self.get_object()
+		group_users = group.group_users.all()
+		response = []
+		for group_user in group_users:
+			response.append(GroupUserSerializer(group_user).data)
+		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список участников группы"},
+						 "data": response}, status=200)
 
 	@action(detail=True, methods=['post'])
 	@swagger_auto_schema(
@@ -380,31 +403,6 @@ class GroupViewSet(viewsets.ModelViewSet):
 			"message": serializer.errors
 		}}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
-
-	@action(detail=True, methods=['get'])
-	@swagger_auto_schema(
-		responses={
-			200: openapi.Response(description="Успешный ответ", schema=GroupUsersResponseSerializer),
-			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
-		},
-		operation_summary="Получение всех участников группы",
-		operation_description="Выводит всех участников группы.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
-	)
-	def users(self, request, pk):
-		try:
-			group = self.get_object()
-			group_users = group.group_users.all()
-			print('users: ', group_users)
-			response = []
-			for group_user in group_users:
-				response.append(GroupUserSerializer(group_user).data)
-			return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список участников группы"},
-								 "data": response}, status=200)
-		except:
-			return Response({"detail": "Внутренняя ошибка сервера"}, status=500)
 
 
 # функция для добавления отсутствующих профилей пользователей
