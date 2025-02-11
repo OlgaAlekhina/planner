@@ -325,6 +325,33 @@ class GroupViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
+			200: openapi.Response(description="Успешный ответ"),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Редактирование группы по id",
+		operation_description="Эндпоинт для редактирования названия группы.\nУсловия доступа к эндпоинту: токен авторизации в "
+							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может редактировать только созданную им группу."
+	)
+	def partial_update(self, request, pk):
+		serializer = self.get_serializer(data=request.data)
+		if serializer.is_valid():
+			name = serializer.validated_data['name']
+			group = self.get_object()
+			group.name = name
+			group.save()
+			return Response(
+				{"detail": {"code": "HTTP_200_OK", "message": "Группа успешно изменена"}, "data": GroupSerializer(group).data}, status=200)
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@swagger_auto_schema(
+		responses={
 			200: openapi.Response(description="Успешный ответ", schema=GroupListResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})

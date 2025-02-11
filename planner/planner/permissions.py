@@ -15,13 +15,13 @@ class UserPermission(permissions.BasePermission):
 
 
 class GroupPermission(permissions.BasePermission):
-    """ разрешает пользователю удалять только свою собственную группу """
+    """ разрешает пользователю удалять, редактировать и добавлять участников только в свою собственную группу """
 
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
             return True
 
-        if view.action in ['destroy', 'add_user']:
+        if view.action in ['destroy', 'add_user', 'partial_update']:
             return request.user.is_authenticated and obj.owner == request.user
 
         return True
