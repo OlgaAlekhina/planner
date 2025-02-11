@@ -119,6 +119,8 @@ def update_or_create_user(email: str, first_name: str, last_name: str, nickname:
 		create_defaults={"username": email, "email": email, "first_name": first_name, "last_name": last_name},
 	)
 	user_id = user.id
+	user.is_active = True
+	user.save()
 	profile = UserProfile.objects.get(user=user)
 	profile.nickname = nickname
 	if birthday:
