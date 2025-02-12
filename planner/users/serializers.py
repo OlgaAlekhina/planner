@@ -51,6 +51,12 @@ class LoginDataResponseSerializer(serializers.Serializer):
 	user_auth_token = serializers.UUIDField()
 
 
+class UserResponseSerializer(serializers.Serializer):
+	""" Сериализатор данных пользователя для ответа сервера без токена """
+	detail = DetailSerializer()
+	data = UserLoginSerializer()
+
+
 class LoginResponseSerializer(serializers.Serializer):
 	""" Сериализатор для ответа сервера при авторизации """
 	detail = DetailSerializer()

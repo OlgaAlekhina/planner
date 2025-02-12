@@ -10,7 +10,7 @@ from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginRespon
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
 						  CodeSerializer, GroupUserSerializer, SignupSerializer, ResetPasswordSerializer,
 						  GroupResponseSerializer, GroupUserResponseSerializer, GroupUsersResponseSerializer,
-						  GroupListResponseSerializer)
+						  GroupListResponseSerializer, UserResponseSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -64,7 +64,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
-			200: openapi.Response(description="Успешный ответ"),
+			200: openapi.Response(description="Успешный ответ", schema=UserResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
@@ -75,7 +75,8 @@ class UserViewSet(viewsets.ModelViewSet):
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может просматривать только свой собственный профиль.")
 	def retrieve(self, request, pk):
 		user = self.get_object()
-		return Response(self.get_serializer(user).data, status=200)
+		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные пользователя получены."}, "data": self.get_serializer(user).data}
+		return Response(response, status=200)
 
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
