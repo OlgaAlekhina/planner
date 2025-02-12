@@ -2,13 +2,13 @@ from rest_framework import permissions
 
 
 class UserPermission(permissions.BasePermission):
-    """ разрешает пользователю удалять только свой собственный профиль """
+    """ разрешает пользователю просматривать и удалять только свой собственный профиль """
 
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
             return True
 
-        if view.action in ['destroy']:
+        if view.action in ['destroy', 'retrieve']:
             return request.user.is_authenticated and obj == request.user
 
         return True

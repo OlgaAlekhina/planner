@@ -62,6 +62,21 @@ class UserViewSet(viewsets.ModelViewSet):
 		user.delete()
 		return Response(status=204)
 
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ"),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Получение данных пользователя по id",
+		operation_description="Получает данные профиля пользователя по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
+							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может просматривать только свой собственный профиль.")
+	def retrieve(self, request, pk):
+		user = self.get_object()
+		return Response(self.get_serializer(user).data, status=200)
+
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
 		responses={
