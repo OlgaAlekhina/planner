@@ -23,7 +23,11 @@ from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(mixins.CreateModelMixin,
+                   mixins.RetrieveModelMixin,
+                   mixins.UpdateModelMixin,
+                   mixins.DestroyModelMixin,
+                   viewsets.GenericViewSet):
 	""" Эндпоинты для работы с пользователями """
 	queryset = User.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
