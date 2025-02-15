@@ -130,7 +130,7 @@ class UserViewSet(mixins.CreateModelMixin,
 			email = serializer.validated_data['email']
 			password = serializer.validated_data['password']
 			# проверяем, есть ли пользователь с таким email в БД
-			user = User.objects.filter(email=email).first()
+			user = User.objects.filter(email__iexact=email).first()
 			# если найден пользователь с неактивным аккаунтом, то удаляем его
 			if user and not user.is_active:
 				user.delete()
@@ -286,10 +286,6 @@ class GroupViewSet(viewsets.ModelViewSet):
 	def get_serializer_class(self):
 		if self.action == 'add_user':
 			return GroupUserSerializer
-		# elif self.action == 'vk_auth':
-		# 	return VKAuthSerializer
-		# elif self.action == 'mail_auth':
-		# 	return MailAuthSerializer
 		else:
 			return GroupSerializer
 

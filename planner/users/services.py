@@ -48,7 +48,7 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 	возвращает данные пользователя и токен авторизации
 	если у пользователя нет пароля (он регистрировался через соцсети), высылает код подтверждения на почту
 	"""
-	user = User.objects.filter(email=email, is_active=True)
+	user = User.objects.filter(email__iexact=email, is_active=True)
 	# если не найдено активных пользователей с данным email адресом
 	if not user:
 		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь не зарегистрирован в приложении"}}, 403
@@ -89,7 +89,7 @@ def send_password(email: str) -> tuple[dict, int]:
 	проверяет, есть ли пользователь с таким email в БД
 	устанавливает новый пароль (случайно сгенерированный из 8 символов) и высылает его на почту
 	"""
-	user = User.objects.filter(email=email, is_active=True).first()
+	user = User.objects.filter(email__iexact=email, is_active=True).first()
 	if not user:
 		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом не зарегистрирован в приложении"}}, 403
 	new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
@@ -114,7 +114,7 @@ def update_or_create_user(email: str, first_name: str, last_name: str, nickname:
 	if 'http' not in avatar:
 		avatar = f'https://avatars.yandex.net/get-yapic/{avatar}/islands-75'
 	user, created = User.objects.update_or_create(
-		email=email,
+		email__iexact=email,
 		defaults={"first_name": first_name, "last_name": last_name},
 		create_defaults={"username": email, "email": email, "first_name": first_name, "last_name": last_name},
 	)
