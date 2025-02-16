@@ -1,3 +1,50 @@
-from django.shortcuts import render
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import viewsets
+from rest_framework.parsers import MultiPartParser, JSONParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-# Create your views here.
+from .models import Event
+from .serializers import EventSerializer
+from users.serializers import ErrorResponseSerializer
+
+
+class EventViewSet(viewsets.ModelViewSet):
+	""" Эндпоинты для работы с событиями """
+	queryset = Event.objects.all()
+	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
+	parser_classes = (JSONParser, MultiPartParser)
+	# permission_classes = [IsAuthenticated]
+
+	def get_serializer_class(self):
+		if self.action == 'add_user':
+			return EventSerializer
+		else:
+			return EventSerializer
+
+	@swagger_auto_schema(
+		responses={
+			201: openapi.Response(description="Успешное создание группы", schema=EventSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Создание нового события",
+		operation_description="Создает новое событие для данного пользователя.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+	)
+	def create(self, request):
+		return Response('test')
+		# serializer = self.get_serializer(data=request.data)
+		# if serializer.is_valid():
+		# 	name = serializer.validated_data['name']
+		# 	user = request.user
+		# 	group = Group.objects.create(owner=user, name=name)
+		# 	GroupUser.objects.create(user=user, group=group, user_name=user.userprofile.nickname)
+		# 	return Response({"detail": {"code": "HTTP_201_OK", "message": "Группа создана"}, "data": GroupSerializer(group).data}, status=201)
+		# response = {'detail': {
+		# 	"code": "BAD_REQUEST",
+		# 	"message": serializer.errors
+		# }}
+		# return Response(response, status=status.HTTP_400_BAD_REQUEST)

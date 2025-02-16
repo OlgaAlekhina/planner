@@ -24,6 +24,7 @@ from django.conf.urls.static import static
 from django.views.generic.base import RedirectView
 from rest_framework import routers
 from users.views import UserViewSet, GroupViewSet, add_missing_profiles
+from events.views import EventViewSet
 
 
 # чтобы выводить 500 ошибку в формате JSON, а не HTML
@@ -41,6 +42,7 @@ schema_view = get_schema_view(
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'groups', GroupViewSet)
+router.register(r'events', EventViewSet)
 
 urlpatterns = [
     path('planner/admin/', admin.site.urls),
