@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .validators import validate_password_symbols, validate_email
-from .models import UserProfile, Group, SignupCode, GroupUser
+from .models import Group, SignupCode, GroupUser
 
 
 class DetailSerializer(serializers.Serializer):
