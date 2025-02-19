@@ -15,7 +15,7 @@ class EventViewSet(viewsets.ModelViewSet):
 	queryset = Event.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
 	parser_classes = (JSONParser, MultiPartParser)
-	# permission_classes = [IsAuthenticated]
+	permission_classes = [IsAuthenticated]
 
 	def get_serializer_class(self):
 		if self.action == 'add_user':
@@ -48,3 +48,28 @@ class EventViewSet(viewsets.ModelViewSet):
 		# 	"message": serializer.errors
 		# }}
 		# return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=EventSerializer()),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Получение всех событий пользователя",
+		operation_description="Выводит список всех событий пользователя.\nУсловия доступа к эндпоинту: токен авторизации в "
+							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+	)
+	def list(self, request):
+		user = request.user
+		print(Event.objects.filter(users__pk=user.id))
+		# event_users = user.event_users.all()
+		# events = []
+		# for event_user in event_users:
+		# 	events.append(event_user.event)
+		# print('events: ', events)
+		# response = []
+		# for group_user in group_users:
+		# 	response.append(GroupSerializer(group_user.group).data)
+		# return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
+		# 				 "data": response}, status=200)
+		return Response('test')

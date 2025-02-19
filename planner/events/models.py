@@ -1,5 +1,5 @@
 from django.db import models
-from users.models import GroupUser
+from django.contrib.auth.models import User
 
 
 class Event(models.Model):
@@ -10,21 +10,17 @@ class Event(models.Model):
 	start_time = models.TimeField(blank=True, null=True)
 	end_time = models.TimeField(blank=True, null=True)
 	repeats = models.BooleanField(default=False)
+	users = models.ManyToManyField(User)
 
 	def __str__(self):
-		return f"group-{self.group.id}, user-{self.user_name}"
+		return f"event{self.id}, {self.title}"
 
 
 class EventMeta(models.Model):
 	event = models.ForeignKey(Event, on_delete=models.CASCADE)
-	start_date = models.DateField()
-	end_date = models.DateField()
+	start_repeat = models.DateField()
+	end_repeat = models.DateField()
 	interval = models.IntegerField()
 
 
-class EventUser(models.Model):
-	user = models.ForeignKey(GroupUser, on_delete=models.CASCADE)
-	event = models.ForeignKey(Event, on_delete=models.CASCADE)
 
-	def __str__(self):
-		return f"event-{self.event.id}, user-{self.user.user_name}"
