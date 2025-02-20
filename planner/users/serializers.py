@@ -94,10 +94,17 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
 
 class GroupSerializer(serializers.ModelSerializer):
 	""" Сериализатор для создания групп """
-
 	class Meta:
 		model = Group
 		fields = ('id', 'name', 'color')
+
+	# чтобы сделать поле "name" необязательным в методе PATCH
+	def get_fields(self, *args, **kwargs):
+		fields = super(GroupSerializer, self).get_fields(*args, **kwargs)
+		request = self.context.get('request', None)
+		if request and getattr(request, 'method', None) == "PATCH":
+			fields['name'].required = False
+		return fields
 
 
 class GroupResponseSerializer(serializers.Serializer):
