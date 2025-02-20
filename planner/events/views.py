@@ -1,13 +1,13 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 from .models import Event
 from .serializers import EventSerializer
 from users.serializers import ErrorResponseSerializer
+from django.contrib.auth.models import User
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -25,29 +25,36 @@ class EventViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
-			201: openapi.Response(description="Успешное создание группы", schema=EventSerializer()),
+			201: openapi.Response(description="Успешное создание события", schema=EventSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Создание нового события",
-		operation_description="Создает новое событие для данного пользователя.\n"
+		operation_description="Создает новое событие в календаре.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
 	)
 	def create(self, request):
-		return Response('test')
-		# serializer = self.get_serializer(data=request.data)
-		# if serializer.is_valid():
-		# 	name = serializer.validated_data['name']
-		# 	user = request.user
-		# 	group = Group.objects.create(owner=user, name=name)
-		# 	GroupUser.objects.create(user=user, group=group, user_name=user.userprofile.nickname)
-		# 	return Response({"detail": {"code": "HTTP_201_OK", "message": "Группа создана"}, "data": GroupSerializer(group).data}, status=201)
-		# response = {'detail': {
-		# 	"code": "BAD_REQUEST",
-		# 	"message": serializer.errors
-		# }}
-		# return Response(response, status=status.HTTP_400_BAD_REQUEST)
+		serializer = self.get_serializer(data=request.data)
+		if serializer.is_valid():
+			title = serializer.validated_data['title']
+			location = serializer.validated_data['location'] if 'location' in serializer.validated_data else None
+			start_date = serializer.validated_data['start_date']
+			end_date = serializer.validated_data['end_date']
+			start_time = serializer.validated_data['start_time'] if 'start_time' in serializer.validated_data else None
+			end_time = serializer.validated_data['end_time'] if 'end_time' in serializer.validated_data else None
+			users = serializer.validated_data['users']
+			event = Event.objects.create(
+				title=title, location=location, start_date=start_date, end_date=end_date, start_time=start_time, end_time=end_time
+			)
+			for user in users:
+				event.users.add(user)
+			return Response({"detail": {"code": "HTTP_201_OK", "message": "Событие создано"}, "data": EventSerializer(event).data}, status=201)
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 	@swagger_auto_schema(
 		responses={
