@@ -303,8 +303,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			name = serializer.validated_data['name']
+			color = serializer.validated_data['color']
 			user = request.user
-			group = Group.objects.create(owner=user, name=name)
+			group = Group.objects.create(owner=user, name=name, color=color)
 			GroupUser.objects.create(user=user, group=group, user_name=user.userprofile.nickname)
 			return Response({"detail": {"code": "HTTP_201_OK", "message": "Группа создана"}, "data": GroupSerializer(group).data}, status=201)
 		response = {'detail': {
@@ -353,9 +354,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 	def partial_update(self, request, pk):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
-			name = serializer.validated_data['name']
 			group = self.get_object()
-			group.name = name
+			group.name = serializer.validated_data.get('name', group.name)
+			group.color = serializer.validated_data.get('color', group.color)
 			group.save()
 			return Response(
 				{"detail": {"code": "HTTP_200_OK", "message": "Группа успешно изменена"}, "data": GroupSerializer(group).data}, status=200)

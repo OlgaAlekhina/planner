@@ -23,6 +23,7 @@ class UserProfile(models.Model):
 class Group(models.Model):
 	owner = models.ForeignKey(User, on_delete=models.CASCADE)
 	name = models.CharField(max_length=100)
+	color = models.CharField(max_length=50)
 
 	def __str__(self):
 		return f"group-{self.id}"

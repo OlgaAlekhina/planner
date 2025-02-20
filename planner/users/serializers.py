@@ -94,11 +94,10 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
 
 class GroupSerializer(serializers.ModelSerializer):
 	""" Сериализатор для создания групп """
-	# owner = serializers.CharField(source='admin.username')
 
 	class Meta:
 		model = Group
-		fields = ('id', 'name')
+		fields = ('id', 'name', 'color')
 
 
 class GroupResponseSerializer(serializers.Serializer):
@@ -115,7 +114,6 @@ class GroupListResponseSerializer(serializers.Serializer):
 
 class GroupUserSerializer(serializers.ModelSerializer):
 	""" Сериализатор для участников группы """
-	# user_email = serializers.CharField(max_length=50, validators=[validate_email])
 
 	class Meta:
 		model = GroupUser
@@ -142,9 +140,3 @@ class CodeSerializer(serializers.ModelSerializer):
 		model = SignupCode
 		fields = ('code', )
 
-# class ProfileSerializer(serializers.ModelSerializer):
-# 	""" Сериализатор для модели UserProfile """
-#
-# 	class Meta:
-# 		model = UserProfile
-# 		fields = ('sex', 'birthday', 'ya_login', 'avatar')
