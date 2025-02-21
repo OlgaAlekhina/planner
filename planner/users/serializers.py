@@ -121,6 +121,7 @@ class GroupListResponseSerializer(serializers.Serializer):
 
 class GroupUserSerializer(serializers.ModelSerializer):
 	""" Сериализатор для участников группы """
+	id = serializers.IntegerField(source='user.id')
 
 	class Meta:
 		model = GroupUser
