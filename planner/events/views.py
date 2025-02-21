@@ -57,6 +57,24 @@ class EventViewSet(viewsets.ModelViewSet):
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 	@swagger_auto_schema(
+		manual_parameters=[
+			openapi.Parameter(
+				'start_date',
+				openapi.IN_QUERY,
+				description='Начальная дата',
+				type=openapi.TYPE_STRING,
+				format=openapi.FORMAT_DATE,
+				required=True
+			),
+			openapi.Parameter(
+				'end_date',
+				openapi.IN_QUERY,
+				description='Конечная дата',
+				type=openapi.TYPE_STRING,
+				format=openapi.FORMAT_DATE,
+				required=True
+			)
+		],
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=EventSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
@@ -66,17 +84,13 @@ class EventViewSet(viewsets.ModelViewSet):
 		operation_description="Выводит список всех событий пользователя.\nУсловия доступа к эндпоинту: токен авторизации в "
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
 	)
-	def list(self, request):
+	def list(self, request, *args, **kwargs):
 		user = request.user
-		print(Event.objects.filter(users__pk=user.id))
-		# event_users = user.event_users.all()
-		# events = []
-		# for event_user in event_users:
-		# 	events.append(event_user.event)
-		# print('events: ', events)
-		# response = []
-		# for group_user in group_users:
-		# 	response.append(GroupSerializer(group_user.group).data)
-		# return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
-		# 				 "data": response}, status=200)
-		return Response('test')
+		start_date = request.GET.get('start_date')
+		end_date = request.GET.get('end_date')
+		events = Event.objects.filter(users__pk=user.id, start_date__range=[start_date, end_date])
+		response = []
+		for event in events:
+			response.append(EventSerializer(event).data)
+		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"}, "data": response}, status=200)
+
