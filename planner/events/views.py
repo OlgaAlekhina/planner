@@ -96,3 +96,17 @@ class EventViewSet(viewsets.ModelViewSet):
 			response.append(EventSerializer(event).data)
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"}, "data": response}, status=200)
 
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=EventSerializer()),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Событие не найдено", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Получение события по id",
+		operation_description="Получает данные события по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
+							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'")
+	def retrieve(self, request, pk):
+		event = self.get_object()
+		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные события получены."}, "data": self.get_serializer(event).data}
+		return Response(response, status=200)
