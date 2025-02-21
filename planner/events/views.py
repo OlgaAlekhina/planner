@@ -61,7 +61,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			openapi.Parameter(
 				'start_date',
 				openapi.IN_QUERY,
-				description='Начальная дата',
+				description='Начальная дата в формате "2025-02-21"',
 				type=openapi.TYPE_STRING,
 				format=openapi.FORMAT_DATE,
 				required=True
@@ -69,7 +69,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			openapi.Parameter(
 				'end_date',
 				openapi.IN_QUERY,
-				description='Конечная дата',
+				description='Конечная дата в формате "2025-02-28"',
 				type=openapi.TYPE_STRING,
 				format=openapi.FORMAT_DATE,
 				required=True
@@ -81,14 +81,16 @@ class EventViewSet(viewsets.ModelViewSet):
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Получение всех событий пользователя",
-		operation_description="Выводит список всех событий пользователя.\nУсловия доступа к эндпоинту: токен авторизации в "
-							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+		operation_description="Выводит список всех событий пользователя за определенный временной интервал.\n"
+							  "Необходимо передать начальную и конечную дату, которые будут включены в интервал поиска.\n"
+							  "События отсортированы по времени начала.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
 	)
 	def list(self, request, *args, **kwargs):
 		user = request.user
 		start_date = request.GET.get('start_date')
 		end_date = request.GET.get('end_date')
-		events = Event.objects.filter(users__pk=user.id, start_date__range=[start_date, end_date])
+		events = Event.objects.filter(users__pk=user.id, start_date__range=[start_date, end_date]).order_by('start_time')
 		response = []
 		for event in events:
 			response.append(EventSerializer(event).data)
