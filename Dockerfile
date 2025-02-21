@@ -14,9 +14,9 @@ COPY ./requirements.txt .
 
 RUN chown -R app:app /app
 
+RUN python3 -m pip install --no-cache-dir --no-warn-script-location --upgrade pip &&\
+    python3 -m pip install --no-cache-dir --no-warn-script-location -r requirements.txt
+
 USER app
 
-RUN python3 -m pip install --no-cache-dir --no-warn-script-location --upgrade pip &&\
-    python3 -m pip install --no-cache-dir --no-warn-script-location --user -r requirements.txt
-
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
