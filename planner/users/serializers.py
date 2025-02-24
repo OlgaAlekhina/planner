@@ -94,9 +94,11 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
 
 class GroupSerializer(serializers.ModelSerializer):
 	""" Сериализатор для создания групп """
+	is_owner = serializers.SerializerMethodField()
+
 	class Meta:
 		model = Group
-		fields = ('id', 'name', 'color')
+		fields = ('id', 'name', 'color', 'is_owner')
 
 	# чтобы сделать поле "name" необязательным в методе PATCH
 	def get_fields(self, *args, **kwargs):
@@ -104,7 +106,13 @@ class GroupSerializer(serializers.ModelSerializer):
 		request = self.context.get('request', None)
 		if request and getattr(request, 'method', None) == "PATCH":
 			fields['name'].required = False
+			fields['color'].required = False
 		return fields
+
+	# определяет, является ли текущий пользователь владельцем группы
+	def get_is_owner(self, obj):
+		current_user = self.context['request'].user
+		return current_user == obj.owner
 
 
 class GroupResponseSerializer(serializers.Serializer):
@@ -121,7 +129,7 @@ class GroupListResponseSerializer(serializers.Serializer):
 
 class GroupUserSerializer(serializers.ModelSerializer):
 	""" Сериализатор для участников группы """
-	id = serializers.IntegerField(source='user.id')
+	id = serializers.IntegerField(source='user.id', read_only=True)
 
 	class Meta:
 		model = GroupUser

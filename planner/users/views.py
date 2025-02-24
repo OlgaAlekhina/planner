@@ -307,7 +307,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			user = request.user
 			group = Group.objects.create(owner=user, name=name, color=color)
 			GroupUser.objects.create(user=user, group=group, user_name=user.userprofile.nickname)
-			return Response({"detail": {"code": "HTTP_201_OK", "message": "Группа создана"}, "data": GroupSerializer(group).data}, status=201)
+			return Response({"detail": {"code": "HTTP_201_OK", "message": "Группа создана"}, "data": GroupSerializer(group, context={'request': request}).data}, status=201)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
@@ -348,7 +348,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Редактирование группы по id",
-		operation_description="Эндпоинт для редактирования названия группы.\nУсловия доступа к эндпоинту: токен авторизации в "
+		operation_description="Эндпоинт для редактирования данных группы.\nУсловия доступа к эндпоинту: токен авторизации в "
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может редактировать только созданную им группу."
 	)
 	def partial_update(self, request, pk):
@@ -359,7 +359,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			group.color = serializer.validated_data.get('color', group.color)
 			group.save()
 			return Response(
-				{"detail": {"code": "HTTP_200_OK", "message": "Группа успешно изменена"}, "data": GroupSerializer(group).data}, status=200)
+				{"detail": {"code": "HTTP_200_OK", "message": "Группа успешно изменена"}, "data": GroupSerializer(group, context={'request': request}).data}, status=200)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
@@ -381,7 +381,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 		group_users = user.users.all()
 		response = []
 		for group_user in group_users:
-			response.append(GroupSerializer(group_user.group).data)
+			response.append(GroupSerializer(group_user.group, context={'request': request}).data)
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
 						 "data": response}, status=200)
 
