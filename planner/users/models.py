@@ -37,7 +37,7 @@ class GroupUser(models.Model):
 	user_color = models.CharField(max_length=30, blank=True)
 
 	def __str__(self):
-		return f"group-{self.group.id}, user-{self.user_name}"
+		return f"group-{self.group.id}, user{self.id}-{self.user_name}"
 
 
 class SignupCode(models.Model):

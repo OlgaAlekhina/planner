@@ -115,6 +115,12 @@ class GroupSerializer(serializers.ModelSerializer):
 		return current_user == obj.owner
 
 
+class InvitationSerializer(serializers.Serializer):
+	""" Сериализатор для принятия приглашения в группу """
+	# group_id = serializers.IntegerField()
+	group_user_id = serializers.IntegerField()
+
+
 class GroupResponseSerializer(serializers.Serializer):
 	""" Сериализатор ответа при создании групп """
 	detail = DetailSerializer()
