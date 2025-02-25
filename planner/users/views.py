@@ -1,6 +1,7 @@
 import random
 import string
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
@@ -46,8 +47,6 @@ class UserViewSet(mixins.CreateModelMixin,
 			return SignupSerializer
 		elif self.action == 'reset_password':
 			return ResetPasswordSerializer
-		elif self.action == 'accept_invitation':
-			return InvitationSerializer
 		else:
 			return UserLoginSerializer
 
@@ -276,40 +275,6 @@ class UserViewSet(mixins.CreateModelMixin,
 		}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
-	@action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
-	@swagger_auto_schema(
-		responses={
-			200: openapi.Response(description="Успешный ответ", schema=ErrorResponseSerializer()),
-			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
-			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
-		},
-		operation_summary="Добавление в группу по приглашению",
-		operation_description="Добавляет пользователя в группу по приглашению.\n"
-							  "Меняет пользователя, созданного владельцем группы, на авторизованного пользователя.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'."
-	)
-	def accept_invitation(self, request):
-		serializer = self.get_serializer(data=request.data)
-		if serializer.is_valid():
-			user = request.user
-			group_user_id = serializer.validated_data['group_user_id']
-			group_user = GroupUser.objects.filter(id=group_user_id)
-			if not group_user:
-				return Response({"detail": {"code": "HTTP_404_NOT_FOUND", "message": "Пользователь не найден"}}, status=404)
-			group_user = group_user[0]
-			old_user = group_user.user
-			group_user.user = user
-			group_user.save()
-			old_user.delete()
-			return Response({"detail": {"code": "HTTP_200_OK", "message": "Приглашение в группу принято"}}, status=200)
-		response = {'detail': {
-			"code": "BAD_REQUEST",
-			"message": serializer.errors
-		}}
-		return Response(response, status=status.HTTP_400_BAD_REQUEST)
-
 
 class GroupViewSet(viewsets.ModelViewSet):
 	""" Эндпоинты для работы с группами """
@@ -321,6 +286,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 	def get_serializer_class(self):
 		if self.action == 'add_user':
 			return GroupUserSerializer
+		elif self.action == 'accept_invitation':
+			return InvitationSerializer
 		else:
 			return GroupSerializer
 
@@ -477,6 +444,39 @@ class GroupViewSet(viewsets.ModelViewSet):
 			# затем добавляем его в группу
 			group_user = GroupUser.objects.create(user=user, group=group, user_name=user_name, user_role=user_role, user_color=user_color)
 			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Участник добавлен в группу"}, "data": GroupUserSerializer(group_user).data}, status=201)
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=False, methods=['post'])
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=ErrorResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Объект не найден", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Добавление пользователя в группу по приглашению",
+		operation_description="Добавляет пользователя в группу по приглашению владельца группы.\n"
+							  "Меняет пользователя, созданного владельцем группы, на авторизованного пользователя.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'."
+	)
+	def accept_invitation(self, request):
+		serializer = self.get_serializer(data=request.data)
+		if serializer.is_valid():
+			user = request.user
+			group_id = serializer.validated_data['group_id']
+			user_id = serializer.validated_data['user_id']
+			old_user = get_object_or_404(User, pk=user_id)
+			group = get_object_or_404(Group, pk=group_id)
+			group_user = get_object_or_404(GroupUser, user=old_user, group=group)
+			group_user.user = user
+			group_user.save()
+			old_user.delete()
+			return Response({"detail": {"code": "HTTP_200_OK", "message": "Приглашение в группу принято"}}, status=200)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors

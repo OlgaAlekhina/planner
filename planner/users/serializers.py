@@ -116,9 +116,9 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class InvitationSerializer(serializers.Serializer):
-	""" Сериализатор для принятия приглашения в группу """
-	# group_id = serializers.IntegerField()
-	group_user_id = serializers.IntegerField()
+	""" Сериализатор для вступления в группу по приглашению """
+	group_id = serializers.IntegerField()
+	user_id = serializers.IntegerField()
 
 
 class GroupResponseSerializer(serializers.Serializer):
