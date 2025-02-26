@@ -29,20 +29,30 @@ class VKAuthSerializer(serializers.Serializer):
 
 
 class UserLoginSerializer(serializers.ModelSerializer):
-	""" Сериализатор для ответа на запрос авторизации через Яндекс """
+	""" Сериализатор для ответа на запрос авторизации """
 	avatar = serializers.CharField(source='userprofile.avatar')
 	nickname = serializers.CharField(source='userprofile.nickname')
 	birthday = serializers.CharField(source='userprofile.birthday', required=False)
 	gender = serializers.CharField(source='userprofile.get_gender_display', required=False)
+	color = serializers.CharField(source='userprofile.color', required=False)
 
 	class Meta:
 		model = User
-		fields = ('id', 'email', 'first_name', 'last_name', 'nickname', 'birthday', 'gender', 'avatar')
+		fields = ('id', 'email', 'first_name', 'last_name', 'nickname', 'birthday', 'gender', 'avatar', 'color')
 		extra_kwargs = {
 						'first_name': {'required': True},
 						'last_name': {'required': True},
 						'email': {'required': True},
 						}
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+	""" Сериализатор для редактирования данных пользователя """
+	color = serializers.CharField(source='userprofile.color', required=False)
+
+	class Meta:
+		model = User
+		fields = ('first_name', 'color')
 
 
 class LoginDataResponseSerializer(serializers.Serializer):

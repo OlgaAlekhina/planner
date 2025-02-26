@@ -10,7 +10,8 @@ from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginRespon
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
 						  CodeSerializer, GroupUserSerializer, SignupSerializer, ResetPasswordSerializer,
 						  GroupResponseSerializer, GroupUserResponseSerializer, GroupUsersResponseSerializer,
-						  GroupListResponseSerializer, UserResponseSerializer, InvitationSerializer)
+						  GroupListResponseSerializer, UserResponseSerializer, InvitationSerializer,
+						  UserUpdateSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -47,6 +48,8 @@ class UserViewSet(mixins.CreateModelMixin,
 			return SignupSerializer
 		elif self.action == 'reset_password':
 			return ResetPasswordSerializer
+		elif self.action == 'partial_update':
+			return UserUpdateSerializer
 		else:
 			return UserLoginSerializer
 
@@ -81,6 +84,34 @@ class UserViewSet(mixins.CreateModelMixin,
 		user = self.get_object()
 		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные пользователя получены."}, "data": self.get_serializer(user).data}
 		return Response(response, status=200)
+
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешное редактирование профиля", schema=UserResponseSerializer()),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Редактирование данных пользователя по id",
+		operation_description="Редактирует данные профиля пользователя по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
+							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может реактировать только свой собственный профиль.")
+	def partial_update(self, request, pk):
+		user = self.get_object()
+		serializer = self.get_serializer(data=request.data)
+		if serializer.is_valid():
+			user.first_name = serializer.validated_data.get('first_name', user.first_name)
+			user.save()
+			profile = UserProfile.objects.get(user=user)
+			profile.color = serializer.validated_data.get('userprofile', {'color': profile.color}).get('color', profile.color)
+			profile.save()
+			user = self.get_object()
+			return Response({"detail": {"code": "HTTP_200_OK", "message": "Данные пользователя отредактированы."}, "data": UserLoginSerializer(user).data}, status=200)
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
