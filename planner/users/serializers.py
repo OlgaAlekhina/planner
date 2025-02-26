@@ -92,27 +92,34 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
 		fields = ('email',)
 
 
+class CustomBoolField(serializers.BooleanField):
+	""" Кастомное поле для проверки, является ли текущий пользователь владельцем группы """
+	def to_representation(self, instance):
+		current_user = self.context['request'].user
+		return current_user == instance.owner
+
+	def to_internal_value(self, data):
+		return {self.field_name: data}
+
+
 class GroupSerializer(serializers.ModelSerializer):
-	""" Сериализатор для создания групп """
-	is_owner = serializers.SerializerMethodField()
+	""" Сериализатор для групп """
+	is_owner = CustomBoolField(source='*', read_only=True)
 
 	class Meta:
 		model = Group
 		fields = ('id', 'name', 'color', 'is_owner')
 
-	# чтобы сделать поле "name" необязательным в методе PATCH
 	def get_fields(self, *args, **kwargs):
 		fields = super(GroupSerializer, self).get_fields(*args, **kwargs)
 		request = self.context.get('request', None)
+		# добавляем объект Request в поле 'is_owner'
+		fields['is_owner'].contex = self.context
+		# делаем поля необязательными в методе PATCH
 		if request and getattr(request, 'method', None) == "PATCH":
 			fields['name'].required = False
 			fields['color'].required = False
 		return fields
-
-	# определяет, является ли текущий пользователь владельцем группы
-	def get_is_owner(self, obj):
-		current_user = self.context['request'].user
-		return current_user == obj.owner
 
 
 class InvitationSerializer(serializers.Serializer):
