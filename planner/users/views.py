@@ -102,10 +102,6 @@ class UserViewSet(mixins.CreateModelMixin,
 		if serializer.is_valid():
 			user.first_name = serializer.validated_data.get('first_name', user.first_name)
 			user.save()
-			profile = UserProfile.objects.get(user=user)
-			profile.color = serializer.validated_data.get('userprofile', {'color': profile.color}).get('color', profile.color)
-			profile.save()
-			user = self.get_object()
 			return Response({"detail": {"code": "HTTP_200_OK", "message": "Данные пользователя отредактированы."}, "data": UserLoginSerializer(user).data}, status=200)
 		response = {'detail': {
 			"code": "BAD_REQUEST",

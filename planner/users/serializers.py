@@ -48,11 +48,10 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
 class UserUpdateSerializer(serializers.ModelSerializer):
 	""" Сериализатор для редактирования данных пользователя """
-	color = serializers.CharField(source='userprofile.color', required=False)
 
 	class Meta:
 		model = User
-		fields = ('first_name', 'color')
+		fields = ('first_name')
 
 
 class LoginDataResponseSerializer(serializers.Serializer):
