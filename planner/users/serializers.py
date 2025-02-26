@@ -34,11 +34,10 @@ class UserLoginSerializer(serializers.ModelSerializer):
 	nickname = serializers.CharField(source='userprofile.nickname')
 	birthday = serializers.CharField(source='userprofile.birthday', required=False)
 	gender = serializers.CharField(source='userprofile.get_gender_display', required=False)
-	color = serializers.CharField(source='userprofile.color', required=False)
 
 	class Meta:
 		model = User
-		fields = ('id', 'email', 'first_name', 'last_name', 'nickname', 'birthday', 'gender', 'avatar', 'color')
+		fields = ('id', 'email', 'first_name', 'last_name', 'nickname', 'birthday', 'gender', 'avatar')
 		extra_kwargs = {
 						'first_name': {'required': True},
 						'last_name': {'required': True},
@@ -156,6 +155,14 @@ class GroupUserSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = GroupUser
 		fields = ('id', 'user_name', 'user_role', 'user_color')
+
+	def get_fields(self, *args, **kwargs):
+		fields = super(GroupUserSerializer, self).get_fields(*args, **kwargs)
+		request = self.context.get('request', None)
+		# делаем поля необязательными в методе PATCH
+		if request and getattr(request, 'method', None) == "PATCH":
+			fields['user_name'].required = False
+		return fields
 
 
 class GroupUserResponseSerializer(serializers.Serializer):

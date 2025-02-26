@@ -311,7 +311,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 	permission_classes = [IsAuthenticated, GroupPermission]
 
 	def get_serializer_class(self):
-		if self.action == 'add_user':
+		if self.action in ('add_user', 'users'):
 			return GroupUserSerializer
 		elif self.action == 'accept_invitation':
 			return InvitationSerializer
@@ -471,6 +471,39 @@ class GroupViewSet(viewsets.ModelViewSet):
 			# затем добавляем его в группу
 			group_user = GroupUser.objects.create(user=user, group=group, user_name=user_name, user_role=user_role, user_color=user_color)
 			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Участник добавлен в группу"}, "data": GroupUserSerializer(group_user).data}, status=201)
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=True, methods=['patch'], url_path=r'users/(?P<user_id>\d+)')
+	@swagger_auto_schema(
+		responses={
+			201: openapi.Response(description="Успешное редактирования данных участника", schema=GroupUserResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Редактирование участников группы",
+		operation_description="Редактирует данные участников группы.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Редактировать участника может только владелец группы."
+	)
+	def users(self, request, pk, user_id):
+		group = self.get_object()
+		user = get_object_or_404(User, id=user_id)
+		group_user = get_object_or_404(GroupUser, user=user, group=group)
+		serializer = self.get_serializer(data=request.data)
+		if serializer.is_valid():
+			group_user.user_name = serializer.validated_data.get('user_name', group_user.user_name)
+			group_user.user_role = serializer.validated_data.get('user_role', group_user.user_role)
+			group_user.user_color = serializer.validated_data.get('user_color', group_user.user_color)
+			group_user.save()
+			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Данные участника успешно отредактированы"},
+							 "data": GroupUserSerializer(group_user).data}, status=200)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
