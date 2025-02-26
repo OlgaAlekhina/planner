@@ -51,7 +51,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = User
-		fields = ('first_name')
+		fields = ('first_name',)
 
 
 class LoginDataResponseSerializer(serializers.Serializer):
