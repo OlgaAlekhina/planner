@@ -17,7 +17,7 @@ class UserProfile(models.Model):
 	nickname = models.CharField(max_length=50, blank=True)
 
 	def __str__(self):
-		return self.user.username
+		return f"{self.user.username}-{self.user.id}"
 
 
 class Group(models.Model):

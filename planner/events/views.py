@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
@@ -77,6 +78,7 @@ class EventViewSet(viewsets.ModelViewSet):
 		],
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=EventSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
@@ -90,7 +92,16 @@ class EventViewSet(viewsets.ModelViewSet):
 		user = request.user
 		start_date = request.GET.get('start_date')
 		end_date = request.GET.get('end_date')
-		events = Event.objects.filter(users__pk=user.id, start_date__range=[start_date, end_date]).order_by('start_time')
+		if start_date > end_date:
+			return Response(
+				{"detail": {"code": "BAD_REQUEST", "message": "Некоректный временной диапазон"}},
+				status=400)
+		try:
+			events = Event.objects.filter(users__pk=user.id, start_date__lte=end_date, end_date__gte=start_date).order_by('start_time')
+		except ValidationError:
+			return Response(
+				{"detail": {"code": "BAD_REQUEST", "message": "Некоректная дата"}},
+				status=400)
 		response = []
 		for event in events:
 			response.append(EventSerializer(event).data)
