@@ -97,7 +97,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				{"detail": {"code": "BAD_REQUEST", "message": "Некоректный временной диапазон"}},
 				status=400)
 		try:
-			events = Event.objects.filter(users__pk=user.id, start_date__lte=end_date, end_date__gte=start_date).order_by('start_time')
+			events = Event.objects.filter(users__pk=user.id, start_date__lte=end_date, end_date__gte=start_date).order_by('start_date', 'start_time')
 		except ValidationError:
 			return Response(
 				{"detail": {"code": "BAD_REQUEST", "message": "Некоректная дата"}},
