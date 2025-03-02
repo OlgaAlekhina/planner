@@ -99,36 +99,36 @@ def send_password(email: str) -> tuple[dict, int]:
 	return {"detail": {"code": "HTTP_200_OK", "message": "Новый пароль успешно отправлен пользователю"}}, 200
 
 
-def update_or_create_user(email: str, first_name: str, last_name: str, nickname: str, gender: str, birthday: str, avatar: str) -> dict:
+def get_or_create_user(email: str, first_name: str, last_name: str, nickname: str, gender: str, birthday: str, avatar: str) -> dict:
 	"""
-	создает нового пользователя или обновляет его данные в БД
+	создает нового пользователя или получает его данные из БД
 	используется для авторизации через яндекс и ВК
 	возвращает данные пользователя и токен авторизации
 	"""
-	if gender in ('male', 2):
-		gender = 'M'
-	elif gender in ('female', 1):
-		gender = 'F'
-	else:
-		gender = 'N'
-	if 'http' not in avatar:
-		avatar = f'https://avatars.yandex.net/get-yapic/{avatar}/islands-75'
-	user, created = User.objects.update_or_create(
+	user, created = User.objects.get_or_create(
 		email__iexact=email,
-		defaults={"first_name": first_name, "last_name": last_name},
-		create_defaults={"username": email, "email": email, "first_name": first_name, "last_name": last_name},
+		defaults={"username": email, "email": email, "first_name": first_name, "last_name": last_name}
 	)
 	user_id = user.id
 	user.is_active = True
 	user.save()
-	profile = UserProfile.objects.get(user=user)
-	profile.nickname = nickname
-	if birthday:
-		profile.birthday = convert_date(birthday)
-	profile.gender = gender
-	profile.avatar = avatar
-	profile.save()
-	user = User.objects.get(id=user_id)
+	if created:
+		if gender in ('male', 2):
+			gender = 'M'
+		elif gender in ('female', 1):
+			gender = 'F'
+		else:
+			gender = 'N'
+		if 'http' not in avatar:
+			avatar = f'https://avatars.yandex.net/get-yapic/{avatar}/islands-75'
+		profile = UserProfile.objects.get(user=user)
+		profile.nickname = nickname
+		if birthday:
+			profile.birthday = convert_date(birthday)
+		profile.gender = gender
+		profile.avatar = avatar
+		profile.save()
+		user = User.objects.get(id=user_id)
 	token = Token.objects.get(user=user)
 	user_data = UserLoginSerializer(user).data
 	result = {"user_data": user_data, "user_auth_token": token.key}
@@ -154,7 +154,7 @@ def get_user_from_yandex(token: str) -> tuple[dict, int]:
 		first_name = response_data.get('first_name')
 		last_name = response_data.get('last_name')
 		gender = response_data.get('sex')
-		user_data = update_or_create_user(email, first_name, last_name, nickname, gender, birthday, avatar)
+		user_data = get_or_create_user(email, first_name, last_name, nickname, gender, birthday, avatar)
 		return user_data, 200
 	except HTTPError as http_err:
 		result_data = {
@@ -212,7 +212,7 @@ def get_user_from_vk(code_verifier: str, code: str, device_id: str, state: str) 
 		first_name = response_data.get('first_name')
 		last_name = response_data.get('last_name')
 		gender = response_data.get('sex')
-		user_data = update_or_create_user(email, first_name, last_name, nickname, gender, birthday, avatar)
+		user_data = get_or_create_user(email, first_name, last_name, nickname, gender, birthday, avatar)
 		return user_data, 200
 	except HTTPError as http_err:
 		result_data = {

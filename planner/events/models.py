@@ -10,6 +10,7 @@ class Event(models.Model):
 	start_time = models.TimeField(blank=True, null=True)
 	end_time = models.TimeField(blank=True, null=True)
 	repeats = models.BooleanField(default=False)
+	end_repeat = models.DateField(blank=True, null=True)
 	users = models.ManyToManyField(User)
 
 	def __str__(self):
@@ -19,7 +20,6 @@ class Event(models.Model):
 class EventMeta(models.Model):
 	event = models.ForeignKey(Event, on_delete=models.CASCADE)
 	start_repeat = models.DateField()
-	end_repeat = models.DateField()
 	interval = models.IntegerField()
 
 

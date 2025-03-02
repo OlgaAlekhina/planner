@@ -85,7 +85,7 @@ class EventViewSet(viewsets.ModelViewSet):
 		operation_summary="Получение всех событий пользователя",
 		operation_description="Выводит список всех событий пользователя за определенный временной интервал.\n"
 							  "Необходимо передать начальную и конечную дату, которые будут включены в интервал поиска.\n"
-							  "События отсортированы по времени начала.\n"
+							  "События отсортированы по дате и времени начала.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
 	)
 	def list(self, request, *args, **kwargs):
@@ -97,7 +97,9 @@ class EventViewSet(viewsets.ModelViewSet):
 				{"detail": {"code": "BAD_REQUEST", "message": "Некоректный временной диапазон"}},
 				status=400)
 		try:
-			events = Event.objects.filter(users__pk=user.id, start_date__lte=end_date, end_date__gte=start_date).order_by('start_date', 'start_time')
+			events = Event.objects.filter(users__pk=user.id, repeats=False, start_date__lte=end_date, end_date__gte=start_date).order_by('start_date', 'start_time')
+			repeated_events = Event.objects.filter(users__pk=user.id, repeats=True, start_date__lte=end_date, end_repeat__gte=start_date)
+			print('repeated_events: ', repeated_events)
 		except ValidationError:
 			return Response(
 				{"detail": {"code": "BAD_REQUEST", "message": "Некоректная дата"}},
