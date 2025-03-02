@@ -430,10 +430,12 @@ class GroupViewSet(viewsets.ModelViewSet):
 	)
 	def retrieve(self, request, pk):
 		group = self.get_object()
+		user = request.user
 		group_users = group.group_users.all()
 		response = []
 		for group_user in group_users:
-			response.append(GroupUserSerializer(group_user).data)
+			if group_user.user.id != user.id:
+				response.append(GroupUserSerializer(group_user).data)
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список участников группы"},
 						 "data": response}, status=200)
 
