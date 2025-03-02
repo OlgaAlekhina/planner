@@ -425,8 +425,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 								  examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Получение всех участников группы",
-		operation_description="Выводит всех участников группы.\n"
+		operation_description="Выводит всех участников данной группы кроме пользователя, который сделал запрос.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Пользователь может просматривать участников только тех групп, в которых он состоит."
 	)
 	def retrieve(self, request, pk):
 		group = self.get_object()

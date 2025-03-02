@@ -1,3 +1,4 @@
+from requests import request
 from rest_framework import permissions
 
 
@@ -24,4 +25,12 @@ class GroupPermission(permissions.BasePermission):
         if view.action in ['destroy', 'add_user', 'partial_update', 'users']:
             return request.user.is_authenticated and obj.owner == request.user
 
+        # проверяем, что текущий пользователь состоит в группе, для выдачи доступа к просмотру участников группы
+        if view.action in ['retrieve']:
+            return request.user.is_authenticated and any(i in obj.group_users.all() for i in request.user.users.all())
+
         return True
+
+
+
+
