@@ -311,7 +311,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 	permission_classes = [IsAuthenticated, GroupPermission]
 
 	def get_serializer_class(self):
-		if self.action in ('add_user', 'users'):
+		if self.action in ('add_user', 'update_group_user'):
 			return GroupUserSerializer
 		elif self.action == 'accept_invitation':
 			return InvitationSerializer
@@ -480,22 +480,45 @@ class GroupViewSet(viewsets.ModelViewSet):
 		}}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
-	@action(detail=True, methods=['patch'], url_path=r'users/(?P<user_id>\d+)')
 	@swagger_auto_schema(
+		method='patch',
 		responses={
-			201: openapi.Response(description="Успешное редактирования данных участника", schema=GroupUserResponseSerializer()),
+			201: openapi.Response(description="Успешное редактирование данных участника", schema=GroupUserResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
-			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Объект не найден", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
-		operation_summary="Редактирование участников группы",
+		operation_summary="Редактирование участника группы",
 		operation_description="Редактирует данные участников группы.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
 							  "Редактировать участника может только владелец группы."
 	)
-	def users(self, request, pk, user_id):
+	@swagger_auto_schema(
+		method='delete',
+		responses={
+			204: openapi.Response(description="Успешное удаление участника из группы"),
+			401: openapi.Response(description="Требуется авторизация",
+								  examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Объект не найден", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса",
+								  examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Удаление участника из группы",
+		operation_description="Удаляет участников из группы.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Удалить участника может только владелец группы."
+	)
+	@action(detail=True, methods=['patch', 'delete'], url_path=r'users/(?P<user_id>\d+)')
+	def groups_actions(self, request, *args, **kwargs):
+		if request.method == 'DELETE':
+			return self.delete_group_user(request, *args, **kwargs)
+		else:
+			return self.update_group_user(request, *args, **kwargs)
+
+	def update_group_user(self, request, pk, user_id):
 		group = self.get_object()
 		user = get_object_or_404(User, id=user_id)
 		group_user = get_object_or_404(GroupUser, user=user, group=group)
@@ -512,6 +535,15 @@ class GroupViewSet(viewsets.ModelViewSet):
 			"message": serializer.errors
 		}}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	def delete_group_user(self, request, pk, user_id):
+		group = self.get_object()
+		user = get_object_or_404(User, id=user_id)
+		group_user = get_object_or_404(GroupUser, user=user, group=group)
+		group_user.delete()
+		if not user.is_active:
+			user.delete()
+		return Response(status=204)
 
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(

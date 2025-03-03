@@ -22,7 +22,7 @@ class GroupPermission(permissions.BasePermission):
         if request.user.is_superuser:
             return True
 
-        if view.action in ['destroy', 'add_user', 'partial_update', 'users']:
+        if view.action in ['destroy', 'add_user', 'partial_update', 'groups_actions']:
             return request.user.is_authenticated and obj.owner == request.user
 
         # проверяем, что текущий пользователь состоит в группе, для выдачи доступа к просмотру участников группы
