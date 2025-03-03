@@ -311,7 +311,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 	permission_classes = [IsAuthenticated, GroupPermission]
 
 	def get_serializer_class(self):
-		if self.action in ('add_user', 'update_group_user'):
+		if self.action in ('add_user', 'groups_actions'):
 			return GroupUserSerializer
 		elif self.action == 'accept_invitation':
 			return InvitationSerializer
