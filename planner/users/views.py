@@ -483,7 +483,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 	@swagger_auto_schema(
 		method='patch',
 		responses={
-			201: openapi.Response(description="Успешное редактирование данных участника", schema=GroupUserResponseSerializer()),
+			200: openapi.Response(description="Успешное редактирование данных участника", schema=GroupUserResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
@@ -528,7 +528,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			group_user.user_role = serializer.validated_data.get('user_role', group_user.user_role)
 			group_user.user_color = serializer.validated_data.get('user_color', group_user.user_color)
 			group_user.save()
-			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Данные участника успешно отредактированы"},
+			return Response({"detail": {"code": "HTTP_200_OK", "message": "Данные участника успешно отредактированы"},
 							 "data": GroupUserSerializer(group_user).data}, status=200)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
