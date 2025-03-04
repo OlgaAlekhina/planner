@@ -165,6 +165,18 @@ class GroupUserSerializer(serializers.ModelSerializer):
 		return fields
 
 
+class GroupUserListSerializer(serializers.Serializer):
+	""" Сериализатор для группы пользователя со списком участников """
+	group = GroupSerializer()
+	users = serializers.ListSerializer(child=GroupUserSerializer())
+
+
+class GroupUserListResponseSerializer(serializers.Serializer):
+	""" Сериализатор ответа при получении всех групп пользователя со списком участников """
+	detail = DetailSerializer()
+	data = serializers.ListSerializer(child=GroupUserListSerializer())
+
+
 class GroupUserResponseSerializer(serializers.Serializer):
 	""" Сериализатор ответа при создании групп """
 	detail = DetailSerializer()

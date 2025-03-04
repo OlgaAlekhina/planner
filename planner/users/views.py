@@ -11,7 +11,7 @@ from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginRespon
 						  CodeSerializer, GroupUserSerializer, SignupSerializer, ResetPasswordSerializer,
 						  GroupResponseSerializer, GroupUserResponseSerializer, GroupUsersResponseSerializer,
 						  GroupListResponseSerializer, UserResponseSerializer, InvitationSerializer,
-						  UserUpdateSerializer)
+						  UserUpdateSerializer, GroupUserListResponseSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -439,6 +439,35 @@ class GroupViewSet(viewsets.ModelViewSet):
 				response.append(GroupUserSerializer(group_user).data)
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список участников группы"},
 						 "data": response}, status=200)
+
+	@action(detail=False, methods=['get'], url_path=r'users')
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=GroupUserListResponseSerializer()),
+			401: openapi.Response(description="Требуется авторизация",
+								  examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса",
+								  examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Получение всех групп пользователя со списком участников",
+		operation_description="Выводит список всех групп пользователя со списком участников.\nУсловия доступа к эндпоинту: токен авторизации в "
+							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+	)
+	def groups_with_users(self, request):
+		user = request.user
+		group_users = user.users.all()
+		response = []
+		for group_user in group_users:
+			group = group_user.group
+			users = group.group_users.all()
+			users_list = []
+			for u in users:
+				if u.user.id != user.id:
+					users_list.append(GroupUserSerializer(u).data)
+			response.append({'group': GroupSerializer(group, context={'request': request}).data, 'users': users_list})
+		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
+						 "data": response}, status=200)
+
 
 	@action(detail=True, methods=['post'])
 	@swagger_auto_schema(
