@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from .models import Event
 from .serializers import EventSerializer
 from users.serializers import ErrorResponseSerializer
+from django.db.models import Q
 from django.contrib.auth.models import User
 
 
@@ -38,6 +39,7 @@ class EventViewSet(viewsets.ModelViewSet):
 	def create(self, request):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
+			user = request.user
 			title = serializer.validated_data['title']
 			location = serializer.validated_data['location'] if 'location' in serializer.validated_data else None
 			start_date = serializer.validated_data['start_date']
@@ -46,7 +48,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			end_time = serializer.validated_data['end_time'] if 'end_time' in serializer.validated_data else None
 			users = serializer.validated_data['users']
 			event = Event.objects.create(
-				title=title, location=location, start_date=start_date, end_date=end_date, start_time=start_time, end_time=end_time
+				author=user, title=title, location=location, start_date=start_date, end_date=end_date, start_time=start_time, end_time=end_time
 			)
 			for user in users:
 				event.users.add(user)
@@ -97,7 +99,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				{"detail": {"code": "BAD_REQUEST", "message": "Некоректный временной диапазон"}},
 				status=400)
 		try:
-			events = Event.objects.filter(users__pk=user.id, repeats=False, start_date__lte=end_date, end_date__gte=start_date).order_by('start_date', 'start_time')
+			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), repeats=False, start_date__lte=end_date, end_date__gte=start_date).order_by('start_date', 'start_time')
 			repeated_events = Event.objects.filter(users__pk=user.id, repeats=True, start_date__lte=end_date, end_repeat__gte=start_date)
 			print('repeated_events: ', repeated_events)
 		except ValidationError:
