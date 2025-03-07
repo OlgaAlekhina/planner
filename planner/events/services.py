@@ -6,14 +6,7 @@ from dateutil.parser import *
 def get_dates(metadata, start_date, end_date, event_start, event_end=None):
 	saved_args = {**locals()}
 	print("saved_args is", saved_args)
-	if metadata['daily']:
-		freq = DAILY
-	elif metadata['weekly']:
-		freq = WEEKLY
-	elif metadata['monthly']:
-		freq = MONTHLY
-	else:
-		freq = YEARLY
+	freq = metadata['freq']
 	start_date = parse(start_date)
 	end_date = parse(end_date)
 	if not event_end or datetime.date(end_date) <= event_end:

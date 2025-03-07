@@ -3,10 +3,10 @@ from django.contrib.auth.models import User
 
 
 EVENT_FREQ = [
-	('DAILY', 'Daily'),
-	('WEEKLY', 'Weekly'),
-	('MONTHLY', 'Monthly'),
-	('YEARLY', 'Yearly')
+	(3, 'Daily'),
+	(2, 'Weekly'),
+	(1, 'Monthly'),
+	(0, 'Yearly')
 ]
 
 class Event(models.Model):
@@ -27,7 +27,7 @@ class Event(models.Model):
 
 class EventMeta(models.Model):
 	event = models.OneToOneField(Event, on_delete=models.CASCADE)
-	freq = models.CharField(max_length=7, choices=EVENT_FREQ)
+	freq = models.IntegerField(choices=EVENT_FREQ)
 	interval = models.IntegerField(default=1)
 	byweekday = models.CharField(max_length=50, blank=True, null=True)
 	bymonthday = models.CharField(max_length=50, blank=True, null=True)
