@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.exceptions import ValidationError
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -97,20 +99,27 @@ class EventViewSet(viewsets.ModelViewSet):
 		end_date = request.GET.get('end_date')
 		if start_date > end_date:
 			return Response(
-				{"detail": {"code": "BAD_REQUEST", "message": "Некоректный временной диапазон"}},
+				{"detail": {"code": "BAD_REQUEST", "message": "Некорректный временной диапазон"}},
 				status=400)
 		try:
 			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), repeats=False, start_date__lte=end_date, end_date__gte=start_date).distinct().order_by('start_date', 'start_time')
 			repeated_events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), Q(end_repeat__gte=start_date) | Q(end_repeat__isnull=True), repeats=True, start_date__lte=end_date)
 			print('repeated_events: ', repeated_events)
 			for repeated_event in repeated_events:
+				duration = repeated_event.end_date - repeated_event.start_date
+				print('duration: ', duration)
 				metadata = EventMetaSerializer(repeated_event.eventmeta).data
 				print('metadata: ', metadata)
-				event_dates = get_dates(metadata, start_date, end_date, repeated_event.start_date, repeated_event.end_repeat)
+				event_dates = get_dates(metadata, start_date, end_date, repeated_event.start_date, repeated_event.end_date, repeated_event.end_repeat)
 				print('dates: ', event_dates)
+				for event_date in event_dates:
+					repeated_event.start_date = datetime.date(event_date)
+					if duration.days > 1:
+						repeated_event.end_date = datetime.date(event_date) + duration
+					print(EventSerializer(repeated_event).data)
 		except ValidationError:
 			return Response(
-				{"detail": {"code": "BAD_REQUEST", "message": "Некоректная дата"}},
+				{"detail": {"code": "BAD_REQUEST", "message": "Некорректная дата"}},
 				status=400)
 		response = []
 		for event in events:
