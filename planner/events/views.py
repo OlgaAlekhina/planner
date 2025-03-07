@@ -6,9 +6,10 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Event
-from .serializers import EventSerializer
+from .serializers import EventSerializer, EventMetaSerializer
 from users.serializers import ErrorResponseSerializer
 from django.db.models import Q
+from .services import get_dates
 from django.contrib.auth.models import User
 
 
@@ -102,6 +103,11 @@ class EventViewSet(viewsets.ModelViewSet):
 			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), repeats=False, start_date__lte=end_date, end_date__gte=start_date).distinct().order_by('start_date', 'start_time')
 			repeated_events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), Q(end_repeat__gte=start_date) | Q(end_repeat__isnull=True), repeats=True, start_date__lte=end_date)
 			print('repeated_events: ', repeated_events)
+			for repeated_event in repeated_events:
+				metadata = EventMetaSerializer(repeated_event.eventmeta).data
+				print('metadata: ', metadata)
+				event_dates = get_dates(metadata, start_date, end_date, repeated_event.start_date, repeated_event.end_repeat)
+				print('dates: ', event_dates)
 		except ValidationError:
 			return Response(
 				{"detail": {"code": "BAD_REQUEST", "message": "Некоректная дата"}},
