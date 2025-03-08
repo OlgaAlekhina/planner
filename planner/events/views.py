@@ -94,6 +94,7 @@ class EventViewSet(viewsets.ModelViewSet):
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
 	)
 	def list(self, request, *args, **kwargs):
+		response = []
 		user = request.user
 		start_date = request.GET.get('start_date')
 		end_date = request.GET.get('end_date')
@@ -102,7 +103,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				{"detail": {"code": "BAD_REQUEST", "message": "Некорректный временной диапазон"}},
 				status=400)
 		try:
-			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), repeats=False, start_date__lte=end_date, end_date__gte=start_date).distinct().order_by('start_date', 'start_time')
+			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), repeats=False, start_date__lte=end_date, end_date__gte=start_date).distinct()
 			repeated_events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), Q(end_repeat__gte=start_date) | Q(end_repeat__isnull=True), repeats=True, start_date__lte=end_date)
 			print('repeated_events: ', repeated_events)
 			for repeated_event in repeated_events:
@@ -116,14 +117,14 @@ class EventViewSet(viewsets.ModelViewSet):
 					repeated_event.start_date = datetime.date(event_date)
 					if duration.days > 1:
 						repeated_event.end_date = datetime.date(event_date) + duration
-					print(EventSerializer(repeated_event).data)
+					response.append(EventSerializer(repeated_event).data)
 		except ValidationError:
 			return Response(
 				{"detail": {"code": "BAD_REQUEST", "message": "Некорректная дата"}},
 				status=400)
-		response = []
 		for event in events:
 			response.append(EventSerializer(event).data)
+		response.sort(key=lambda x: (x['start_date'], x['start_time']))
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"}, "data": response}, status=200)
 
 	@swagger_auto_schema(
