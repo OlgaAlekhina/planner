@@ -12,12 +12,12 @@ def get_dates(metadata, start_date, end_date, event_start, event_end, end_repeat
 	interval = metadata['interval']
 	# вычисляем дату начала для периодических событий
 	if interval > 1 and event_end < datetime.date(start_date):
-		# если повторение по дням
+		# если событие повторяется по дням
 		if metadata['freq'] == 3:
 			days_delta = (datetime.date(start_date) - event_start).days
 			if days_delta % interval > 0:
 				start_date += timedelta(days=interval-days_delta % interval)
-		# если повторение по неделям
+		# если событие повторяется по неделям
 		elif metadata['freq'] == 2:
 			pass
 	elif event_start > datetime.date(start_date) or event_start < datetime.date(start_date) <= event_end:
