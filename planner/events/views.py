@@ -104,7 +104,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				status=400)
 		try:
 			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), repeats=False, start_date__lte=end_date, end_date__gte=start_date).distinct()
-			repeated_events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), Q(end_repeat__gte=start_date) | Q(end_repeat__isnull=True), repeats=True, start_date__lte=end_date)
+			repeated_events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), Q(end_repeat__gte=start_date) | Q(end_repeat__isnull=True), repeats=True, start_date__lte=end_date).distinct()
 			print('repeated_events: ', repeated_events)
 			for repeated_event in repeated_events:
 				duration = repeated_event.end_date - repeated_event.start_date
@@ -115,8 +115,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				print('dates: ', event_dates)
 				for event_date in event_dates:
 					repeated_event.start_date = datetime.date(event_date)
-					if duration.days > 1:
-						repeated_event.end_date = datetime.date(event_date) + duration
+					repeated_event.end_date = datetime.date(event_date) + duration
 					response.append(EventSerializer(repeated_event).data)
 		except ValidationError:
 			return Response(

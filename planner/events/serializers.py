@@ -28,5 +28,5 @@ class EventMetaSerializer(serializers.ModelSerializer):
 		ret = super().to_representation(instance)
 		# переводим строку, содержащую дни недели, в кортеж чисел
 		if ret['byweekday']:
-			ret['byweekday'] = tuple(map(int, ret['byweekday'].split(',')))
+			ret['byweekday'] = sorted(tuple(map(int, ret['byweekday'].split(','))))
 		return ret
