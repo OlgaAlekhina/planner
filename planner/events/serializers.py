@@ -22,7 +22,7 @@ class EventMetaSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = EventMeta
-		fields = ('freq', 'interval', 'byweekday', 'bymonthday')
+		fields = ('freq', 'interval', 'byweekday', 'bymonthday', 'bymonth', 'byweekno')
 
 	def to_representation(self, instance):
 		ret = super().to_representation(instance)

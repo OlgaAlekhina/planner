@@ -9,6 +9,22 @@ EVENT_FREQ = [
 	(0, 'Yearly')
 ]
 
+MONTHS = [
+	(0, None),
+	(1, 'January'),
+	(2, 'Fabruary'),
+	(3, 'March'),
+	(4, 'April'),
+	(5, 'May'),
+	(6, 'June'),
+	(7, 'July'),
+	(8, 'August'),
+	(9, 'September'),
+	(10, 'October'),
+	(11, 'November'),
+	(12, 'December')
+]
+
 class Event(models.Model):
 	author = models.ForeignKey(User, on_delete=models.CASCADE)
 	title = models.CharField(max_length=100)
@@ -31,6 +47,8 @@ class EventMeta(models.Model):
 	interval = models.IntegerField(default=1)
 	byweekday = models.CharField(max_length=50, blank=True, null=True)
 	bymonthday = models.CharField(max_length=50, blank=True, null=True)
+	bymonth = models.IntegerField(choices=MONTHS, blank=True, null=True)
+	byweekno = models.IntegerField(blank=True, null=True)
 
 	def __str__(self):
 		return f"event{self.event.id}, {self.event.title}"
