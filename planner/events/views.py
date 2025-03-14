@@ -7,8 +7,8 @@ from rest_framework import viewsets, status
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import Event
-from .serializers import EventSerializer, EventMetaSerializer
+from .models import Event, EventMeta
+from .serializers import EventSerializer, EventMetaSerializer, EventCreateSerializer, EventListSerializer
 from users.serializers import ErrorResponseSerializer
 from django.db.models import Q
 from .services import get_dates
@@ -23,14 +23,14 @@ class EventViewSet(viewsets.ModelViewSet):
 	permission_classes = [IsAuthenticated]
 
 	def get_serializer_class(self):
-		if self.action == 'add_user':
-			return EventSerializer
+		if self.action == 'create':
+			return EventCreateSerializer
 		else:
 			return EventSerializer
 
 	@swagger_auto_schema(
 		responses={
-			201: openapi.Response(description="Успешное создание события", schema=EventSerializer()),
+			201: openapi.Response(description="Успешное создание события", schema=EventCreateSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
@@ -43,19 +43,22 @@ class EventViewSet(viewsets.ModelViewSet):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			user = request.user
-			title = serializer.validated_data['title']
-			location = serializer.validated_data['location'] if 'location' in serializer.validated_data else None
-			start_date = serializer.validated_data['start_date']
-			end_date = serializer.validated_data['end_date']
-			start_time = serializer.validated_data['start_time'] if 'start_time' in serializer.validated_data else None
-			end_time = serializer.validated_data['end_time'] if 'end_time' in serializer.validated_data else None
-			users = serializer.validated_data['users']
-			event = Event.objects.create(
-				author=user, title=title, location=location, start_date=start_date, end_date=end_date, start_time=start_time, end_time=end_time
-			)
+			event_data = serializer.validated_data.get('event_data')
+			event_meta = serializer.validated_data.get('repeat_pattern')
+			users = event_data.pop('users')
+			# создаем новое событие в БД
+			event = Event.objects.create(author=user, **event_data)
+			# добавляем участников события вручную
 			for user in users:
 				event.users.add(user)
-			return Response({"detail": {"code": "HTTP_201_OK", "message": "Событие создано"}, "data": EventSerializer(event).data}, status=201)
+			response = {
+				'event_data': EventSerializer(event).data,
+			}
+			# если были получены метаданные, делаем запись в таблице
+			if event_meta:
+				meta = EventMeta.objects.create(event=event, **event_meta)
+				response.update(EventMetaSerializer(meta).data)
+			return Response({"detail": {"code": "HTTP_201_OK", "message": "Событие создано"}, "data": response}, status=201)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
@@ -82,7 +85,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			)
 		],
 		responses={
-			200: openapi.Response(description="Успешный ответ", schema=EventSerializer()),
+			200: openapi.Response(description="Успешный ответ", schema=EventListSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
@@ -117,13 +120,13 @@ class EventViewSet(viewsets.ModelViewSet):
 				for event_date in event_dates:
 					repeated_event.start_date = datetime.date(event_date)
 					repeated_event.end_date = datetime.date(event_date) + duration
-					response.append(EventSerializer(repeated_event).data)
+					response.append(EventListSerializer(repeated_event).data)
 		except ValidationError:
 			return Response(
 				{"detail": {"code": "BAD_REQUEST", "message": "Некорректная дата"}},
 				status=400)
 		for event in events:
-			response.append(EventSerializer(event).data)
+			response.append(EventListSerializer(event).data)
 		response.sort(key=lambda x: (x['start_date'], x['start_time']))
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"}, "data": response}, status=200)
 
