@@ -1,5 +1,5 @@
-from datetime import datetime
-
+from datetime import datetime, time, date
+from dateutil.parser import parse
 from django.core.exceptions import ValidationError
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -113,10 +113,16 @@ class EventViewSet(viewsets.ModelViewSet):
 			print('repeated_events: ', repeated_events)
 			for repeated_event in repeated_events:
 				duration = repeated_event.end_date - repeated_event.start_date
+				# получаем метаданные, описывающие паттерн повторений события
 				metadata = EventMetaSerializer(repeated_event.eventmeta).data
-				print('metadata: ', metadata)
+				# передаем данные в функцию, которая вычисляет все повторения в заданном диапазоне времени, и возвращает список объектов datetime
 				event_dates = get_dates(metadata, filter_start, filter_end, repeated_event.start_date, repeated_event.end_date, repeated_event.end_repeat)
 				print('dates: ', event_dates)
+				event_start_datetime = datetime.combine(repeated_event.start_date, time.min)
+				# если дата начала события не соответствует паттерну повторений, но находится в диапазоне фильтрации, добавляем ее в список дат
+				if repeated_event.start_date <= datetime.date(parse(filter_end)) and repeated_event.end_date >= datetime.date(parse(filter_start)) and event_start_datetime not in event_dates:
+					event_dates.append(event_start_datetime)
+					print('dates2: ', event_dates)
 				for event_date in event_dates:
 					repeated_event.start_date = datetime.date(event_date)
 					repeated_event.end_date = datetime.date(event_date) + duration

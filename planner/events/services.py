@@ -4,7 +4,14 @@ from dateutil.parser import *
 from dateutil.relativedelta import relativedelta
 
 
-def get_dates(metadata, filter_start, filter_end, event_start, event_end, end_repeat=None):
+def get_dates(
+		metadata: dict,
+		filter_start: str,
+		filter_end: str,
+		event_start: datetime.date,
+		event_end: datetime.date,
+		end_repeat: datetime.date
+	) -> list[datetime]:
 	""" Функция для вычисления списка дат для повторяющихся событий с помощью библиотеки rrule """
 	saved_args = {**locals()}
 	print("saved_args is", saved_args)
@@ -41,7 +48,7 @@ def get_dates(metadata, filter_start, filter_end, event_start, event_end, end_re
 			if month_count % interval != 0:
 				filter_start += relativedelta(months=interval - month_count % interval)
 				filter_start = filter_start.replace(day=1)
-		# если событие повторяется по годам
+		# если событие повторяется по годам (metadata['freq'] == 0)
 		else:
 			# считаем количество лет между стартовой датой поиска (filter_start) и датой начала события (event_start)
 			year_count = filter_start.year - event_start.year
