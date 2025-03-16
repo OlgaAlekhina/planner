@@ -144,7 +144,8 @@ SWAGGER_SETTINGS = {
     'DEFAULT_MODEL_RENDERING': 'example',
     'SECURITY_DEFINITIONS': {
             'Bearer token': {
-                'description': 'Enter token value with Bearer prefix, e.g. "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6"',
+                'description': 'Enter token value with Bearer prefix, e.g. '
+                               '"Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6"',
                 'type': 'apiKey',
                 'in': 'header',
                 'name': 'Authorization',

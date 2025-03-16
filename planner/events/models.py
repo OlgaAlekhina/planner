@@ -52,3 +52,11 @@ class EventMeta(models.Model):
 
 	def __str__(self):
 		return f"event{self.event.id}, {self.event.title}"
+
+
+class CanceledEvent(models.Model):
+	event = models.ForeignKey(Event, on_delete=models.CASCADE)
+	cancel_date = models.DateField()
+
+
+
