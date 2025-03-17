@@ -17,6 +17,7 @@ def get_dates(
 	print("saved_args is", saved_args)
 	filter_start = parse(filter_start)
 	filter_end = parse(filter_end)
+	# количество дней между началом и концом события (минимум 1 день)
 	duration = (event_end - event_start).days + 1
 	interval = metadata['interval']
 
@@ -26,7 +27,6 @@ def get_dates(
 		if metadata['freq'] == 3:
 			# вычисляем количество дней между стартовой датой поиска (filter_start) и датой начала события (event_start)
 			days_count = (datetime.date(filter_start) - event_start).days
-			print('days_count: ', days_count)
 			print('duration: ', duration)
 			mod = days_count % interval
 			print('mod: ', mod)
@@ -48,6 +48,9 @@ def get_dates(
 			nearest_date = datetime.date(filter_start) - timedelta(days=startdate_weekday - event_weekday)
 			# определяем количество дней между датами и проверяем, попали ли мы в правильную неделю
 			week_count = (nearest_date - event_start).days / 7
+			print('week_count: ', week_count)
+			mod = week_count % interval
+			print('mod: ', mod)
 			if week_count % interval != 0:
 				# если мы попали в правильную неделю, то оставляем filter_start, если нет - вычисляем нужную неделю и в качестве старта берем понедельник
 				filter_start += timedelta(weeks=interval - week_count % interval) - timedelta(days=startdate_weekday)
