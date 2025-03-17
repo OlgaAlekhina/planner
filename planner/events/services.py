@@ -17,16 +17,27 @@ def get_dates(
 	print("saved_args is", saved_args)
 	filter_start = parse(filter_start)
 	filter_end = parse(filter_end)
+	duration = (event_end - event_start).days + 1
 	interval = metadata['interval']
+
 	# вычисляем дату начала для периодических событий
 	if interval > 1 and event_end < datetime.date(filter_start):
 		# если событие повторяется по дням
 		if metadata['freq'] == 3:
 			# вычисляем количество дней между стартовой датой поиска (filter_start) и датой начала события (event_start)
 			days_count = (datetime.date(filter_start) - event_start).days
+			print('days_count: ', days_count)
+			print('duration: ', duration)
+			mod = days_count % interval
+			print('mod: ', mod)
 			# если не попали в интервал повторений, определяем новую дату начала повторений
-			if days_count % interval > 0:
-				filter_start += timedelta(days=interval - days_count % interval)
+			if duration <= mod:
+				print('1')
+				filter_start += timedelta(days=interval - mod)
+			else:
+				print('2')
+				filter_start -= timedelta(days=mod)
+
 		# если событие повторяется по неделям
 		elif metadata['freq'] == 2:
 			# определяем день недели даты начала события (event_start)
@@ -40,6 +51,7 @@ def get_dates(
 			if week_count % interval != 0:
 				# если мы попали в правильную неделю, то оставляем filter_start, если нет - вычисляем нужную неделю и в качестве старта берем понедельник
 				filter_start += timedelta(weeks=interval - week_count % interval) - timedelta(days=startdate_weekday)
+
 		# если событие повторяется по месяцам
 		elif metadata['freq'] == 1:
 			# считаем количество месяцев между стартовой датой поиска (filter_start) и датой начала события (event_start)
@@ -48,6 +60,7 @@ def get_dates(
 			if month_count % interval != 0:
 				filter_start += relativedelta(months=interval - month_count % interval)
 				filter_start = filter_start.replace(day=1)
+
 		# если событие повторяется по годам (metadata['freq'] == 0)
 		else:
 			# считаем количество лет между стартовой датой поиска (filter_start) и датой начала события (event_start)
@@ -56,9 +69,12 @@ def get_dates(
 			if year_count % interval != 0:
 				filter_start += relativedelta(years=interval - year_count % interval)
 				filter_start = filter_start.replace(day=1, month=1)
+
 	# если событие начинается позже, чем начало поиска, или начало поиска совпадает или раньше даты окончания события, то стартом будет дата начала события
 	elif event_start > datetime.date(filter_start) or event_start < datetime.date(filter_start) <= event_end:
 		filter_start = event_start
+
+	# определяем конец повторений
 	until = filter_end if not end_repeat or datetime.date(filter_end) <= end_repeat else end_repeat
 	metadata['dtstart'] = filter_start
 	metadata['until'] = until

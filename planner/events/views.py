@@ -59,7 +59,8 @@ class EventViewSet(viewsets.ModelViewSet):
 			if event_meta:
 				meta = EventMeta.objects.create(event=event, **event_meta)
 				response.update(EventMetaSerializer(meta).data)
-			return Response({"detail": {"code": "HTTP_201_OK", "message": "Событие создано"}, "data": response}, status=201)
+			return Response({"detail": {"code": "HTTP_201_OK", "message": "Событие создано"}, "data": response},
+							status=201)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
@@ -130,6 +131,9 @@ class EventViewSet(viewsets.ModelViewSet):
 															  and event_start_datetime not in event_dates):
 					event_dates.append(event_start_datetime)
 					print('dates2: ', event_dates)
+				# получаем даты отмененных событий в заданном временном интервале
+				canceled_events = CanceledEvent.objects.filter(event=repeated_event, cancel_date__lte=filter_end, cancel_date__gte=parse(filter_start)-duration)
+				print('canceled_events: ', canceled_events)
 				for event_date in event_dates:
 					repeated_event.start_date = datetime.date(event_date)
 					repeated_event.end_date = datetime.date(event_date) + duration
