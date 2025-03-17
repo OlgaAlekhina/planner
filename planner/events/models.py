@@ -58,5 +58,8 @@ class CanceledEvent(models.Model):
 	event = models.ForeignKey(Event, on_delete=models.CASCADE)
 	cancel_date = models.DateField()
 
+	def __str__(self):
+		return f"event{self.event.id}, {self.event.title}-{self.cancel_date}"
+
 
 

@@ -7,12 +7,13 @@ from rest_framework import viewsets, status
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import Event, EventMeta
+from .models import Event, EventMeta, CanceledEvent
 from .serializers import EventSerializer, EventMetaSerializer, EventCreateSerializer, EventListSerializer
 from users.serializers import ErrorResponseSerializer
 from django.db.models import Q
 from .services import get_dates
 from django.contrib.auth.models import User
+from planner.permissions import EventPermission
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -20,7 +21,7 @@ class EventViewSet(viewsets.ModelViewSet):
 	queryset = Event.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
 	parser_classes = (JSONParser, MultiPartParser)
-	permission_classes = [IsAuthenticated]
+	permission_classes = [IsAuthenticated, EventPermission]
 
 	def get_serializer_class(self):
 		if self.action == 'create':
@@ -107,20 +108,26 @@ class EventViewSet(viewsets.ModelViewSet):
 				status=400)
 		try:
 			# получаем все события без повторений в нужном временном интервале
-			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), repeats=False, start_date__lte=filter_end, end_date__gte=filter_start).distinct()
+			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), repeats=False, start_date__lte=filter_end,
+										  end_date__gte=filter_start).distinct()
 			# получаем все события с повторениями в интервале start_date - end_repeat
-			repeated_events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), Q(end_repeat__gte=filter_start) | Q(end_repeat__isnull=True), repeats=True, start_date__lte=filter_end).distinct()
+			repeated_events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), Q(end_repeat__gte=filter_start)
+												   | Q(end_repeat__isnull=True), repeats=True, start_date__lte=filter_end).distinct()
 			print('repeated_events: ', repeated_events)
 			for repeated_event in repeated_events:
 				duration = repeated_event.end_date - repeated_event.start_date
 				# получаем метаданные, описывающие паттерн повторений события
 				metadata = EventMetaSerializer(repeated_event.eventmeta).data
-				# передаем данные в функцию, которая вычисляет все повторения в заданном диапазоне времени, и возвращает список объектов datetime
-				event_dates = get_dates(metadata, filter_start, filter_end, repeated_event.start_date, repeated_event.end_date, repeated_event.end_repeat)
+				# передаем данные в функцию, которая вычисляет все повторения в заданном диапазоне времени,
+				# и возвращает список объектов datetime
+				event_dates = get_dates(metadata, filter_start, filter_end, repeated_event.start_date, repeated_event.end_date,
+										repeated_event.end_repeat)
 				print('dates: ', event_dates)
 				event_start_datetime = datetime.combine(repeated_event.start_date, time.min)
-				# если дата начала события не соответствует паттерну повторений, но находится в диапазоне фильтрации, добавляем ее в список дат
-				if repeated_event.start_date <= datetime.date(parse(filter_end)) and repeated_event.end_date >= datetime.date(parse(filter_start)) and event_start_datetime not in event_dates:
+				# если дата начала события не соответствует паттерну повторений, но находится в диапазоне фильтрации,
+				# добавляем ее в список дат
+				if (repeated_event.start_date <= datetime.date(parse(filter_end)) and repeated_event.end_date >= datetime.date(parse(filter_start))
+															  and event_start_datetime not in event_dates):
 					event_dates.append(event_start_datetime)
 					print('dates2: ', event_dates)
 				for event_date in event_dates:
@@ -134,19 +141,62 @@ class EventViewSet(viewsets.ModelViewSet):
 		for event in events:
 			response.append(EventListSerializer(event).data)
 		response.sort(key=lambda x: (x['start_date'], x['start_time']))
-		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"}, "data": response}, status=200)
+		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"},
+						 "data": response}, status=200)
 
 	@swagger_auto_schema(
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=EventSerializer()),
-			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация",
+								  examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Событие не найдено", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса",
+								  examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Получение события по id",
 		operation_description="Получает данные события по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'")
 	def retrieve(self, request, pk):
 		event = self.get_object()
-		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные события получены."}, "data": self.get_serializer(event).data}
+		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные события получены."},
+					"data": self.get_serializer(event).data}
 		return Response(response, status=200)
+
+	@swagger_auto_schema(
+		manual_parameters=[
+			openapi.Parameter(
+				'cancel_date',
+				openapi.IN_QUERY,
+				description='Дата в формате "2025-02-28", передается только в том случае, когда надо удалить '
+							'повторяющееся событие только в конкретный день',
+				type=openapi.TYPE_STRING,
+				format=openapi.FORMAT_DATE,
+				),
+			],
+		responses={
+			204: openapi.Response(description="Успешное удаление события"),
+			401: openapi.Response(description="Требуется авторизация",
+								  examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Событие не найдено", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса",
+								  examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Удаление события по id",
+		operation_description="Удаляет событие из базы данных по его id.\n"
+							  "Чтобы удалить только одно повторяющееся событие на конкретную дату, надо передать параметр cancel_date.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Пользователь может удалить только созданное им событие."
+	)
+	def destroy(self, request, pk):
+		event = self.get_object()
+		cancel_date = request.GET.get('cancel_date')
+		# если надо удалить событие вместе с повторами из БД
+		if not cancel_date:
+			event.delete()
+		# чтобы удалить только один повтор события, делаем запись в БД в таблицу CanceledEvent
+		else:
+			CanceledEvent.objects.create(event=event, cancel_date=cancel_date)
+		return Response(status=204)
+
+

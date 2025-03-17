@@ -39,5 +39,23 @@ class GroupPermission(permissions.BasePermission):
         return True
 
 
+class EventPermission(permissions.BasePermission):
+    """
+    разрешает пользователю удалять и редактировать только созданные им события
+    """
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser:
+            return True
+
+        if view.action in ['destroy', 'partial_update']:
+            return request.user.is_authenticated and obj.author == request.user
+
+        return True
+
+
+
+
+
 
 
