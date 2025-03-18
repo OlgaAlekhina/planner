@@ -8,6 +8,14 @@ class EventSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Event
 		exclude = ['author']
+		extra_kwargs = {
+			'start_time': {
+				'help_text': 'Время начала события в формате 06:30:00'
+			},
+			'end_time': {
+				'help_text': 'Время завершения события в формате 07:30:00'
+			}
+		}
 
 
 class EventListSerializer(serializers.ModelSerializer):

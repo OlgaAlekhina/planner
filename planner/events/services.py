@@ -30,9 +30,8 @@ def get_dates(
 			print('duration: ', duration)
 			mod = days_count % interval
 			print('mod: ', mod)
-			# если не попали в интервал повторений, определяем новую дату начала повторений
+			# определяем новую дату начала повторений
 			if duration <= mod:
-				print('1')
 				filter_start += timedelta(days=interval - mod)
 			else:
 				print('2')
@@ -40,6 +39,9 @@ def get_dates(
 
 		# если событие повторяется по неделям
 		elif metadata['freq'] == 2:
+			filter_start -= timedelta(days=duration-1)
+			print('FS: ', filter_start)
+			days_count = (datetime.date(filter_start) - event_start).days
 			# определяем день недели даты начала события (event_start)
 			event_weekday = event_start.weekday()
 			# определяем день недели стартовой даты поиска (filter_start)
@@ -49,11 +51,19 @@ def get_dates(
 			# определяем количество дней между датами и проверяем, попали ли мы в правильную неделю
 			week_count = (nearest_date - event_start).days / 7
 			print('week_count: ', week_count)
-			mod = week_count % interval
+			mod = days_count % interval * 7
 			print('mod: ', mod)
-			if week_count % interval != 0:
-				# если мы попали в правильную неделю, то оставляем filter_start, если нет - вычисляем нужную неделю и в качестве старта берем понедельник
+			if week_count % interval > 0:
+			# if duration <= mod:
+				print('1')
+				# если мы попали в правильную неделю, то оставляем filter_start, если нет - вычисляем нужную неделю и в
+				# качестве старта берем понедельник
+				# filter_start += timedelta(days=interval * 7 - mod) - timedelta(days=startdate_weekday)
 				filter_start += timedelta(weeks=interval - week_count % interval) - timedelta(days=startdate_weekday)
+			# else:
+			# 	# if duration <= mod:
+			# 	print('2')
+			# 	filter_start -= timedelta(days=duration-1)
 
 		# если событие повторяется по месяцам
 		elif metadata['freq'] == 1:

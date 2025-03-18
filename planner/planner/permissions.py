@@ -51,6 +51,11 @@ class EventPermission(permissions.BasePermission):
         if view.action in ['destroy', 'partial_update']:
             return request.user.is_authenticated and obj.author == request.user
 
+        # проверяем, что текущий пользователь является автором или участником события, для выдачи доступа к просмотру
+        # этого события
+        if view.action in ['retrieve']:
+            return request.user.is_authenticated and (obj.author is request.user or request.user in obj.users.all())
+
         return True
 
 
