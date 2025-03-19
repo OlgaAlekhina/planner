@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Event, EventMeta
+from users.serializers import DetailSerializer
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -38,7 +39,7 @@ class EventMetaSerializer(serializers.ModelSerializer):
 	bymonthday = serializers.CharField(max_length=50, required=False,
 									  help_text='Список дней месяца через запятую, например, "1, 28" - для повторов 1-ого и 28-ого числа')
 	bymonth = serializers.IntegerField(min_value=1, max_value=12, help_text='Номер месяца', required=False)
-	byweekno = serializers.IntegerField(min_value=1, max_value=5, help_text='Номер недели', required=False)
+	byweekno = serializers.IntegerField(min_value=1, max_value=6, help_text='Номер недели', required=False)
 
 	class Meta:
 		model = EventMeta
@@ -59,4 +60,10 @@ class EventCreateSerializer(serializers.Serializer):
 	""" Сериализатор для создания события """
 	event_data = EventSerializer()
 	repeat_pattern = EventMetaSerializer(required=False)
+
+
+class EventResponseSerializer(serializers.Serializer):
+	""" Сериализатор ответа сервера для получения события """
+	detail = DetailSerializer()
+	data = EventCreateSerializer()
 

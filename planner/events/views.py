@@ -8,7 +8,8 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Event, EventMeta, CanceledEvent
-from .serializers import EventSerializer, EventMetaSerializer, EventCreateSerializer, EventListSerializer
+from .serializers import EventSerializer, EventMetaSerializer, EventCreateSerializer, EventListSerializer, \
+	EventResponseSerializer
 from users.serializers import ErrorResponseSerializer
 from django.db.models import Q
 from .services import get_dates
@@ -31,7 +32,7 @@ class EventViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
-			201: openapi.Response(description="Успешное создание события", schema=EventCreateSerializer()),
+			201: openapi.Response(description="Успешное создание события", schema=EventResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
@@ -132,7 +133,8 @@ class EventViewSet(viewsets.ModelViewSet):
 					event_dates.append(event_start_datetime)
 					print('dates2: ', event_dates)
 				# получаем даты отмененных событий в заданном временном интервале
-				canceled_events = CanceledEvent.objects.filter(event=repeated_event, cancel_date__lte=filter_end, cancel_date__gte=parse(filter_start)-duration)
+				canceled_events = CanceledEvent.objects.filter(event=repeated_event, cancel_date__lte=filter_end,
+															   cancel_date__gte=parse(filter_start)-duration)
 				print('canceled_events: ', canceled_events)
 				for event_date in event_dates:
 					repeated_event.start_date = datetime.date(event_date)
@@ -144,13 +146,14 @@ class EventViewSet(viewsets.ModelViewSet):
 				status=400)
 		for event in events:
 			response.append(EventListSerializer(event).data)
-		response.sort(key=lambda x: (x['start_date'], x['start_time']))
+		# сортируем итоговый список событий сперва по дате, а затем по времени
+		response.sort(key=lambda x: (x['start_date'], x['start_time'] if x['start_time'] is not None else ''))
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"},
 						 "data": response}, status=200)
 
 	@swagger_auto_schema(
 		responses={
-			200: openapi.Response(description="Успешный ответ", schema=EventSerializer()),
+			200: openapi.Response(description="Успешный ответ", schema=EventResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация",
 								  examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Событие не найдено", examples={"application/json": {"detail": "string"}}),
@@ -162,8 +165,13 @@ class EventViewSet(viewsets.ModelViewSet):
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'")
 	def retrieve(self, request, pk):
 		event = self.get_object()
+		response_data = {"event_data": self.get_serializer(event).data, "repeat_pattern": {}}
+		try:
+			response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
+		except:
+			pass
 		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные события получены."},
-					"data": self.get_serializer(event).data}
+					"data": response_data}
 		return Response(response, status=200)
 
 	@swagger_auto_schema(
