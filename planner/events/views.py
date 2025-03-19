@@ -25,7 +25,7 @@ class EventViewSet(viewsets.ModelViewSet):
 	permission_classes = [IsAuthenticated, EventPermission]
 
 	def get_serializer_class(self):
-		if self.action == 'create':
+		if self.action in ('create', 'partial_update'):
 			return EventCreateSerializer
 		else:
 			return EventSerializer
@@ -55,11 +55,12 @@ class EventViewSet(viewsets.ModelViewSet):
 				event.users.add(user)
 			response = {
 				'event_data': EventSerializer(event).data,
+				'repeat_pattern': {}
 			}
 			# если были получены метаданные, делаем запись в таблице
 			if event_meta:
 				meta = EventMeta.objects.create(event=event, **event_meta)
-				response.update(EventMetaSerializer(meta).data)
+				response['repeat_pattern'] = EventMetaSerializer(meta).data
 			return Response({"detail": {"code": "HTTP_201_OK", "message": "Событие создано"}, "data": response},
 							status=201)
 		response = {'detail': {
@@ -210,5 +211,47 @@ class EventViewSet(viewsets.ModelViewSet):
 		else:
 			CanceledEvent.objects.create(event=event, cancel_date=cancel_date)
 		return Response(status=204)
+
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=EventResponseSerializer()),
+			401: openapi.Response(description="Требуется авторизация",
+								  examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Событие не найдено", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса",
+								  examples={"application/json": {"error": "string"}})
+		},
+		operation_summary="Редактирование события по id",
+		operation_description="Эндпоинт для редактирования события.\nУсловия доступа к эндпоинту: токен авторизации в "
+							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Пользователь может редактировать только созданное им событие."
+	)
+	def partial_update(self, request, pk):
+		serializer = self.get_serializer(data=request.data)
+		if serializer.is_valid():
+			event = self.get_object()
+			event_data = serializer.validated_data.get('event_data')
+			event_meta = serializer.validated_data.get('repeat_pattern')
+			# если переданы данные события, обновляем их
+			if event_data:
+				Event.objects.filter(id=pk).update(**event_data)
+				event = Event.objects.get(id=pk)
+			# если переданы метаданные события, обновляем их
+			if event_meta:
+				EventMeta.objects.update_or_create(event=event, defaults=event_meta)
+			response_data = {"event_data": EventSerializer(event).data, "repeat_pattern": {}}
+			try:
+				response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
+			except:
+				pass
+			return Response(
+				{"detail": {"code": "HTTP_200_OK", "message": "Событие успешно изменено"},
+				 "data": response_data}, status=200)
+		response = {'detail': {
+			"code": "BAD_REQUEST",
+			"message": serializer.errors
+		}}
+		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 

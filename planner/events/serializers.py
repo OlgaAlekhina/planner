@@ -18,6 +18,17 @@ class EventSerializer(serializers.ModelSerializer):
 			}
 		}
 
+	def get_fields(self, *args, **kwargs):
+		fields = super(EventSerializer, self).get_fields(*args, **kwargs)
+		request = self.context.get('request', None)
+		# делаем поля необязательными в методе PATCH
+		if request and getattr(request, 'method', None) == "PATCH":
+			fields['title'].required = False
+			fields['start_date'].required = False
+			fields['end_date'].required = False
+			fields['users'].required = False
+		return fields
+
 
 class EventListSerializer(serializers.ModelSerializer):
 	""" Сериализатор для кратких данных события """
