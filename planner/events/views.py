@@ -235,24 +235,55 @@ class EventViewSet(viewsets.ModelViewSet):
 		operation_summary="Редактирование события по id",
 		operation_description="Эндпоинт для редактирования события.\n"
 							  "Чтобы редактировать только одно повторяющееся событие на конкретную дату, надо передать параметр change_date.\n"
+							  "Если пользователь удаляет повторения события в будущем, то надо установить поле end_repeat = start_date.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
 							  "Пользователь может редактировать только созданное им событие."
 	)
 	def partial_update(self, request, pk):
 		serializer = self.get_serializer(data=request.data)
 		change_date = request.GET.get('change_date')
-		print('change_date: ', change_date)
+
 		if serializer.is_valid():
 			event = self.get_object()
 			event_data = serializer.validated_data.get('event_data')
 			event_meta = serializer.validated_data.get('repeat_pattern')
-			# если переданы данные события, обновляем их
+
+			# если надо отредактировать только одно повторяющееся событие, удаляем его из повторяющихся и ставим отдельной
+			# записью в таблицу, как неповторяющееся
+			if change_date:
+				old_users = event.users.all()
+				event_duration = event.end_date - event.start_date
+				# добавляем событие в таблицу отмененных
+				CanceledEvent.objects.create(event=event, cancel_date=change_date)
+				# копируем исходное событие и создаем новый объект, меняя некоторые атрибуты
+				event.pk = None
+				event.start_date = change_date
+				event.end_date = parse(change_date) + event_duration
+				event.repeats = False
+				event.end_repeat = None
+				event.save()
+				# добавляем участников события
+				event.users.set(old_users)
+
+			# если переданы данные события, то обновляем их
 			if event_data:
-				Event.objects.filter(id=pk).update(**event_data)
-				event = Event.objects.get(id=pk)
-			# если переданы метаданные события, обновляем их
+				new_users = event_data.pop('users')
+				Event.objects.filter(id=event.id).update(**event_data)
+				# если передан список участников события, обновляем его в БД
+				if new_users:
+					old_users = event.users.all()
+					for user in old_users:
+						if user not in new_users:
+							event.users.remove(user)
+					for user in new_users:
+						if user not in old_users:
+							event.users.add(user)
+				event = Event.objects.get(id=event.id)
+
+			# если переданы метаданные события, то обновляем их
 			if event_meta:
 				EventMeta.objects.update_or_create(event=event, defaults=event_meta)
+
 			response_data = {"event_data": EventSerializer(event).data, "repeat_pattern": {}}
 			try:
 				response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
@@ -261,6 +292,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			return Response(
 				{"detail": {"code": "HTTP_200_OK", "message": "Событие успешно изменено"},
 				 "data": response_data}, status=200)
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
