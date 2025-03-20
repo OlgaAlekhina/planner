@@ -54,6 +54,8 @@ def get_dates(
 
 		# если событие повторяется по месяцам
 		elif metadata['freq'] == 1:
+			# сдвигаем дату начала периодического события, если оно длится более 1 дня
+			filter_start -= timedelta(days=duration - 1)
 			# считаем количество месяцев между стартовой датой поиска (filter_start) и датой начала события (event_start)
 			month_count = (filter_start.year - event_start.year) * 12 + filter_start.month - event_start.month
 			# если мы попали в правильный месяц, то оставляем filter_start, если нет - вычисляем нужный месяц и в качестве старта берем 1-ое число
@@ -63,6 +65,8 @@ def get_dates(
 
 		# если событие повторяется по годам (metadata['freq'] == 0)
 		else:
+			# сдвигаем дату начала периодического события, если оно длится более 1 дня
+			filter_start -= timedelta(days=duration - 1)
 			# считаем количество лет между стартовой датой поиска (filter_start) и датой начала события (event_start)
 			year_count = filter_start.year - event_start.year
 			# если мы попали в правильный год, то оставляем filter_start, если нет - вычисляем нужный год и в качестве старта берем 1 января
