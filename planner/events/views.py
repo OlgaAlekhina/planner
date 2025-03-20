@@ -213,6 +213,16 @@ class EventViewSet(viewsets.ModelViewSet):
 		return Response(status=204)
 
 	@swagger_auto_schema(
+		manual_parameters=[
+			openapi.Parameter(
+				'change_date',
+				openapi.IN_QUERY,
+				description='Дата в формате "2025-02-28", передается только в том случае, когда надо отредактировать '
+							'повторяющееся событие только в конкретный день',
+				type=openapi.TYPE_STRING,
+				format=openapi.FORMAT_DATE,
+			),
+		],
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=EventResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация",
@@ -223,12 +233,15 @@ class EventViewSet(viewsets.ModelViewSet):
 								  examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Редактирование события по id",
-		operation_description="Эндпоинт для редактирования события.\nУсловия доступа к эндпоинту: токен авторизации в "
-							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+		operation_description="Эндпоинт для редактирования события.\n"
+							  "Чтобы редактировать только одно повторяющееся событие на конкретную дату, надо передать параметр change_date.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
 							  "Пользователь может редактировать только созданное им событие."
 	)
 	def partial_update(self, request, pk):
 		serializer = self.get_serializer(data=request.data)
+		change_date = request.GET.get('change_date')
+		print('change_date: ', change_date)
 		if serializer.is_valid():
 			event = self.get_object()
 			event_data = serializer.validated_data.get('event_data')

@@ -371,7 +371,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
-			200: openapi.Response(description="Успешный ответ"),
+			200: openapi.Response(description="Успешный ответ", schema=GroupResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),

@@ -4,6 +4,8 @@ from .validators import validate_password_symbols, validate_email
 from .models import Group, SignupCode, GroupUser
 
 
+# общие сериализаторы
+
 class DetailSerializer(serializers.Serializer):
 	""" Сериализатор для деталей ответа """
 	code = serializers.CharField()
@@ -14,6 +16,8 @@ class ErrorResponseSerializer(serializers.Serializer):
 	""" Сериализатор для общего ответа об ошибке """
 	detail = DetailSerializer()
 
+
+# сериализаторы для авторизации/регистрации и работы с данными пользователей
 
 class YandexAuthSerializer(serializers.Serializer):
 	""" Сериализатор для OAuth токена от Яндекса """
@@ -99,6 +103,8 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
 		model = User
 		fields = ('email',)
 
+
+# сериализаторы для работы с группами
 
 class CustomBoolField(serializers.BooleanField):
 	""" Кастомное поле для проверки, является ли текущий пользователь владельцем группы """
