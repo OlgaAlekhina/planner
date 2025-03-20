@@ -267,7 +267,7 @@ class EventViewSet(viewsets.ModelViewSet):
 
 			# если переданы данные события, то обновляем их
 			if event_data:
-				new_users = event_data.pop('users')
+				new_users = event_data.pop('users', None)
 				Event.objects.filter(id=event.id).update(**event_data)
 				# если передан список участников события, обновляем его в БД
 				if new_users:

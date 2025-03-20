@@ -43,8 +43,8 @@ class EventMetaSerializer(serializers.ModelSerializer):
 	freq = serializers.IntegerField(min_value=0, max_value=3,
 									help_text='Паттерн повторений, возможные значения: 3 - для повторений по дням, 2 - по неделям,'
 																		' 1 - по месяцам, 0 - по годам')
-	interval = serializers.IntegerField(min_value=2, max_value=1000, required=False,
-										help_text='Интервал повторений, передавать надо, только если он больше 1')
+	interval = serializers.IntegerField(min_value=1, max_value=1000, required=False,
+										help_text='Интервал повторений, где 1 означает, что повторяется каждый день (неделю и т.д.)')
 	byweekday = serializers.CharField(max_length=50, required=False,
 									  help_text='Список дней недели через запятую, где 0 - понедельник, 6 - воскресенье')
 	bymonthday = serializers.CharField(max_length=50, required=False,
