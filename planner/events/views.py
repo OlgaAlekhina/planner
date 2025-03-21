@@ -105,46 +105,56 @@ class EventViewSet(viewsets.ModelViewSet):
 		user = request.user
 		filter_start = request.GET.get('start_date')
 		filter_end = request.GET.get('end_date')
+
 		if filter_start > filter_end:
 			return Response(
 				{"detail": {"code": "BAD_REQUEST", "message": "Некорректный временной диапазон"}},
 				status=400)
+
 		try:
-			# получаем все события без повторений в нужном временном интервале
+			# получаем все события без повторений в переданном временном интервале
 			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), repeats=False, start_date__lte=filter_end,
 										  end_date__gte=filter_start).distinct()
 			# получаем все события с повторениями в интервале start_date - end_repeat
 			repeated_events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), Q(end_repeat__gte=filter_start)
 												   | Q(end_repeat__isnull=True), repeats=True, start_date__lte=filter_end).distinct()
-			print('repeated_events: ', repeated_events)
-			for repeated_event in repeated_events:
-				duration = repeated_event.end_date - repeated_event.start_date
-				# получаем метаданные, описывающие паттерн повторений события
-				metadata = EventMetaSerializer(repeated_event.eventmeta).data
-				# передаем данные в функцию, которая вычисляет все повторения в заданном диапазоне времени,
-				# и возвращает список объектов datetime
-				event_dates = get_dates(metadata, filter_start, filter_end, repeated_event.start_date, repeated_event.end_date,
-										repeated_event.end_repeat)
-				print('dates: ', event_dates)
-				event_start_datetime = datetime.combine(repeated_event.start_date, time.min)
-				# если дата начала события не соответствует паттерну повторений, но находится в диапазоне фильтрации,
-				# добавляем ее в список дат
-				if (repeated_event.start_date <= datetime.date(parse(filter_end)) and repeated_event.end_date >= datetime.date(parse(filter_start))
-															  and event_start_datetime not in event_dates):
-					event_dates.append(event_start_datetime)
-					print('dates2: ', event_dates)
-				# получаем даты отмененных событий в заданном временном интервале
-				canceled_events = CanceledEvent.objects.filter(event=repeated_event, cancel_date__lte=filter_end,
-															   cancel_date__gte=parse(filter_start)-duration)
-				print('canceled_events: ', canceled_events)
-				for event_date in event_dates:
-					repeated_event.start_date = datetime.date(event_date)
-					repeated_event.end_date = datetime.date(event_date) + duration
-					response.append(EventListSerializer(repeated_event).data)
 		except ValidationError:
 			return Response(
 				{"detail": {"code": "BAD_REQUEST", "message": "Некорректная дата"}},
 				status=400)
+
+		for repeated_event in repeated_events:
+			duration = repeated_event.end_date - repeated_event.start_date
+			# получаем метаданные, описывающие паттерн повторений события
+			metadata = EventMetaSerializer(repeated_event.eventmeta).data
+			# передаем данные в функцию, которая вычисляет все повторения в заданном диапазоне времени,
+			# и возвращает список объектов datetime
+			event_dates = get_dates(metadata, filter_start, filter_end, repeated_event.start_date, repeated_event.end_date,
+									repeated_event.end_repeat)
+			print('dates: ', event_dates)
+
+			event_start_datetime = datetime.combine(repeated_event.start_date, time.min)
+			# если дата начала события не соответствует паттерну повторений, но находится в диапазоне фильтрации,
+			# добавляем ее в список дат
+			if (repeated_event.start_date <= datetime.date(parse(filter_end))
+					and repeated_event.end_date >= datetime.date(parse(filter_start))
+					and event_start_datetime not in event_dates):
+				event_dates.append(event_start_datetime)
+
+			# получаем даты отмененных событий в заданном временном интервале и удаляем их из списка
+			canceled_events = CanceledEvent.objects.filter(event=repeated_event, cancel_date__lte=filter_end,
+														   cancel_date__gte=parse(filter_start)-duration)
+			print('canceled_events: ', canceled_events)
+			for canceled_event in canceled_events:
+				cancel_date = datetime.combine(canceled_event.cancel_date, time.min)
+				if cancel_date in event_dates:
+					event_dates.remove(cancel_date)
+
+			for event_date in event_dates:
+				repeated_event.start_date = datetime.date(event_date)
+				repeated_event.end_date = datetime.date(event_date) + duration
+				response.append(EventListSerializer(repeated_event).data)
+
 		for event in events:
 			response.append(EventListSerializer(event).data)
 		# сортируем итоговый список событий сперва по дате, а затем по времени
