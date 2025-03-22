@@ -1,4 +1,4 @@
-from datetime import datetime, time, date
+from datetime import datetime, time, timedelta
 from dateutil.parser import parse
 from django.core.exceptions import ValidationError
 from drf_yasg import openapi
@@ -190,11 +190,16 @@ class EventViewSet(viewsets.ModelViewSet):
 			openapi.Parameter(
 				'cancel_date',
 				openapi.IN_QUERY,
-				description='Дата в формате "2025-02-28", передается только в том случае, когда надо удалить '
-							'повторяющееся событие только в конкретный день',
+				description='Дата в формате "2025-02-28", передается только при удалении повторяющихся событий',
 				type=openapi.TYPE_STRING,
 				format=openapi.FORMAT_DATE,
 				),
+			openapi.Parameter(
+				'all',
+				openapi.IN_QUERY,
+				description='Передавать all=true, если удаляются все повторения, false передавать необязательно',
+				type=openapi.TYPE_BOOLEAN
+			),
 			],
 		responses={
 			204: openapi.Response(description="Успешное удаление события"),
@@ -207,19 +212,27 @@ class EventViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Удаление события по id",
 		operation_description="Удаляет событие из базы данных по его id.\n"
-							  "Чтобы удалить только одно повторяющееся событие на конкретную дату, надо передать параметр cancel_date.\n"
+							  "При удалении повторяющихся событий надо передать параметр cancel_date.\n"
+							  "Если удаляются все повторы события в будущем, надо передать параметр all=true.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
 							  "Пользователь может удалить только созданное им событие."
 	)
 	def destroy(self, request, pk):
 		event = self.get_object()
 		cancel_date = request.GET.get('cancel_date')
-		# если надо удалить событие вместе с повторами из БД
+		all_param = request.GET.get('all')
+		# удаляем неповторяющиеся события
 		if not cancel_date:
 			event.delete()
-		# чтобы удалить только один повтор события, делаем запись в БД в таблицу CanceledEvent
+		# удаляем повторяющиеся события
 		else:
-			CanceledEvent.objects.create(event=event, cancel_date=cancel_date)
+			# чтобы удалить все повторы события, меняем дату окончания повторов на переданную
+			if all_param == 'true':
+				event.end_repeat = datetime.date(parse(cancel_date) - timedelta(days=1))
+				event.save()
+			# чтобы удалить только один повтор события, делаем запись в БД в таблицу CanceledEvent
+			else:
+				CanceledEvent.objects.create(event=event, cancel_date=cancel_date)
 		return Response(status=204)
 
 	@swagger_auto_schema(
