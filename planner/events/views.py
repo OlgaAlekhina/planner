@@ -199,7 +199,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				openapi.IN_QUERY,
 				description='Передавать all=true, если удаляются все повторения, false передавать необязательно',
 				type=openapi.TYPE_BOOLEAN
-			),
+			)
 			],
 		responses={
 			204: openapi.Response(description="Успешное удаление события"),
@@ -240,11 +240,16 @@ class EventViewSet(viewsets.ModelViewSet):
 			openapi.Parameter(
 				'change_date',
 				openapi.IN_QUERY,
-				description='Дата в формате "2025-02-28", передается только в том случае, когда надо отредактировать '
-							'повторяющееся событие только в конкретный день',
+				description='Дата в формате "2025-02-28", передается только при редактировании повторяющихся событий',
 				type=openapi.TYPE_STRING,
 				format=openapi.FORMAT_DATE,
 			),
+			openapi.Parameter(
+				'all',
+				openapi.IN_QUERY,
+				description='Передавать all=true, если редактируются все повторения, false передавать необязательно',
+				type=openapi.TYPE_BOOLEAN
+			)
 		],
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=EventResponseSerializer()),
@@ -257,36 +262,47 @@ class EventViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Редактирование события по id",
 		operation_description="Эндпоинт для редактирования события.\n"
-							  "Чтобы редактировать только одно повторяющееся событие на конкретную дату, надо передать параметр change_date.\n"
-							  "Если пользователь удаляет повторения события в будущем, то надо установить поле end_repeat = start_date.\n"
+							  "При редактировании повторяющихся событий надо передавать параметр change_date, соответствующий дате начала события.\n"
+							  "Если редактируются все повторы события, то надо передать параметр all=true.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
 							  "Пользователь может редактировать только созданное им событие."
 	)
 	def partial_update(self, request, pk):
 		serializer = self.get_serializer(data=request.data)
 		change_date = request.GET.get('change_date')
+		all_param = request.GET.get('all')
 
 		if serializer.is_valid():
 			event = self.get_object()
 			event_data = serializer.validated_data.get('event_data')
 			event_meta = serializer.validated_data.get('repeat_pattern')
 
-			# если надо отредактировать только одно повторяющееся событие, удаляем его из повторяющихся и ставим отдельной
-			# записью в таблицу, как неповторяющееся
+			# если надо отредактировать повторяющееся событие, то создаем его копию в БД и редактируем именно ее
 			if change_date:
 				old_users = event.users.all()
 				event_duration = event.end_date - event.start_date
-				# добавляем событие в таблицу отмененных
-				CanceledEvent.objects.create(event=event, cancel_date=change_date)
-				# копируем исходное событие и создаем новый объект, меняя некоторые атрибуты
+				# копируем исходное событие и создаем новый объект, меняя даты начала и конца события
 				event.pk = None
 				event.start_date = change_date
 				event.end_date = parse(change_date) + event_duration
-				event.repeats = False
-				event.end_repeat = None
 				event.save()
 				# добавляем участников события
 				event.users.set(old_users)
+
+				old_event = Event.objects.get(id=pk)
+				# если редактируем все повторы события, то меняем дату окончания повторов исходного события на
+				# предшествующую change_date, то есть удаляем все повторы в будущем
+				if all_param == 'true':
+					old_event.end_repeat = datetime.date(parse(change_date) - timedelta(days=1))
+					old_event.save()
+				# если надо отредактировать только одно повторяющееся событие, то удаляем его из повторяющихся и ставим
+				# отдельной записью в таблицу, как неповторяющееся
+				else:
+					event.repeats = False
+					event.end_repeat = None
+					event.save()
+					# добавляем событие в таблицу отмененных
+					CanceledEvent.objects.create(event=old_event, cancel_date=change_date)
 
 			# если переданы данные события, то обновляем их
 			if event_data:
