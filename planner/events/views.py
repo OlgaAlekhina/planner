@@ -126,7 +126,11 @@ class EventViewSet(viewsets.ModelViewSet):
 		for repeated_event in repeated_events:
 			duration = repeated_event.end_date - repeated_event.start_date
 			# получаем метаданные, описывающие паттерн повторений события
-			metadata = EventMetaSerializer(repeated_event.eventmeta).data
+			# если вдруг у повторяющегося события нет метаданных, не обрабатываем это событие
+			try:
+				metadata = EventMetaSerializer(repeated_event.eventmeta).data
+			except:
+				continue
 			# передаем данные в функцию, которая вычисляет все повторения в заданном диапазоне времени,
 			# и возвращает список объектов datetime
 			event_dates = get_dates(metadata, filter_start, filter_end, repeated_event.start_date, repeated_event.end_date,
