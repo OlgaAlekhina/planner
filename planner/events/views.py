@@ -293,6 +293,12 @@ class EventViewSet(viewsets.ModelViewSet):
 				# если редактируем все повторы события, то меняем дату окончания повторов исходного события на
 				# предшествующую change_date, то есть удаляем все повторы в будущем
 				if all_param == 'true':
+					# добавляем старые метаданные к новому событию
+					old_meta = old_event.eventmeta
+					old_meta.pk = None
+					old_meta.event = event
+					old_meta.save()
+					# меняем дату окончания повторов исходного события
 					old_event.end_repeat = datetime.date(parse(change_date) - timedelta(days=1))
 					old_event.save()
 				# если надо отредактировать только одно повторяющееся событие, то удаляем его из повторяющихся и ставим
