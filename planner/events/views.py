@@ -40,6 +40,19 @@ class EventViewSet(viewsets.ModelViewSet):
 		operation_summary="Создание нового события",
 		operation_description="Создает новое событие в календаре.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Если событие повторяется, надо передать данные о повторах в поле 'repeat_pattern'.\n\n"
+							  "Пока реализованы следующие паттерны повторов событий:\n"
+							  "1) По дням - через сколько дней повторяется событие: надо передать параметры freq=3 и int (например, int=1 - "
+							  "повторяется каждый день, int=5 - повторяется раз в 5 дней;\n"
+							  "2) По неделям - через сколько недель повторяется событие и в какие дни недели: надо передать параметры "
+							  "freq=2, int (через сколько недель) и byweekday - в какой день недели (или дни), например, freq=2, int=2, byweekday='1,4' "
+							  "означает, что событие повторяется через неделю по вторникам и пятницам;\n"
+							  "3) По месяцам - через сколько месяцев повторяется и в какие дни месяца: надо передать парметры freq=1, "
+							  "int (через сколько месяцев) и bymonthday (какого числа), например, freq=1, int=1, bymonthday='5' "
+							  "означает, что событие повторяется каждый месяц 5-ого числа;\n"
+							  "4) По годам - через сколько лет повторяется событие и в какую дату: надо передать параметры freq=0, int (через сколько лет), "
+							  "bymonthday (в какой день месяца) и bymonth (в какой месяц), например, freq=0, int=2, bymonthday='8', bymonth=2 "
+							  "означает, что событие повторяется 8 февраля через год."
 	)
 	def create(self, request):
 		serializer = self.get_serializer(data=request.data)
@@ -74,7 +87,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			openapi.Parameter(
 				'start_date',
 				openapi.IN_QUERY,
-				description='Начальная дата в формате "2025-02-21"',
+				description='Начальная дата поиска в формате "2025-02-21"',
 				type=openapi.TYPE_STRING,
 				format=openapi.FORMAT_DATE,
 				required=True
@@ -82,7 +95,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			openapi.Parameter(
 				'end_date',
 				openapi.IN_QUERY,
-				description='Конечная дата в формате "2025-02-28"',
+				description='Конечная дата поиска в формате "2025-02-28"',
 				type=openapi.TYPE_STRING,
 				format=openapi.FORMAT_DATE,
 				required=True
@@ -98,7 +111,7 @@ class EventViewSet(viewsets.ModelViewSet):
 		operation_description="Выводит список всех событий пользователя за определенный временной интервал.\n"
 							  "Необходимо передать начальную и конечную дату, которые будут включены в интервал поиска.\n"
 							  "События отсортированы по дате и времени начала.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'."
 	)
 	def list(self, request, *args, **kwargs):
 		response = []
@@ -126,7 +139,7 @@ class EventViewSet(viewsets.ModelViewSet):
 		for repeated_event in repeated_events:
 			duration = repeated_event.end_date - repeated_event.start_date
 			# получаем метаданные, описывающие паттерн повторений события
-			# если вдруг у повторяющегося события нет метаданных, не обрабатываем это событие
+			# если вдруг у повторяющегося события нет метаданных, пропускаем это событие, чтобы избежать ошибки
 			try:
 				metadata = EventMetaSerializer(repeated_event.eventmeta).data
 			except:
@@ -137,6 +150,7 @@ class EventViewSet(viewsets.ModelViewSet):
 									repeated_event.end_repeat)
 			print('dates: ', event_dates)
 
+			# переводим date в datetime с помощью функции combine
 			event_start_datetime = datetime.combine(repeated_event.start_date, time.min)
 			# если дата начала события не соответствует паттерну повторений, но находится в диапазоне фильтрации,
 			# добавляем ее в список дат
@@ -150,6 +164,7 @@ class EventViewSet(viewsets.ModelViewSet):
 														   cancel_date__gte=parse(filter_start)-duration)
 			print('canceled_events: ', canceled_events)
 			for canceled_event in canceled_events:
+				# переводим date в datetime с помощью функции combine
 				cancel_date = datetime.combine(canceled_event.cancel_date, time.min)
 				if cancel_date in event_dates:
 					event_dates.remove(cancel_date)

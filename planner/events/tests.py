@@ -112,3 +112,24 @@ def test_monthly_event_int2_dur3():
 		  datetime.datetime(2025, 12, 15, 0, 0), datetime.datetime(2026, 2, 15, 0, 0),
 		  datetime.datetime(2026, 4, 15, 0, 0), datetime.datetime(2026, 6, 15, 0, 0),
 		  datetime.datetime(2026, 8, 15, 0, 0)]
+
+def test_yearly_event_int1():
+	assert get_dates(
+		metadata = {'freq': 0, 'interval': 1, 'byweekday': None, 'bymonthday': [9], 'bymonth': 5, 'byweekno': None},
+		filter_start = '2025-03-31',
+		filter_end = '2026-09-21',
+		event_start = datetime.date(2025, 5, 9),
+		event_end = datetime.date(2025, 5, 9),
+		end_repeat = None
+	) == [datetime.datetime(2025, 5, 9, 0, 0), datetime.datetime(2026, 5, 9, 0, 0)]
+
+def test_yearly_event_int2_dur3():
+	assert get_dates(
+		metadata = {'freq': 0, 'interval': 2, 'byweekday': None, 'bymonthday': [30], 'bymonth': 12, 'byweekno': None},
+		filter_start = '2025-12-31',
+		filter_end = '2036-09-21',
+		event_start = datetime.date(2025, 12, 30),
+		event_end = datetime.date(2026, 1, 1),
+		end_repeat = datetime.date(2033, 3, 20)
+	) == [datetime.datetime(2025, 12, 30, 0, 0), datetime.datetime(2027, 12, 30, 0, 0),
+		  datetime.datetime(2029, 12, 30, 0, 0), datetime.datetime(2031, 12, 30, 0, 0)]
