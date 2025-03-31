@@ -13,7 +13,7 @@ from .serializers import EventSerializer, EventMetaSerializer, EventCreateSerial
 from users.serializers import ErrorResponseSerializer
 from django.db.models import Q
 from .services import get_dates
-from django.contrib.auth.models import User
+from django.core.cache import cache
 from planner.permissions import EventPermission
 
 
@@ -194,7 +194,14 @@ class EventViewSet(viewsets.ModelViewSet):
 		operation_description="Получает данные события по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'")
 	def retrieve(self, request, pk):
-		event = self.get_object()
+		cache_key = f"event_{pk}"
+		event = cache.get(cache_key)
+		print('event: ', event)
+		print('cache_keys: ', cache.keys('*'))
+		if not event:
+			print('1')
+			event = self.get_object()
+			cache.set(cache_key, event)
 		response_data = {"event_data": self.get_serializer(event).data, "repeat_pattern": {}}
 		try:
 			response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
