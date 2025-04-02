@@ -15,6 +15,10 @@ from django.db.models import Q
 from .services import get_dates
 from django.core.cache import cache
 from planner.permissions import EventPermission
+import logging
+
+
+logger = logging.getLogger('events')
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -195,10 +199,13 @@ class EventViewSet(viewsets.ModelViewSet):
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'")
 	def retrieve(self, request, pk):
 		cache_key = f"event_{pk}"
+		logger.info('Just logging test')
 		event = cache.get(cache_key)
 		print('event: ', event)
 		print('cache_keys: ', cache.keys('*'))
+		logger.info(f'Ключи в кэше: {cache.keys("*")}')
 		if not event:
+			logger.info(f'События с id = {pk} нет в кэше')
 			print('1')
 			event = self.get_object()
 			cache.set(cache_key, event)

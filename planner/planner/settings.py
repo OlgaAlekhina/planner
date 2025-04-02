@@ -178,3 +178,97 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_USE_SSL = True
 SERVER_EMAIL = 'olga-olechka-5'
 DEFAULT_FROM_EMAIL = 'olga-olechka-5@yandex.ru'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'style': '{',
+    'formatters': {
+        'format1': {
+            'format': '%(asctime)s %(levelname)s %(message)s'
+        },
+        'format2': {
+            'format': '%(asctime)s %(levelname)s %(message)s %(pathname)s'
+        },
+        'format3': {
+            'format': '%(asctime)s %(levelname)s %(message)s %(pathname)s %(exc_info)s'
+        },
+        'format4': {
+            'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'format1',
+        },
+        'general': {
+            'level': 'INFO',
+            'filters': ['require_debug_false'],
+            'class': 'logging.FileHandler',
+            'formatter': 'format4',
+            'filename': os.path.join(BASE_DIR, 'logs/general.log'),
+        },
+        'errors': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'formatter': 'format3',
+            'filename': os.path.join(BASE_DIR, 'logs/errors.log'),
+        },
+        'security': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'format4',
+            'filename': os.path.join(BASE_DIR, 'logs/security.log'),
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler',
+            'formatter': 'format2',
+        },
+        'events': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'format1',
+            'filename': os.path.join(BASE_DIR, 'logs/events.log'),
+        },
+    },
+    'loggers': {
+        'events': {
+            'handlers': ['events'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django': {
+            'handlers': ['console', 'general'],
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['errors', 'mail_admins'],
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['errors', 'mail_admins'],
+            'propagate': False,
+        },
+        'django.db_backends': {
+            'handlers': ['errors'],
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['security'],
+            'propagate': False,
+        },
+    },
+}
