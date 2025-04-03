@@ -71,11 +71,11 @@ class EventViewSet(viewsets.ModelViewSet):
 			if users:
 				for user in users:
 					event.users.add(user)
+			# если нет списка участников, добавляем только текущего пользователя
 			else:
 				event.users.add(user)
 			response = {
-				'event_data': EventSerializer(event, context={'request': request}).data,
-				'repeat_pattern': {}
+				'event_data': EventSerializer(event, context={'request': request}).data
 			}
 			# если были получены метаданные, делаем запись в таблице
 			if event_meta:
@@ -202,7 +202,6 @@ class EventViewSet(viewsets.ModelViewSet):
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'")
 	def retrieve(self, request, pk):
 		cache_key = f"event_{pk}"
-		logger.info('Just logging test')
 		event = cache.get(cache_key)
 		print('event: ', event)
 		print('cache_keys: ', cache.keys('*'))
@@ -212,7 +211,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			print('1')
 			event = self.get_object()
 			cache.set(cache_key, event)
-		response_data = {"event_data": EventCreateSerializer(event, context={'request': request}).data, "repeat_pattern": {}}
+		response_data = {"event_data": EventCreateSerializer(event, context={'request': request}).data}
 		try:
 			response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
 		except:
@@ -365,7 +364,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			if event_meta:
 				EventMeta.objects.update_or_create(event=event, defaults=event_meta)
 
-			response_data = {"event_data": EventSerializer(event, context={'request': request}).data, "repeat_pattern": {}}
+			response_data = {"event_data": EventSerializer(event, context={'request': request}).data}
 			try:
 				response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
 			except:
