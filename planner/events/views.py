@@ -74,7 +74,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			else:
 				event.users.add(user)
 			response = {
-				'event_data': EventSerializer(event).data,
+				'event_data': EventSerializer(event, context={'request': request}).data,
 				'repeat_pattern': {}
 			}
 			# если были получены метаданные, делаем запись в таблице
@@ -182,7 +182,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				response.append(EventListSerializer(repeated_event).data)
 
 		for event in events:
-			response.append(EventListSerializer(event).data)
+			response.append(EventListSerializer(event, context={'request': request}).data)
 		# сортируем итоговый список событий сперва по дате, а затем по времени
 		response.sort(key=lambda x: (x['start_date'], x['start_time'] if x['start_time'] is not None else ''))
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"},
@@ -212,7 +212,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			print('1')
 			event = self.get_object()
 			cache.set(cache_key, event)
-		response_data = {"event_data": self.get_serializer(event).data, "repeat_pattern": {}}
+		response_data = {"event_data": EventCreateSerializer(event, context={'request': request}).data, "repeat_pattern": {}}
 		try:
 			response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
 		except:
@@ -365,7 +365,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			if event_meta:
 				EventMeta.objects.update_or_create(event=event, defaults=event_meta)
 
-			response_data = {"event_data": EventSerializer(event).data, "repeat_pattern": {}}
+			response_data = {"event_data": EventSerializer(event, context={'request': request}).data, "repeat_pattern": {}}
 			try:
 				response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
 			except:

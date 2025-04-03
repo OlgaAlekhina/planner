@@ -3,8 +3,19 @@ from .models import Event, EventMeta
 from users.serializers import DetailSerializer
 
 
+class EventAuthorBoolField(serializers.BooleanField):
+	""" Кастомное поле для проверки, является ли текущий пользователь создателем события """
+	def to_representation(self, instance):
+		current_user = self.context['request'].user
+		return current_user == instance.author
+
+	def to_internal_value(self, data):
+		return {self.field_name: data}
+
+
 class EventSerializer(serializers.ModelSerializer):
 	""" Общий сериализатор для события """
+	is_creator = EventAuthorBoolField(source='*', read_only=True)
 
 	class Meta:
 		model = Event
@@ -26,6 +37,8 @@ class EventSerializer(serializers.ModelSerializer):
 	def get_fields(self, *args, **kwargs):
 		fields = super(EventSerializer, self).get_fields(*args, **kwargs)
 		request = self.context.get('request', None)
+		# добавляем объект Request в поле 'is_creator'
+		fields['is_creator'].contex = self.context
 		# делаем поля необязательными в методе PATCH
 		if request and getattr(request, 'method', None) == "PATCH":
 			fields['title'].required = False
@@ -37,10 +50,17 @@ class EventSerializer(serializers.ModelSerializer):
 
 class EventListSerializer(serializers.ModelSerializer):
 	""" Сериализатор для кратких данных события """
+	is_creator = EventAuthorBoolField(source='*', read_only=True)
 
 	class Meta:
 		model = Event
 		exclude = ['author', 'repeats', 'end_repeat']
+
+	def get_fields(self, *args, **kwargs):
+		fields = super(EventListSerializer, self).get_fields(*args, **kwargs)
+		# добавляем объект Request в поле 'is_creator'
+		fields['is_creator'].contex = self.context
+		return fields
 
 
 class EventMetaSerializer(serializers.ModelSerializer):
