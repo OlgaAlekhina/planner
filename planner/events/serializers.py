@@ -97,6 +97,14 @@ class EventCreateSerializer(serializers.Serializer):
 	event_data = EventSerializer()
 	repeat_pattern = EventMetaSerializer(required=False)
 
+	def get_fields(self, *args, **kwargs):
+		fields = super(EventCreateSerializer, self).get_fields(*args, **kwargs)
+		request = self.context.get('request', None)
+		# делаем поле необязательным в методе PATCH
+		if request and getattr(request, 'method', None) == "PATCH":
+			fields['event_data'].required = False
+		return fields
+
 
 class EventResponseSerializer(serializers.Serializer):
 	""" Сериализатор ответа сервера для получения события """

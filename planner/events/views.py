@@ -319,7 +319,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				# копируем исходное событие и создаем новый объект, меняя даты начала и конца события
 				event.pk = None
 				event.start_date = change_date
-				event.end_date = parse(change_date) + event_duration
+				event.end_date = datetime.date(parse(change_date)) + event_duration
 				event.save()
 				# добавляем прежних участников события
 				event.users.set(old_users)
