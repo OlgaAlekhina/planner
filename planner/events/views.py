@@ -322,18 +322,20 @@ class EventViewSet(viewsets.ModelViewSet):
 				event.start_date = change_date
 				event.end_date = parse(change_date) + event_duration
 				event.save()
-				# добавляем участников события
+				# добавляем прежних участников события
 				event.users.set(old_users)
 
+				# достаем исходное событие
 				old_event = Event.objects.get(id=pk)
 				# если редактируем все повторы события, то меняем дату окончания повторов исходного события на
 				# предшествующую change_date, то есть удаляем все повторы в будущем
 				if all_param == 'true':
-					# добавляем старые метаданные к новому событию
-					old_meta = old_event.eventmeta
-					old_meta.pk = None
-					old_meta.event = event
-					old_meta.save()
+					if not event_data or 'repeats' not in event_data or event_data['repeats'] is True:
+						# добавляем старые метаданные к новому событию, если пользователь при редактировании не убрал повторы
+						old_meta = old_event.eventmeta
+						old_meta.pk = None
+						old_meta.event = event
+						old_meta.save()
 					# меняем дату окончания повторов исходного события
 					old_event.end_repeat = datetime.date(parse(change_date) - timedelta(days=1))
 					old_event.save()
