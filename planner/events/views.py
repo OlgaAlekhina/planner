@@ -179,7 +179,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			for event_date in event_dates:
 				repeated_event.start_date = datetime.date(event_date)
 				repeated_event.end_date = datetime.date(event_date) + duration
-				response.append(EventListSerializer(repeated_event).data)
+				response.append(EventListSerializer(repeated_event, context={'request': request}).data)
 
 		for event in events:
 			response.append(EventListSerializer(event, context={'request': request}).data)
@@ -202,10 +202,9 @@ class EventViewSet(viewsets.ModelViewSet):
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'")
 	def retrieve(self, request, pk):
 		cache_key = f"event_{pk}"
-		event = self.get_object()
-		# event = cache.get(cache_key)
+		event = cache.get(cache_key)
 		print('event: ', event)
-		# print('cache_keys: ', cache.keys('*'))
+		print('cache_keys: ', cache.keys('*'))
 		# logger.info(f'Ключи в кэше: {cache.keys("*")}')
 		if not event:
 			logger.info(f'События с id = {pk} нет в кэше')
