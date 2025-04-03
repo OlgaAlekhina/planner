@@ -16,6 +16,11 @@ class EventSerializer(serializers.ModelSerializer):
 			'end_time': {
 				'help_text': 'Время завершения события в формате 07:30:00'
 			}
+			,
+			'users': {
+				'help_text': 'Список id пользователей-участников события',
+				'required': False
+			}
 		}
 
 	def get_fields(self, *args, **kwargs):

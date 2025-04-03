@@ -64,11 +64,14 @@ class EventViewSet(viewsets.ModelViewSet):
 			user = request.user
 			event_data = serializer.validated_data.get('event_data')
 			event_meta = serializer.validated_data.get('repeat_pattern')
-			users = event_data.pop('users')
+			users = event_data.pop('users', None)
 			# создаем новое событие в БД
 			event = Event.objects.create(author=user, **event_data)
 			# добавляем участников события вручную
-			for user in users:
+			if users:
+				for user in users:
+					event.users.add(user)
+			else:
 				event.users.add(user)
 			response = {
 				'event_data': EventSerializer(event).data,
