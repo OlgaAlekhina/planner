@@ -1,4 +1,4 @@
-from .services import get_dates
+from events.services import get_dates
 import datetime
 
 def test_daily_event_int1():
