@@ -205,7 +205,7 @@ class EventViewSet(viewsets.ModelViewSet):
 		event = cache.get(cache_key)
 		print('event: ', event)
 		print('cache_keys: ', cache.keys('*'))
-		# logger.info(f'Ключи в кэше: {cache.keys("*")}')
+		logger.info(f'Ключи в кэше: {cache.keys("*")}')
 		if not event:
 			logger.info(f'События с id = {pk} нет в кэше')
 			print('1')
