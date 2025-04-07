@@ -19,7 +19,6 @@ def test_create_event():
     }}
     r = requests.post(f'{api_url}/events/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
     event_id = r.json().get('data').get('event_data').get('id')
-    print('event_id: ', event_id)
     assert r.status_code == 201
 
 
@@ -27,3 +26,9 @@ def test_get_event():
     global event_id
     r = requests.get(f'{api_url}/events/{event_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
     assert r.status_code == 200
+
+
+def test_delete_event():
+    global event_id
+    r = requests.delete(f'{api_url}/events/{event_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 204
