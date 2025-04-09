@@ -106,6 +106,12 @@ class EventViewSet(viewsets.ModelViewSet):
 				type=openapi.TYPE_STRING,
 				format=openapi.FORMAT_DATE,
 				required=True
+			),
+			openapi.Parameter(
+				'search',
+				openapi.IN_QUERY,
+				description='Поисковый запрос',
+				type=openapi.TYPE_STRING
 			)
 		],
 		responses={
@@ -125,6 +131,7 @@ class EventViewSet(viewsets.ModelViewSet):
 		user = request.user
 		filter_start = request.GET.get('start_date')
 		filter_end = request.GET.get('end_date')
+		search = request.GET.get('search', '')
 
 		if filter_start > filter_end:
 			return Response(
@@ -133,11 +140,12 @@ class EventViewSet(viewsets.ModelViewSet):
 
 		try:
 			# получаем все события без повторений в переданном временном интервале
-			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), repeats=False, start_date__lte=filter_end,
-										  end_date__gte=filter_start).distinct()
+			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), title__icontains=search, repeats=False,
+										  start_date__lte=filter_end, end_date__gte=filter_start).distinct()
 			# получаем все события с повторениями в интервале start_date - end_repeat
 			repeated_events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), Q(end_repeat__gte=filter_start)
-												   | Q(end_repeat__isnull=True), repeats=True, start_date__lte=filter_end).distinct()
+												   | Q(end_repeat__isnull=True), title__icontains=search, repeats=True,
+												   start_date__lte=filter_end).distinct()
 		except ValidationError:
 			return Response(
 				{"detail": {"code": "BAD_REQUEST", "message": "Некорректная дата"}},
