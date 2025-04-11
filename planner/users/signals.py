@@ -7,20 +7,20 @@ from django.conf import settings
 from .models import UserProfile
 
 
-@receiver(post_save, sender=User)
-def create_profile(sender, instance, created, **kwargs):
-    if created:
-        email = instance.email
-        nickname = email.split('@')[0]
-        UserProfile.objects.create(user=instance, nickname=nickname)
-
-
-@receiver(post_save, sender=User)
-def save_profile(sender, instance, **kwargs):
-    instance.userprofile.save()
-
-
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token(sender, instance=None, created=False, **kwargs):
-    if created:
-        Token.objects.create(user=instance)
+# @receiver(post_save, sender=User)
+# def create_profile(sender, instance, created, **kwargs):
+#     if created:
+#         email = instance.email
+#         nickname = email.split('@')[0]
+#         UserProfile.objects.create(user=instance, nickname=nickname)
+#
+#
+# @receiver(post_save, sender=User)
+# def save_profile(sender, instance, **kwargs):
+#     instance.userprofile.save()
+#
+#
+# @receiver(post_save, sender=settings.AUTH_USER_MODEL)
+# def create_auth_token(sender, instance=None, created=False, **kwargs):
+#     if created:
+#         Token.objects.create(user=instance)
