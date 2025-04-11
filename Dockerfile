@@ -1,7 +1,7 @@
 FROM python:3.10.16-slim
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV=PYTHONDONTWRITEBYTECODE 1
+ENV=PYTHONUNBUFFERED 1
 
 RUN addgroup --gid 1002 app &&\
     adduser --home /app --uid 1002 --gid 1002 app &&\
