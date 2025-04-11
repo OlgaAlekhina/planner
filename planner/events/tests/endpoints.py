@@ -4,8 +4,20 @@ from datetime import date, timedelta
 
 api_url = config.API_URL
 test_user_token = config.TEST_USER_TOKEN
+yandex_token = config.YANDEX_TOKEN
 
 event_id = None
+test_token = None
+
+def test_yandex_auth():
+    global test_token
+    payload = {
+      "oauth_token": yandex_token
+    }
+    r = requests.post(f'{api_url}/users/yandex_auth/', json=payload)
+    test_token = r.json().get('data').get('user_auth_token')
+    assert r.status_code == 200
+
 
 def test_create_event():
     global event_id

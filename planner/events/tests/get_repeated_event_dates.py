@@ -9,10 +9,12 @@ def test_daily_event_int1():
 		event_start = datetime.date(2025, 1, 28),
 		event_end = datetime.date(2025, 1, 28),
 		end_repeat = datetime.date(2025, 3, 1)
-	) == [datetime.datetime(2025, 1, 28, 0, 0), datetime.datetime(2025, 1, 29, 0, 0), datetime.datetime(2025, 1, 30, 0, 0),
-		  datetime.datetime(2025, 1, 31, 0, 0), datetime.datetime(2025, 2, 1, 0, 0), datetime.datetime(2025, 2, 2, 0, 0),
-		  datetime.datetime(2025, 2, 3, 0, 0), datetime.datetime(2025, 2, 4, 0, 0), datetime.datetime(2025, 2, 5, 0, 0),
-		  datetime.datetime(2025, 2, 6, 0, 0), datetime.datetime(2025, 2, 7, 0, 0), datetime.datetime(2025, 2, 8, 0, 0),
+	) == [datetime.datetime(2025, 1, 28, 0, 0), datetime.datetime(2025, 1, 29, 0, 0),
+		  datetime.datetime(2025, 1, 30, 0, 0), datetime.datetime(2025, 1, 31, 0, 0),
+		  datetime.datetime(2025, 2, 1, 0, 0), datetime.datetime(2025, 2, 2, 0, 0),
+		  datetime.datetime(2025, 2, 3, 0, 0), datetime.datetime(2025, 2, 4, 0, 0),
+		  datetime.datetime(2025, 2, 5, 0, 0), datetime.datetime(2025, 2, 6, 0, 0),
+		  datetime.datetime(2025, 2, 7, 0, 0), datetime.datetime(2025, 2, 8, 0, 0),
 		  datetime.datetime(2025, 2, 9, 0, 0), datetime.datetime(2025, 2, 10, 0, 0)]
 
 def test_daily_event_int5():
