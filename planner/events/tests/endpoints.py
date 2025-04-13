@@ -21,6 +21,13 @@ def test_yandex_auth():
     assert r.status_code == 200
 
 
+def test_get_user():
+    global test_user_id
+    global test_user_token
+    r = requests.get(f'{api_url}/users/{test_user_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 200
+
+
 def test_create_event():
     global event_id
     global test_user_token
