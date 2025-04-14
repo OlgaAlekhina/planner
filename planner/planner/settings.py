@@ -247,6 +247,12 @@ LOGGING = {
             'formatter': 'format1',
             'filename': os.path.join(BASE_DIR, 'logs/events.log'),
         },
+        'users': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'format1',
+            'filename': os.path.join(BASE_DIR, 'logs/users.log'),
+                },
     },
     'loggers': {
         'events': {
@@ -254,6 +260,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'users': {
+            'handlers': ['users'],
+            'level': 'INFO',
+            'propagate': True,
+                },
         'django': {
             'handlers': ['console', 'general'],
             'propagate': True,
@@ -276,3 +287,9 @@ LOGGING = {
         },
     },
 }
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
