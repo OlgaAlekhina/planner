@@ -22,6 +22,9 @@ from planner.permissions import UserPermission, GroupPermission
 from datetime import timedelta
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
+import logging
+
+logger = logging.getLogger('users')
 
 
 class UserViewSet(mixins.CreateModelMixin,
@@ -211,6 +214,7 @@ class UserViewSet(mixins.CreateModelMixin,
 			oauth_token = serializer.validated_data['oauth_token']
 			response_data = get_user_from_yandex(oauth_token)
 			if response_data[1] == 200:
+				logger.info(f"Авторизован пользователь c email {response_data[0].get('user_data').get('email')} и id = {response_data[0].get('user_data').get('id')}")
 				response = {
 					"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
 					"data": response_data[0]

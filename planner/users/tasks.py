@@ -20,6 +20,5 @@ def clean_codes():
 @shared_task
 def test_task():
 	""" Задача для проверки работы Celery """
-	time.sleep(10)
-	print('Celery is working')
-	logger.info('Celery is working')
+	print('It is working!')
+	logger.info('Working')

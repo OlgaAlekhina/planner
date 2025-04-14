@@ -28,6 +28,16 @@ def test_get_user():
     assert r.status_code == 200
 
 
+def test_patch_user():
+    global event_id
+    global test_user_token
+    payload = {"first_name": "Olga"}
+    r = requests.patch(f'{api_url}/users/{test_user_id}/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    assert r.status_code == 200
+    assert r.json().get('data').get('first_name') == 'Olga'
+
+
+
 def test_create_event():
     global event_id
     global test_user_token
