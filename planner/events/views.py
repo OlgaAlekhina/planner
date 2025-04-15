@@ -211,15 +211,17 @@ class EventViewSet(viewsets.ModelViewSet):
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'")
 	def retrieve(self, request, pk):
 		cache_key = f"event_{pk}"
-		event = cache.get(cache_key)
-		print('event: ', event)
-		print('cache_keys: ', cache.keys('*'))
-		logger.info(f'Ключи в кэше: {cache.keys("*")}')
-		if not event:
-			logger.info(f'События с id = {pk} нет в кэше')
-			print('1')
+		try:
+			event = cache.get(cache_key)
+			logger.info(f'Ключи в кэше: {cache.keys("*")}')
+			if not event:
+				logger.info(f'События с id = {pk} нет в кэше')
+				event = self.get_object()
+				cache.set(cache_key, event)
+		except:
+			logger.info('Redis unavailable')
 			event = self.get_object()
-			cache.set(cache_key, event)
+			print('event: ', event)
 		response_data = {"event_data": EventSerializer(event, context={'request': request}).data}
 		try:
 			response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data

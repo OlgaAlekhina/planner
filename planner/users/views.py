@@ -214,7 +214,7 @@ class UserViewSet(mixins.CreateModelMixin,
 			oauth_token = serializer.validated_data['oauth_token']
 			response_data = get_user_from_yandex(oauth_token)
 			if response_data[1] == 200:
-				logger.info(f"Авторизован пользователь c email {response_data[0].get('user_data').get('email')} и id = {response_data[0].get('user_data').get('id')}")
+				logger.info(f"User with email {response_data[0].get('user_data').get('email')} and id = {response_data[0].get('user_data').get('id')} was authorized")
 				response = {
 					"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
 					"data": response_data[0]
@@ -340,6 +340,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			color = serializer.validated_data['color']
 			user = request.user
 			group = Group.objects.create(owner=user, name=name, color=color)
+			logger.info(f"{user.username} created new group '{name}'")
 			GroupUser.objects.create(user=user, group=group, user_name=user.userprofile.nickname)
 			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Группа создана"},
 							 "data": GroupSerializer(group, context={'request': request}).data}, status=201)

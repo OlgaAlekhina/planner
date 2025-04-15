@@ -8,6 +8,8 @@ yandex_token = config.YANDEX_TOKEN
 event_id = None
 test_user_token = None
 test_user_id = None
+group_id = None
+
 
 def test_yandex_auth():
     global test_user_token
@@ -36,6 +38,18 @@ def test_patch_user():
     assert r.status_code == 200
     assert r.json().get('data').get('first_name') == 'Olga'
 
+
+def test_create_group():
+    """ ??????? ????? ?????? """
+    global group_id
+    global test_user_token
+    payload = {
+        "name": "Test group",
+        "color": "some color"
+    }
+    r = requests.post(f'{api_url}/groups/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    group_id = r.json().get('data').get('id')
+    assert r.status_code == 201
 
 
 def test_create_event():
