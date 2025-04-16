@@ -214,7 +214,8 @@ class UserViewSet(mixins.CreateModelMixin,
 			oauth_token = serializer.validated_data['oauth_token']
 			response_data = get_user_from_yandex(oauth_token)
 			if response_data[1] == 200:
-				logger.info(f"User with email {response_data[0].get('user_data').get('email')} and id = {response_data[0].get('user_data').get('id')} was authorized")
+				logger.info(f"User with email {response_data[0].get('user_data').get('email')} and "
+							f"id = {response_data[0].get('user_data').get('id')} was authorized")
 				response = {
 					"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
 					"data": response_data[0]

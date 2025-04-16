@@ -67,7 +67,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			users = event_data.pop('users', None)
 			# создаем новое событие в БД
 			event = Event.objects.create(author=user, **event_data)
-			logger.info(f"Создано событие: id = {event.id}, title = {event.title}")
+			logger.info(f"Created event: id = {event.id}, title = {event.title}")
 			# добавляем участников события вручную
 			if users:
 				for user in users:
