@@ -215,18 +215,18 @@ class EventViewSet(viewsets.ModelViewSet):
 			event = None
 			cache_event = cache.get(cache_key)
 			logger.info(f'Ключи в кэше: {cache.keys("*")}')
-			if request.user.id in cache_event[0]:
+			if cache_event and request.user.id in cache_event[0]:
 				event = cache_event[1]
+				logger.info(f'Событие "{event}" получено из кэша')
 			if not event:
 				logger.info(f'События с id = {pk} нет в кэше')
 				event = self.get_object()
-				users = set([obj.id for obj in event.users.filter(active=True)])
+				users = set([obj.id for obj in event.users.filter(is_active=True)])
 				users.add(event.author.id)
 				cache.set(cache_key, [users, event])
 		except:
 			logger.info('Redis unavailable')
 			event = self.get_object()
-			print('event: ', event)
 		response_data = {"event_data": EventSerializer(event, context={'request': request}).data}
 		try:
 			response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
