@@ -9,6 +9,7 @@ event_id = None
 test_user_token = None
 test_user_id = None
 group_id = None
+group_user_id = None
 
 
 def test_yandex_auth():
@@ -25,6 +26,7 @@ def test_yandex_auth():
 
 
 def test_get_user():
+    """ ????????? ?????? ????????? ???????????? """
     global test_user_id
     global test_user_token
     r = requests.get(f'{api_url}/users/{test_user_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
@@ -50,6 +52,21 @@ def test_create_group():
     }
     r = requests.post(f'{api_url}/groups/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
     group_id = r.json().get('data').get('id')
+    assert r.status_code == 201
+
+
+def test_add_group_user():
+    """ ?????????? ????????? ? ?????? """
+    global group_id
+    global test_user_token
+    global group_user_id
+    payload = {
+        "user_name": "Kisa",
+        "user_role": "my sweetheart"
+    }
+    r = requests.post(f'{api_url}/groups/{group_id}/add_user/', headers={"Authorization": f"Bearer {test_user_token}"},
+                      json=payload)
+    group_user_id = r.json().get('data').get('id')
     assert r.status_code == 201
 
 

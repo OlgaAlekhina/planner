@@ -494,9 +494,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 	def add_user(self, request, pk):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
-			user_name = serializer.validated_data['user_name']
-			user_role = serializer.validated_data['user_role']
-			user_color = serializer.validated_data['user_color']
+			user_name = serializer.validated_data.get('user_name')
+			user_role = serializer.validated_data.get('user_role')
+			user_color = serializer.validated_data.get('user_color')
 			group = self.get_object()
 			# генерируем уникальное имя для создания нового пользователя и проверяем, что такого имени нет в БД
 			for _ in range(10):
@@ -508,7 +508,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 			user.is_active = False
 			user.save()
 			# затем добавляем его в группу
-			group_user = GroupUser.objects.create(user=user, group=group, user_name=user_name, user_role=user_role, user_color=user_color)
+			group_user = GroupUser.objects.create(user=user, group=group, user_name=user_name, user_role=user_role,
+												  user_color=user_color)
 			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Участник добавлен в группу"}, "data": GroupUserSerializer(group_user).data}, status=201)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
