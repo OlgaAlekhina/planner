@@ -212,6 +212,7 @@ class EventViewSet(viewsets.ModelViewSet):
 	def retrieve(self, request, pk):
 		cache_key = f"event_{pk}"
 		try:
+			event = None
 			cache_event = cache.get(cache_key)
 			logger.info(f'Ключи в кэше: {cache.keys("*")}')
 			if request.user.id in cache_event[0]:
