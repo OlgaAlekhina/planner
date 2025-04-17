@@ -210,14 +210,18 @@ class EventViewSet(viewsets.ModelViewSet):
 		operation_description="Получает данные события по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'")
 	def retrieve(self, request, pk):
-		cache_key = f"event_{pk}_user_{request.user.id}"
+		cache_key = f"event_{pk}"
 		try:
-			event = cache.get(cache_key)
+			cache_event = cache.get(cache_key)
 			logger.info(f'Ключи в кэше: {cache.keys("*")}')
+			if request.user.id in cache_event[0]:
+				event = cache_event[1]
 			if not event:
 				logger.info(f'События с id = {pk} нет в кэше')
 				event = self.get_object()
-				cache.set(cache_key, event)
+				users = set([obj.id for obj in event.users.filter(active=True)])
+				users.add(event.author.id)
+				cache.set(cache_key, [users, event])
 		except:
 			logger.info('Redis unavailable')
 			event = self.get_object()
