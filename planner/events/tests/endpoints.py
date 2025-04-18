@@ -34,6 +34,7 @@ def test_get_user():
 
 
 def test_patch_user():
+    """ Изменение профиля тестового пользователя """
     global event_id
     global test_user_token
     payload = {"first_name": "Olga"}
@@ -68,6 +69,18 @@ def test_add_group_user():
                       json=payload)
     group_user_id = r.json().get('data').get('id')
     assert r.status_code == 201
+
+
+def test_patch_group_user():
+    """ Изменение данных участника группы """
+    global group_id
+    global test_user_token
+    global group_user_id
+    payload = {"user_name": "Osya"}
+    r = requests.patch(f'{api_url}/groups/{group_id}/users/{group_user_id}/',
+                       headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    assert r.status_code == 200
+    assert r.json().get('data').get('user_name') == 'Osya'
 
 
 def test_delete_group():
