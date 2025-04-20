@@ -13,7 +13,7 @@ group_user_id = None
 
 
 def test_yandex_auth():
-    """ ??????????? ????????? ???????????? ????? ?????? """
+    """ Авторизация тестового пользователя через Яндекс """
     global test_user_token
     global test_user_id
     payload = {
@@ -81,6 +81,15 @@ def test_patch_group_user():
                        headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
     assert r.status_code == 200
     assert r.json().get('data').get('user_name') == 'Osya'
+
+
+def test_delete_group_user():
+    """ Удаление участника из группы """
+    global group_id
+    global test_user_token
+    global group_user_id
+    r = requests.delete(f'{api_url}/groups/{group_id}/users/{group_user_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 204
 
 
 def test_delete_group():

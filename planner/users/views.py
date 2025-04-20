@@ -360,8 +360,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Удаление группы по id",
-		operation_description="Удаляет группу из базы данных по ее id и всех добавленных в нее пользователей с неактивными профилями.\nУсловия доступа к эндпоинту: токен авторизации в "
-							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может удалить только созданную им группу."
+		operation_description="Удаляет группу из базы данных по ее id и всех добавленных в нее пользователей с неактивными профилями.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Пользователь может удалить только созданную им группу."
 	)
 	def destroy(self, request, pk):
 		group = self.get_object()
@@ -505,6 +506,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 					break
 			# сначала создаем нового пользователя
 			user = User.objects.create_user(username=username)
+			logger.info(f"User {user.username} was added to group '{group.name}'")
 			user.is_active = False
 			user.save()
 			# затем добавляем его в группу
@@ -578,6 +580,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 		user = get_object_or_404(User, id=user_id)
 		group_user = get_object_or_404(GroupUser, user=user, group=group)
 		group_user.delete()
+		logger.info(f"User {user.username} was removed from group '{group.name}'")
 		if not user.is_active:
 			user.delete()
 		return Response(status=204)
