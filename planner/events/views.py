@@ -212,14 +212,19 @@ class EventViewSet(viewsets.ModelViewSet):
 	def retrieve(self, request, pk):
 		cache_key = f"event_{pk}"
 		try:
+			# пробуем получить событие из кэша
 			event = None
 			cache_event = cache.get(cache_key)
-			logger.info(f'Ключи в кэше: {cache.keys("*")}')
+			logger.info(f'Keys in cache: {cache.keys("*")}')
+			# проверяем, что пользователь имеет право на просмотр события из кэша
 			if cache_event and request.user.id in cache_event[0]:
 				event = cache_event[1]
-				logger.info(f'Событие "{event}" получено из кэша')
+				logger.info(f'Event "{event}" was received from cache')
 			if not event:
-				logger.info(f'События с id = {pk} нет в кэше')
+				# если события нет в кэше, добавляем его туда вторым элементом списка, а в качестве первого элемента
+				# формируем множество из id пользователей с активным профилем, которые являются создателем или участниками
+				# события
+				logger.info(f'Event with id = {pk} is absent in cache')
 				event = self.get_object()
 				users = set([obj.id for obj in event.users.filter(is_active=True)])
 				users.add(event.author.id)
@@ -270,6 +275,17 @@ class EventViewSet(viewsets.ModelViewSet):
 	)
 	def destroy(self, request, pk):
 		event = self.get_object()
+		cache_key = f"event_{pk}"
+		# удаляем событие из кэша, если оно там есть
+		try:
+			logger.info(f'Keys in cache before removal: {cache.keys("*")}')
+			if cache_key in cache.keys("*"):
+				cache.delete(cache_key)
+				logger.info(f'Keys in cache after removal: {cache.keys("*")}')
+			else:
+				logger.info(f'Event with id = {pk} is absent in cache')
+		except:
+			logger.info('Redis unavailable')
 		cancel_date = request.GET.get('cancel_date')
 		all_param = request.GET.get('all')
 		# удаляем неповторяющиеся события
