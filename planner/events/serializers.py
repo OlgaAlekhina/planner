@@ -91,6 +91,14 @@ class EventMetaSerializer(serializers.ModelSerializer):
 			ret['bymonthday'] = sorted(tuple(map(int, ret['bymonthday'].split(','))))
 		return ret
 
+	def get_fields(self, *args, **kwargs):
+		fields = super(EventMetaSerializer, self).get_fields(*args, **kwargs)
+		request = self.context.get('request', None)
+		# делаем поле необязательным в методе PATCH
+		if request and getattr(request, 'method', None) == "PATCH":
+			fields['freq'].required = False
+		return fields
+
 
 class EventCreateSerializer(serializers.Serializer):
 	""" Сериализатор для создания события """
