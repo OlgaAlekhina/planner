@@ -26,7 +26,7 @@ def test_yandex_auth():
 
 
 def test_get_user():
-    """ ????????? ?????? ????????? ???????????? """
+    """ Получение данных тестового пользователя """
     global test_user_id
     global test_user_token
     r = requests.get(f'{api_url}/users/{test_user_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
@@ -54,6 +54,16 @@ def test_create_group():
     r = requests.post(f'{api_url}/groups/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
     group_id = r.json().get('data').get('id')
     assert r.status_code == 201
+
+
+def test_patch_group():
+    """ Изменение данных группы """
+    global group_id
+    global test_user_token
+    payload = {"name": "My family"}
+    r = requests.patch(f'{api_url}/groups/{group_id}/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    assert r.status_code == 200
+    assert r.json().get('data').get('name') == 'My family'
 
 
 def test_add_group_user():
