@@ -44,7 +44,7 @@ def test_patch_user():
 
 
 def test_create_group():
-    """ ???????? ????? ?????? """
+    """ Создание тестовой группы """
     global group_id
     global test_user_token
     payload = {
@@ -91,6 +91,14 @@ def test_patch_group_user():
                        headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
     assert r.status_code == 200
     assert r.json().get('data').get('user_name') == 'Osya'
+
+
+def test_get_groups():
+    """ Получение всех групп тестового пользователя """
+    global test_user_token
+    r = requests.get(f'{api_url}/groups/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 200
+    assert len(r.json().get('data')) == 1
 
 
 def test_delete_group_user():
