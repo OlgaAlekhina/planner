@@ -67,7 +67,7 @@ def test_patch_group():
 
 
 def test_add_group_user():
-    """ ?????????? ????????? ? ?????? """
+    """ Добавление участника в группу """
     global group_id
     global test_user_token
     global group_user_id
@@ -99,6 +99,15 @@ def test_get_groups():
     r = requests.get(f'{api_url}/groups/', headers={"Authorization": f"Bearer {test_user_token}"})
     assert r.status_code == 200
     assert len(r.json().get('data')) == 1
+
+
+def test_get_groups_with_users():
+    """ Получение всех групп тестового пользователя со списком участников """
+    global test_user_token
+    r = requests.get(f'{api_url}/groups/users/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 200
+    assert r.json().get('data')[0].get('group').get('name') == "My family"
+    assert len(r.json().get('data')[0].get('users')) == 1
 
 
 def test_delete_group_user():
