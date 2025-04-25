@@ -162,6 +162,7 @@ CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/1",  # Default Redis URL and port
+        "TIMEOUT": 900, # время хранения кэша в секундах
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }

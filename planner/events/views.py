@@ -213,32 +213,38 @@ class EventViewSet(viewsets.ModelViewSet):
 		cache_key = f"event_{pk}"
 		try:
 			# пробуем получить событие из кэша
-			event = None
-			cache_event = cache.get(cache_key)
+			event_data = None
+			cached_event = cache.get(cache_key)
 			logger.info(f'Keys in cache: {cache.keys("*")}')
 			# проверяем, что пользователь имеет право на просмотр события из кэша
-			if cache_event and request.user.id in cache_event[0]:
-				event = cache_event[1]
-				logger.info(f'Event "{event}" was received from cache')
-			if not event:
+			if cached_event and request.user.id in cached_event[0]:
+				event_data = cached_event[1]
+				logger.info(f'Event "{event_data}" was received from cache')
+			if not event_data:
 				# если события нет в кэше, добавляем его туда вторым элементом списка, а в качестве первого элемента
 				# формируем множество из id пользователей с активным профилем, которые являются создателем или участниками
 				# события
 				logger.info(f'Event with id = {pk} is absent in cache')
 				event = self.get_object()
+				event_data = {"event_data": EventSerializer(event, context={'request': request}).data}
+				if event.repeats:
+					event_meta = event.eventmeta
+					if event_meta:
+						event_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
 				users = set([obj.id for obj in event.users.filter(is_active=True)])
 				users.add(event.author.id)
-				cache.set(cache_key, [users, event])
+				cache.set(cache_key, [users, event_data])
 		except:
 			logger.info('Redis unavailable')
 			event = self.get_object()
-		response_data = {"event_data": EventSerializer(event, context={'request': request}).data}
-		try:
-			response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
-		except:
-			pass
+			event_data = {"event_data": EventSerializer(event, context={'request': request}).data}
+			if event.repeats:
+				event_meta = event.eventmeta
+				if event_meta:
+					event_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
+
 		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные события получены."},
-					"data": response_data}
+					"data": event_data}
 		return Response(response, status=200)
 
 	@swagger_auto_schema(
