@@ -404,25 +404,27 @@ class EventViewSet(viewsets.ModelViewSet):
 			if event_meta:
 				EventMeta.objects.update_or_create(event=event, defaults=event_meta)
 
+			# сериализуем данные события с метаданными
+			event_data = {"event_data": EventSerializer(event, context={'request': request}).data}
+			if event.repeats:
+				event_meta = event.eventmeta
+				if event_meta:
+					event_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
+
 			cache_key = f"event_{pk}"
 			# обновляем событие в кэше
 			try:
 				logger.info(f'Keys in cache before update: {cache.keys("*")}')
 				users = set([obj.id for obj in event.users.filter(is_active=True)])
 				users.add(event.author.id)
-				cache.set(cache_key, [users, event])
+				cache.set(cache_key, [users, event_data])
 				logger.info(f'Keys in cache after update: {cache.keys("*")}')
 			except:
 				logger.info('Redis unavailable')
 
-			response_data = {"event_data": EventSerializer(event, context={'request': request}).data}
-			try:
-				response_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
-			except:
-				pass
 			return Response(
 				{"detail": {"code": "HTTP_200_OK", "message": "Событие успешно изменено"},
-				 "data": response_data}, status=200)
+				 "data": event_data}, status=200)
 
 		response = {'detail': {
 			"code": "BAD_REQUEST",
