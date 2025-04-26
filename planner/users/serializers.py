@@ -38,10 +38,11 @@ class UserLoginSerializer(serializers.ModelSerializer):
 	nickname = serializers.CharField(source='userprofile.nickname')
 	birthday = serializers.CharField(source='userprofile.birthday', required=False)
 	gender = serializers.CharField(source='userprofile.get_gender_display', required=False)
+	premium_end = serializers.DateField(source='userprofile.premium_end', required=False)
 
 	class Meta:
 		model = User
-		fields = ('id', 'email', 'first_name', 'last_name', 'nickname', 'birthday', 'gender', 'avatar')
+		fields = ('id', 'email', 'first_name', 'last_name', 'nickname', 'birthday', 'gender', 'avatar', 'premium_end')
 		extra_kwargs = {
 						'first_name': {'required': True},
 						'last_name': {'required': True},

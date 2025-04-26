@@ -15,6 +15,7 @@ class UserProfile(models.Model):
 	gender = models.CharField(max_length=1, choices=USER_SEX, blank=True)
 	birthday = models.DateField(blank=True, null=True)
 	nickname = models.CharField(max_length=50, blank=True)
+	premium_end = models.DateField(blank=True, null=True)
 
 	def __str__(self):
 		return f"{self.user.username}-{self.user.id}"

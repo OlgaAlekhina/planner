@@ -21,18 +21,23 @@ ___
 
 </summary>
 
-### Backend
-*Django Rest Framework, Swagger*
+### REST API
+*Django Rest Framework*
 
-### Tools
+### Документация
+*Swagger*
 
+### Кэширование
+*Redis*
 
-### Containerization
-*Docker, Docker Compos, Nginx*
+### Очереди задач
+*Celery, Redis*
 
+### Тестирование
+*PyTest*
 
-### QA
-*Postman, PyTest*
+### Деплой
+*Docker Compose, Gunicorn, Nginx*
 
 </details>
 
