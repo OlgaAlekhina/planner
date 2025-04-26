@@ -110,6 +110,15 @@ def test_get_groups_with_users():
     assert len(r.json().get('data')[0].get('users')) == 1
 
 
+def test_get_groupusers():
+    """ Получение всех участников тестовой группы """
+    global group_id
+    global test_user_token
+    r = requests.get(f'{api_url}/groups/{group_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 200
+    assert len(r.json().get('data')) == 1
+
+
 def test_delete_group_user():
     """ Удаление участника из группы """
     global group_id
@@ -120,7 +129,7 @@ def test_delete_group_user():
 
 
 def test_delete_group():
-    """ ???????? ???????? ?????? """
+    """" Удаление тестовой группы """
     global group_id
     global test_user_token
     r = requests.delete(f'{api_url}/groups/{group_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
