@@ -335,6 +335,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
 	)
 	def create(self, request):
+		user = request.user
+		premium_account = True if user.userprofile.premium_end else False
+		# group_number =
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			name = serializer.validated_data['name']

@@ -129,7 +129,7 @@ def test_delete_group_user():
 
 
 def test_delete_group():
-    """" Удаление тестовой группы """
+    """ Удаление тестовой группы """
     global group_id
     global test_user_token
     r = requests.delete(f'{api_url}/groups/{group_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
@@ -137,6 +137,7 @@ def test_delete_group():
 
 
 def test_create_event():
+    """ Создание тестового события """
     global event_id
     global test_user_token
     today = str(date.today())
@@ -154,6 +155,7 @@ def test_create_event():
 
 
 def test_get_event():
+    """ Получение данных тестового события """
     global event_id
     global test_user_token
     r = requests.get(f'{api_url}/events/{event_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
@@ -161,6 +163,7 @@ def test_get_event():
 
 
 def test_patch_event():
+    """ Редактирование данных тестового события """
     global event_id
     global test_user_token
     tomorrow = str(date.today() + timedelta(days=1))
@@ -174,6 +177,7 @@ def test_patch_event():
 
 
 def test_delete_event():
+    """ Удаление тестового события """
     global event_id
     global test_user_token
     r = requests.delete(f'{api_url}/events/{event_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
@@ -181,6 +185,7 @@ def test_delete_event():
 
 
 def test_delete_user():
+    """ Удаление тестового пользователя """
     global test_user_id
     global test_user_token
     r = requests.delete(f'{api_url}/users/{test_user_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
