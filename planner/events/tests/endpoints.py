@@ -176,6 +176,17 @@ def test_patch_event():
     assert r.status_code == 200
 
 
+def test_get_events():
+    """ Получение всех событий тестового пользователя на сегодня-завтра """
+    global event_id
+    global test_user_token
+    start_date = str(date.today())
+    end_date = str(date.today() + timedelta(days=1))
+    r = requests.get(f'{api_url}/events/?start_date={start_date}&end_date={end_date}', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 200
+    assert len(r.json().get('data')) == 1
+
+
 def test_delete_event():
     """ Удаление тестового события """
     global event_id
