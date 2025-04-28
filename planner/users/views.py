@@ -19,7 +19,7 @@ from .models import UserProfile, Group, SignupCode, GroupUser
 from django.http import JsonResponse, HttpResponse
 from drf_yasg import openapi
 from planner.permissions import UserPermission, GroupPermission
-from datetime import timedelta
+from datetime import timedelta, datetime, date
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 import logging
@@ -328,6 +328,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			201: openapi.Response(description="Успешное создание группы", schema=GroupResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Создание новой группы",
@@ -336,8 +337,18 @@ class GroupViewSet(viewsets.ModelViewSet):
 	)
 	def create(self, request):
 		user = request.user
-		premium_account = True if user.userprofile.premium_end else False
-		# group_number =
+		# проверяем тип аккаунта пользователя и количество групп, в которых он состоит
+		premium_end = user.userprofile.premium_end
+		premium_account = True if premium_end and premium_end >= date.today() else False
+		group_number = len(user.users.all())
+		# если у пользователя премиум аккаунт, то он может иметь не более 3 групп
+		if premium_account and group_number > 2:
+			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с премиум-аккаунтом "
+								 "не может иметь больше трех групп"}}, status=403)
+		# если у пользователя бесплатный аккаунт, то он может иметь не более 1 группы
+		if not premium_account and group_number > 0:
+			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с бесплатным аккаунтом "
+								 "не может иметь больше одной группы"}}, status=403)
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			name = serializer.validated_data['name']
