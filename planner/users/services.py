@@ -5,15 +5,13 @@ from random import randint
 from typing import Optional
 from datetime import datetime, date
 import requests
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
 from requests.exceptions import RequestException, HTTPError
 from django.contrib.auth.models import User
 from .models import UserProfile, SignupCode
 from .serializers import (UserLoginSerializer,)
 from rest_framework.authtoken.models import Token
 from django.conf import settings
-
+from .tasks import send_letter
 
 client_id = settings.VK_CLIENT_ID
 
@@ -22,24 +20,6 @@ def convert_date(birthday: str, date_format='%d.%m.%Y') -> date | str:
 	if '-' not in birthday:
 		return datetime.strptime(birthday, date_format).date()
 	return birthday
-
-
-def send_letter(email: str, data: int | str, subject: str, template: str) -> None:
-	if subject == 'signup':
-		subject = 'Подтверждение авторизации/регистрации в приложении Family Planner'
-	elif subject == 'reset':
-		subject = 'Восстановление пароля в приложении Family Planner'
-	msg = EmailMultiAlternatives(
-		subject=subject,
-		from_email='olga-olechka-5@yandex.ru',
-		to=[email, ]
-	)
-	html_content = render_to_string(
-		f'{template}',
-		{'data': data}
-	)
-	msg.attach_alternative(html_content, "text/html")
-	msg.send()
 
 
 def get_user(email: str, password: str) -> tuple[dict, int]:
@@ -56,7 +36,7 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 	# если в БД нет пароля, значит, пользователь регистрировался через соцсети, сохраняем переданный пароль и делаем профиль неактивным до подтверждения кода
 	if not user.password:
 		code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
-		send_letter(email, code.code, 'signup', 'signup_code.html')
+		send_letter.delay(email, code.code, 'signup', 'signup_code.html')
 		user.is_active = False
 		user.set_password(password)
 		user.save()
@@ -67,7 +47,8 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 	# при успешно пройденных проверках получаем данные пользователя и токен авторизации
 	token = Token.objects.get(user=user)
 	user_data = UserLoginSerializer(user).data
-	result = {"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"}, "data": {"user_data": user_data, "user_auth_token": token.key}}
+	result = {"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
+			  "data": {"user_data": user_data, "user_auth_token": token.key}}
 	return result, 200
 
 
@@ -80,7 +61,7 @@ def create_user(email: str, password: str) -> tuple[dict, int]:
 	user.is_active = False
 	user.save()
 	code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
-	send_letter(email, code.code, 'signup', 'signup_code.html')
+	send_letter.delay(email, code.code, 'signup', 'signup_code.html')
 	return {"detail": {"code": "HTTP_201_CREATED", "message": "Пользователь зарегистрирован. На электронную почту выслан код подтверждения."}, "data": {"user_id": user.id}}, 201
 
 
@@ -95,7 +76,7 @@ def send_password(email: str) -> tuple[dict, int]:
 	new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 	user.set_password(new_password)
 	user.save()
-	send_letter(email, new_password, 'reset', 'reset_password.html')
+	send_letter.delay(email, new_password, 'reset', 'reset_password.html')
 	return {"detail": {"code": "HTTP_200_OK", "message": "Новый пароль успешно отправлен пользователю"}}, 200
 
 

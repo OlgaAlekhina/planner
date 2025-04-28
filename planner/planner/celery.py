@@ -17,10 +17,10 @@ app.conf.beat_schedule = {
         'schedule': crontab(hour=8, minute=0, day_of_week='monday'),
     },
 
-    'test_every_200_seconds': {
-        'task': 'users.tasks.test_task',
-        'schedule': timedelta(hours=12),
-    },
+    # 'test_every_200_seconds': {
+    #     'task': 'users.tasks.test_task',
+    #     'schedule': timedelta(hours=12),
+    # },
 }
 
 
