@@ -56,6 +56,17 @@ def test_create_group():
     assert r.status_code == 201
 
 
+def test_create_second_group():
+    """ Создание второй тестовой группы (запрещено для пользователя с бесплатным аккаунтом) """
+    global test_user_token
+    payload = {
+        "name": "Test group 2",
+        "color": "some color"
+    }
+    r = requests.post(f'{api_url}/groups/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    assert r.status_code == 403
+
+
 def test_patch_group():
     """ Изменение данных группы """
     global group_id
