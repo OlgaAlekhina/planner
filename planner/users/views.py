@@ -23,15 +23,13 @@ from datetime import timedelta, datetime, date
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 import logging
+from django.core.cache import cache
 
 logger = logging.getLogger('users')
 
 
-class UserViewSet(mixins.CreateModelMixin,
-                   mixins.RetrieveModelMixin,
-                   mixins.UpdateModelMixin,
-                   mixins.DestroyModelMixin,
-                   viewsets.GenericViewSet):
+class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
+																		viewsets.GenericViewSet):
 	""" Эндпоинты для работы с пользователями """
 	queryset = User.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
@@ -84,8 +82,27 @@ class UserViewSet(mixins.CreateModelMixin,
 		operation_description="Получает данные профиля пользователя по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может просматривать только свой собственный профиль.")
 	def retrieve(self, request, pk):
-		user = self.get_object()
-		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные пользователя получены."}, "data": self.get_serializer(user).data}
+		# берем id из данных авторизованного пользователя, а не url, чтобы обеспечить санкционированный допуск к кэшу
+		cache_key = f"user_{request.user.id}"
+		try:
+			# пробуем получить данные пользователя из кэша
+			user_data = None
+			cached_user = cache.get(cache_key)
+			if cached_user:
+				user_data = cached_user
+				logger.info(f'User "{user_data}" was received from cache')
+			if not user_data:
+				# если данных пользователя нет в кэше, добавляем их туда
+				logger.info(f'User with id = {request.user.id} is absent in cache')
+				user = self.get_object()
+				user_data = self.get_serializer(user).data
+				cache.set(cache_key, user_data)
+		except:
+			logger.info('Redis unavailable')
+			user = self.get_object()
+			user_data = self.get_serializer(user).data
+
+		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные пользователя получены."}, "data": user_data}
 		return Response(response, status=200)
 
 	@swagger_auto_schema(
