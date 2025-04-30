@@ -411,8 +411,8 @@ class EventViewSet(viewsets.ModelViewSet):
 				if event_meta:
 					event_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
 
-			cache_key = f"event_{pk}"
 			# обновляем событие в кэше
+			cache_key = f"event_{pk}"
 			try:
 				logger.info(f'Keys in cache before update: {cache.keys("*")}')
 				users = set([obj.id for obj in event.users.filter(is_active=True)])

@@ -114,15 +114,29 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Редактирование данных пользователя по id",
-		operation_description="Редактирует данные профиля пользователя по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
-							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может реактировать только свой собственный профиль.")
+		operation_description="Редактирует данные профиля пользователя по его id.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Пользователь может реактировать только свой собственный профиль.")
 	def partial_update(self, request, pk):
 		user = self.get_object()
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			user.first_name = serializer.validated_data.get('first_name', user.first_name)
 			user.save()
-			return Response({"detail": {"code": "HTTP_200_OK", "message": "Данные пользователя отредактированы."}, "data": UserLoginSerializer(user).data}, status=200)
+			user_data = UserLoginSerializer(user).data
+
+			# обновляем данные пользователя в кэше
+			cache_key = f"user_{pk}"
+			try:
+				logger.info(f'Data in cache before update: {cache.get(cache_key)}')
+				cache.set(cache_key, user_data)
+				logger.info(f'Data in cache after update: {cache.get(cache_key)}')
+			except:
+				logger.info('Redis unavailable')
+
+			return Response({"detail": {"code": "HTTP_200_OK", "message": "Данные пользователя отредактированы."},
+																			"data": user_data}, status=200)
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
