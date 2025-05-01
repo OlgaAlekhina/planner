@@ -1,0 +1,9 @@
+[2025-05-01 21:20:54,498: INFO/MainProcess] Connected to redis://127.0.0.1:6379/0
+[2025-05-01 21:20:54,499: INFO/MainProcess] mingle: searching for neighbors
+[2025-05-01 21:20:55,188: INFO/Beat] beat: Starting...
+[2025-05-01 21:20:55,504: INFO/MainProcess] mingle: all alone
+[2025-05-01 21:20:55,517: INFO/MainProcess] celery@olga-IdeaPad-Slim-5-16IRL8 ready.
+[2025-05-01 21:22:13,882: INFO/MainProcess] Task users.tasks.send_letter[f9b96d34-f1e2-4c0b-b4d3-0d87068d4834] received
+[2025-05-01 21:22:14,823: INFO/ForkPoolWorker-7] Letter was sent to user
+[2025-05-01 21:22:14,837: INFO/ForkPoolWorker-7] Task users.tasks.send_letter[f9b96d34-f1e2-4c0b-b4d3-0d87068d4834] succeeded in 0.9528121469775215s: None
+[2025-05-01 21:22:56,314: INFO/MainProcess] beat: Shutting down...
