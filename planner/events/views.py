@@ -16,6 +16,7 @@ from .services import get_dates
 from django.core.cache import cache
 from planner.permissions import EventPermission
 import logging
+from django.core.exceptions import PermissionDenied
 
 
 logger = logging.getLogger('events')
@@ -210,17 +211,19 @@ class EventViewSet(viewsets.ModelViewSet):
 		operation_description="Получает данные события по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'")
 	def retrieve(self, request, pk):
-		cache_key = f"event_{pk}"
 		try:
 			# пробуем получить событие из кэша
+			cache_key = f"event_{pk}"
 			event_data = None
 			cached_event = cache.get(cache_key)
 			logger.info(f'Keys in cache: {cache.keys("*")}')
 			# проверяем, что пользователь имеет право на просмотр события из кэша
-			if cached_event and request.user.id in cached_event[0]:
+			if cached_event:
+				if request.user.id not in cached_event[0]:
+					raise PermissionDenied()
 				event_data = cached_event[1]
 				logger.info(f'Event "{event_data}" was received from cache')
-			if not event_data:
+			else:
 				# если события нет в кэше, добавляем его туда вторым элементом списка, а в качестве первого элемента
 				# формируем множество из id пользователей с активным профилем, которые являются создателем или участниками
 				# события
@@ -281,15 +284,13 @@ class EventViewSet(viewsets.ModelViewSet):
 	)
 	def destroy(self, request, pk):
 		event = self.get_object()
-		cache_key = f"event_{pk}"
 		# удаляем событие из кэша, если оно там есть
+		cache_key = f"event_{pk}"
 		try:
-			logger.info(f'Keys in cache before removal: {cache.keys("*")}')
+			logger.info(f'Event data in cache before removal: {cache.get(cache_key)}')
 			if cache_key in cache.keys("*"):
 				cache.delete(cache_key)
-				logger.info(f'Keys in cache after removal: {cache.keys("*")}')
-			else:
-				logger.info(f'Event with id = {pk} is absent in cache')
+				logger.info(f'Event data in cache after removal: {cache.get(cache_key)}')
 		except:
 			logger.info('Redis unavailable')
 		cancel_date = request.GET.get('cancel_date')

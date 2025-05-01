@@ -63,11 +63,22 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Удаление пользователей по id",
-		operation_description="Удаляет учетную запись пользователя из базы данных по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
-							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может удалить только свой собственный профиль.")
+		operation_description="Удаляет учетную запись пользователя из базы данных по его id."
+				"\nУсловия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+				"\nПользователь может удалить только свой собственный профиль.")
 	def destroy(self, request, pk):
 		user = self.get_object()
 		user.delete()
+		# удаляем данные пользователя из кэша, если они там есть
+		try:
+			cache_key = f"user_{pk}"
+			logger.info(f'User data in cache before removal: {cache.get(cache_key)}')
+			if cache_key in cache.keys("*"):
+				cache.delete(cache_key)
+				logger.info(f'User data in cache after removal: {cache.get(cache_key)}')
+		except:
+			logger.info('Redis unavailable')
+
 		return Response(status=204)
 
 	@swagger_auto_schema(
@@ -82,16 +93,15 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		operation_description="Получает данные профиля пользователя по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
 							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может просматривать только свой собственный профиль.")
 	def retrieve(self, request, pk):
-		# берем id из данных авторизованного пользователя, а не url, чтобы обеспечить санкционированный допуск к кэшу
-		cache_key = f"user_{request.user.id}"
 		try:
 			# пробуем получить данные пользователя из кэша
 			user_data = None
-			cached_user = cache.get(cache_key)
-			if cached_user:
-				user_data = cached_user
+			# берем id из данных авторизованного пользователя, а не url, чтобы обеспечить санкционированный допуск к кэшу
+			cache_key = f"user_{request.user.id}"
+			user_data = cache.get(cache_key)
+			if user_data:
 				logger.info(f'User "{user_data}" was received from cache')
-			if not user_data:
+			else:
 				# если данных пользователя нет в кэше, добавляем их туда
 				logger.info(f'User with id = {request.user.id} is absent in cache')
 				user = self.get_object()
