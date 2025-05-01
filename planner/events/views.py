@@ -214,7 +214,6 @@ class EventViewSet(viewsets.ModelViewSet):
 		try:
 			# пробуем получить событие из кэша
 			cache_key = f"event_{pk}"
-			event_data = None
 			cached_event = cache.get(cache_key)
 			logger.info(f'Keys in cache: {cache.keys("*")}')
 			# проверяем, что пользователь имеет право на просмотр события из кэша
@@ -238,7 +237,6 @@ class EventViewSet(viewsets.ModelViewSet):
 				users.add(event.author.id)
 				cache.set(cache_key, [users, event_data])
 		except:
-			logger.info('Redis unavailable')
 			event = self.get_object()
 			event_data = {"event_data": EventSerializer(event, context={'request': request}).data}
 			if event.repeats:

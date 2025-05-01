@@ -90,12 +90,12 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Получение данных пользователя по id",
-		operation_description="Получает данные профиля пользователя по его id.\nУсловия доступа к эндпоинту: токен авторизации в "
-							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может просматривать только свой собственный профиль.")
+		operation_description="Получает данные профиля пользователя по его id.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Пользователь может просматривать только свой собственный профиль.")
 	def retrieve(self, request, pk):
 		try:
 			# пробуем получить данные пользователя из кэша
-			user_data = None
 			# берем id из данных авторизованного пользователя, а не url, чтобы обеспечить санкционированный допуск к кэшу
 			cache_key = f"user_{request.user.id}"
 			user_data = cache.get(cache_key)
@@ -108,7 +108,6 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 				user_data = self.get_serializer(user).data
 				cache.set(cache_key, user_data)
 		except:
-			logger.info('Redis unavailable')
 			user = self.get_object()
 			user_data = self.get_serializer(user).data
 
