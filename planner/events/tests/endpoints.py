@@ -16,7 +16,7 @@ group_user_id = None
 
 @pytest.fixture
 def base_url(request):
-    """ Определяем, по какому урлу делать запросы, в зависимости от значения флага --env в команде pytest """
+    """ Определяет, по какому урлу делать запросы, в зависимости от значения флага --env в команде pytest """
     env_param = request.config.getoption('--env')
     base_url = api_url_prod if env_param == 'prod' else api_url
     return base_url

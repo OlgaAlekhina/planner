@@ -1,4 +1,5 @@
 def pytest_addoption(parser):
+    """ Добавляет параметр env в команду pytest """
     parser.addoption(
         '--env',
         action='store',

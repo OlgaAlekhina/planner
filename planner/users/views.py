@@ -470,12 +470,27 @@ class GroupViewSet(viewsets.ModelViewSet):
 	)
 	def list(self, request):
 		user = request.user
-		group_users = user.users.all()
-		response = []
-		for group_user in group_users:
-			response.append(GroupSerializer(group_user.group, context={'request': request}).data)
+		try:
+			# пробуем получить группы из кэша
+			cache_key = f"groups_{user.id}"
+			groups_data = cache.get(cache_key)
+			if not groups_data:
+				# если данных нет в кэше, добавляем их туда
+				logger.info(f'Groups for user with id = {user.id} are absent in cache')
+				group_users = user.users.all()
+				groups_data = []
+				for group_user in group_users:
+					groups_data.append(GroupSerializer(group_user.group, context={'request': request}).data)
+				cache.set(cache_key, groups_data)
+		except:
+			logger.info('Redis unavailable')
+			group_users = user.users.all()
+			groups_data = []
+			for group_user in group_users:
+				groups_data.append(GroupSerializer(group_user.group, context={'request': request}).data)
+
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
-						 "data": response}, status=200)
+						 "data": groups_data}, status=200)
 
 	@swagger_auto_schema(
 		responses={
