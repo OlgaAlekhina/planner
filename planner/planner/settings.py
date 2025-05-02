@@ -161,7 +161,7 @@ SWAGGER_SETTINGS = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",  # Default Redis URL and port
+        "LOCATION": os.getenv('REDIS_URL'),  # Default Redis URL and port
         "TIMEOUT": 900, # время хранения кэша в секундах
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
@@ -289,7 +289,7 @@ LOGGING = {
     },
 }
 
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_BROKER_URL = os.getenv('REDIS_URL')
 CELERY_RESULT_BACKEND = os.getenv('REDIS_URL')
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
