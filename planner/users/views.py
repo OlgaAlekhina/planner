@@ -532,18 +532,39 @@ class GroupViewSet(viewsets.ModelViewSet):
 	)
 	def groups_with_users(self, request):
 		user = request.user
-		group_users = user.users.all()
-		response = []
-		for group_user in group_users:
-			group = group_user.group
-			users = group.group_users.all()
-			users_list = []
-			for u in users:
-				if u.user.id != user.id:
-					users_list.append(GroupUserSerializer(u).data)
-			response.append({'group': GroupSerializer(group, context={'request': request}).data, 'users': users_list})
+		try:
+			# пробуем получить группы с пользователями из кэша
+			cache_key = f"groupusers_{user.id}"
+			groupusers_data = cache.get(cache_key)
+			if not groupusers_data:
+				# если данных нет в кэше, добавляем их туда
+				logger.info(f'Groupusers for user with id = {user.id} are absent in cache')
+				group_users = user.users.all()
+				groupusers_data = []
+				for group_user in group_users:
+					group = group_user.group
+					users = group.group_users.all()
+					users_list = []
+					for u in users:
+						if u.user.id != user.id:
+							users_list.append(GroupUserSerializer(u).data)
+					groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data, 'users': users_list})
+				cache.set(cache_key, groupusers_data)
+		except:
+			logger.info('Redis unavailable')
+			group_users = user.users.all()
+			groupusers_data = []
+			for group_user in group_users:
+				group = group_user.group
+				users = group.group_users.all()
+				users_list = []
+				for u in users:
+					if u.user.id != user.id:
+						users_list.append(GroupUserSerializer(u).data)
+				groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data, 'users': users_list})
+
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
-						 "data": response}, status=200)
+						 "data": groupusers_data}, status=200)
 
 
 	@action(detail=True, methods=['post'])
