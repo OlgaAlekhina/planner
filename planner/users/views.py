@@ -16,6 +16,7 @@ from .services import get_user_from_yandex, get_user_from_vk, get_user, create_u
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .models import UserProfile, Group, SignupCode, GroupUser
+from events.models import Event
 from django.http import JsonResponse, HttpResponse
 from drf_yasg import openapi
 from planner.permissions import UserPermission, GroupPermission
@@ -316,12 +317,21 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		if serializer.is_valid():
 			code = serializer.validated_data['code']
 			user = self.get_object()
+			# проверяем принадлежность кода пользователю
 			if SignupCode.objects.filter(code=code, user=user).exists():
 				signup_code = SignupCode.objects.get(code=code, user=user)
 				if timezone.now() - signup_code.code_time < timedelta(minutes=60):
+					# активируем профиль пользователя
 					user.is_active = True
 					user.save()
+					# удаляем использованный код из БД
 					signup_code.delete()
+					# создаем дефолтную группу и ее участника, если они отсутствуют
+					group, created = Group.objects.get_or_create(owner=user, default=True,
+															defaults={'name': 'default_group', 'color': 'default_color'})
+					if created:
+						GroupUser.objects.get_or_create(user=user, group=group, defaults={'user_name': 'me'})
+					# создаем токен авторизации для пользователя
 					token = Token.objects.get(user=user)
 					user_data = UserLoginSerializer(user).data
 					response = {
@@ -451,7 +461,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 			group.color = serializer.validated_data.get('color', group.color)
 			group.save()
 			return Response(
-				{"detail": {"code": "HTTP_200_OK", "message": "Группа успешно изменена"}, "data": GroupSerializer(group, context={'request': request}).data}, status=200)
+				{"detail": {"code": "HTTP_200_OK", "message": "Группа успешно изменена"}, "data": GroupSerializer(group,
+																	  context={'request': request}).data}, status=200)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
@@ -648,9 +659,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			return self.update_group_user(request, *args, **kwargs)
 
 	def update_group_user(self, request, pk, user_id):
-		group = self.get_object()
-		user = get_object_or_404(User, id=user_id)
-		group_user = get_object_or_404(GroupUser, user=user, group=group)
+		group_user = get_object_or_404(GroupUser, id=user_id)
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			group_user.user_name = serializer.validated_data.get('user_name', group_user.user_name)
@@ -666,11 +675,10 @@ class GroupViewSet(viewsets.ModelViewSet):
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 	def delete_group_user(self, request, pk, user_id):
-		group = self.get_object()
-		user = get_object_or_404(User, id=user_id)
-		group_user = get_object_or_404(GroupUser, user=user, group=group)
+		group_user = get_object_or_404(GroupUser, id=user_id)
+		user = group_user.user
 		group_user.delete()
-		logger.info(f"User {user.username} was removed from group '{group.name}'")
+		logger.info(f"User {user.username} was removed from group")
 		if not user.is_active:
 			user.delete()
 		return Response(status=204)
@@ -706,12 +714,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 																	"не может иметь больше одной группы"}}, status=403)
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
-			user = request.user
-			group_id = serializer.validated_data['group_id']
 			user_id = serializer.validated_data['user_id']
-			old_user = get_object_or_404(User, pk=user_id)
-			group = get_object_or_404(Group, pk=group_id)
-			group_user = get_object_or_404(GroupUser, user=old_user, group=group)
+			group_user = get_object_or_404(GroupUser, id=user_id)
+			old_user = group_user.user
 			group_user.user = user
 			group_user.save()
 			old_user.delete()
@@ -723,7 +728,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
-# функция для добавления отсутствующих профилей пользователей
+# функция для добавления отсутствующих профилей пользователей на проде
 def add_missing_profiles(request):
 	users = User.objects.all()
 	for user in users:
@@ -731,3 +736,37 @@ def add_missing_profiles(request):
 		print(user.username, ' : ', created)
 	print("all done")
 	return HttpResponse("It's done.")
+
+
+# функция для добавления дефолтной группы пользователям на проде
+def add_default_group(request):
+	users = User.objects.all()
+	for user in users:
+		if user.is_active:
+			created_group = Group.objects.get_or_create(owner=user, default=True, defaults={'name': 'default_group',
+																					  'color': 'default_color'})
+			print(user.username, 'create group : ', created_group)
+			created_groupuser = GroupUser.objects.get_or_create(user=user, group=created_group[0], defaults={'user_name': 'me'})
+			print(user.username, 'create groupuser : ', created_groupuser)
+	print("all done")
+	return HttpResponse("It's done.")
+
+
+# функция для удаления участников события, чтобы без ошибок провести изменение структуры БД на проде
+def remove_users_from_event(request):
+	events = Event.objects.all()
+	for event in events:
+		event_users = event.users
+		for user in event_users:
+			event.remove(user)
+	return HttpResponse("It's done.")
+
+
+# функция для добавления создателя события в качестве его участника после изменения структуры БД на проде
+# def add_user_to_event(request):
+# 	events = Event.objects.all()
+# 	for event in events:
+# 		event_author = event.author
+# 		default_group = Group.objects.get()
+# 		event.remove(user)
+# 	return HttpResponse("It's done.")

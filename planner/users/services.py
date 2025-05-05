@@ -7,7 +7,7 @@ from datetime import datetime, date
 import requests
 from requests.exceptions import RequestException, HTTPError
 from django.contrib.auth.models import User
-from .models import UserProfile, SignupCode
+from .models import UserProfile, SignupCode, Group, GroupUser
 from .serializers import (UserLoginSerializer,)
 from rest_framework.authtoken.models import Token
 from django.conf import settings
@@ -62,7 +62,8 @@ def create_user(email: str, password: str) -> tuple[dict, int]:
 	user.save()
 	code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 	send_letter.delay(email, code.code, 'signup', 'signup_code.html')
-	return {"detail": {"code": "HTTP_201_CREATED", "message": "Пользователь зарегистрирован. На электронную почту выслан код подтверждения."}, "data": {"user_id": user.id}}, 201
+	return {"detail": {"code": "HTTP_201_CREATED", "message": "Пользователь зарегистрирован. На электронную почту выслан "
+															  "код подтверждения."}, "data": {"user_id": user.id}}, 201
 
 
 def send_password(email: str) -> tuple[dict, int]:
@@ -93,6 +94,11 @@ def get_or_create_user(email: str, first_name: str, last_name: str, nickname: st
 	user_id = user.id
 	user.is_active = True
 	user.save()
+	# создаем дефолтную группу и ее участника, если они отсутствуют
+	group, group_created = Group.objects.get_or_create(owner=user, default=True,
+												defaults={'name': 'default_group', 'color': 'default_color'})
+	if group_created:
+		GroupUser.objects.get_or_create(user=user, group=group, defaults={'user_name': 'me'})
 	if created:
 		if gender in ('male', 2):
 			gender = 'M'

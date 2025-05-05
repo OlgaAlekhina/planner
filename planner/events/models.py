@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from users.models import GroupUser
 
 EVENT_FREQ = [
 	(3, 'Daily'),
@@ -35,7 +35,7 @@ class Event(models.Model):
 	end_time = models.TimeField(blank=True, null=True)
 	repeats = models.BooleanField(default=False)
 	end_repeat = models.DateField(blank=True, null=True)
-	users = models.ManyToManyField(User, related_name='events')
+	users = models.ManyToManyField(GroupUser, related_name='events')
 
 	def __str__(self):
 		return f"event{self.id}, {self.title}"

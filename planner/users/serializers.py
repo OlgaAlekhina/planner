@@ -139,6 +139,7 @@ class GroupSerializer(serializers.ModelSerializer):
 
 class InvitationSerializer(serializers.Serializer):
 	""" Сериализатор для вступления в группу по приглашению """
+	# group_id я теперь не использую, можно будет убрать по договоренности с мобильными разработчиками
 	group_id = serializers.IntegerField()
 	user_id = serializers.IntegerField()
 
@@ -157,7 +158,6 @@ class GroupListResponseSerializer(serializers.Serializer):
 
 class GroupUserSerializer(serializers.ModelSerializer):
 	""" Сериализатор для участников группы """
-	id = serializers.IntegerField(source='user.id', read_only=True)
 
 	class Meta:
 		model = GroupUser
