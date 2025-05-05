@@ -73,9 +73,9 @@ class EventViewSet(viewsets.ModelViewSet):
 			if users:
 				for user in users:
 					event.users.add(user)
-			# если нет списка участников, добавляем только текущего пользователя
+			# если нет списка участников, добавляем только текущего пользователя, как участника своей дефолтной группы
 			else:
-				event.users.add(user)
+				event.users.add(user.userprofile.default_groupuser_id)
 			response = {
 				'event_data': EventSerializer(event, context={'request': request}).data
 			}

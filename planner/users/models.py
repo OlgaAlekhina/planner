@@ -20,6 +20,17 @@ class UserProfile(models.Model):
 	def __str__(self):
 		return f"{self.user.username}-{self.user.id}"
 
+	@property
+	def default_groupuser_id(self):
+		""" Добавляет идентификатор участника дефолтной группы к профилю пользователя """
+		user = self.user
+		try:
+			default_group = user.group_set.get(default=True)
+			default_groupuser = user.users.get(group=default_group)
+			return default_groupuser.id
+		except:
+			return None
+
 
 class Group(models.Model):
 	owner = models.ForeignKey(User, on_delete=models.CASCADE)

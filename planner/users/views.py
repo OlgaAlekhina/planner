@@ -758,7 +758,7 @@ def remove_users_from_event(request):
 	for event in events:
 		event_users = event.users
 		for user in event_users:
-			event.remove(user)
+			event.users.remove(user)
 	return HttpResponse("It's done.")
 
 

@@ -39,10 +39,12 @@ class UserLoginSerializer(serializers.ModelSerializer):
 	birthday = serializers.CharField(source='userprofile.birthday', required=False)
 	gender = serializers.CharField(source='userprofile.get_gender_display', required=False)
 	premium_end = serializers.DateField(source='userprofile.premium_end', required=False)
+	default_groupuser_id = serializers.ReadOnlyField(source='userprofile.default_groupuser_id',
+					 help_text="Идентификатор для добавления пользователя в события, если он не создал ни одной группы")
 
 	class Meta:
 		model = User
-		fields = ('id', 'email', 'first_name', 'last_name', 'nickname', 'birthday', 'gender', 'avatar', 'premium_end')
+		fields = ('id', 'default_groupuser_id', 'email', 'first_name', 'last_name', 'nickname', 'birthday', 'gender', 'avatar', 'premium_end')
 		extra_kwargs = {
 						'first_name': {'required': True},
 						'last_name': {'required': True},
