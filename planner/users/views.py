@@ -704,12 +704,12 @@ class GroupViewSet(viewsets.ModelViewSet):
 		premium_end = user.userprofile.premium_end
 		premium_account = True if premium_end and premium_end >= date.today() else False
 		group_number = len(user.users.all())
-		# если у пользователя премиум аккаунт, то он может иметь не более 3 групп
-		if premium_account and group_number > 2:
+		# если у пользователя премиум аккаунт, то он может иметь не более 3 групп (плюс 1 дефолтная)
+		if premium_account and group_number > 3:
 			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с премиум-аккаунтом "
 											                      "не может иметь больше трех групп"}}, status=403)
 		# если у пользователя бесплатный аккаунт, то он может иметь не более 1 группы
-		if not premium_account and group_number > 0:
+		if not premium_account and group_number > 1:
 			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с бесплатным аккаунтом "
 																	"не может иметь больше одной группы"}}, status=403)
 		serializer = self.get_serializer(data=request.data)
