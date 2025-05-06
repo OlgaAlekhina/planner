@@ -24,6 +24,7 @@ from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 import logging
 from django.core.cache import cache
+from events.models import Event
 
 logger = logging.getLogger('users')
 
@@ -709,4 +710,14 @@ def add_missing_profiles(request):
 		created = UserProfile.objects.get_or_create(user=user)
 		print(user.username, ' : ', created)
 	print("all done")
+	return HttpResponse("It's done.")
+
+
+# функция для удаления участников события, чтобы без ошибок провести изменение структуры БД на проде
+def remove_users_from_event(request):
+	events = Event.objects.all()
+	for event in events:
+		event_users = event.users.all()
+		for user in event_users:
+			event.users.remove(user)
 	return HttpResponse("It's done.")
