@@ -33,8 +33,8 @@ class GroupPermission(permissions.BasePermission):
         # проверяем, что текущий пользователь состоит в группе, для выдачи доступа к просмотру
         # участников группы
         if view.action in ['retrieve']:
-            return request.user.is_authenticated and any(i in obj.group_users.all()
-                                                         for i in request.user.users.all())
+            return request.user.is_authenticated and any(i in obj.users.all()
+                                                         for i in request.user.group_users.all())
 
         return True
 

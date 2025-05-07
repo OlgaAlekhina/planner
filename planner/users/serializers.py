@@ -40,7 +40,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
 	gender = serializers.CharField(source='userprofile.get_gender_display', required=False)
 	premium_end = serializers.DateField(source='userprofile.premium_end', required=False)
 	default_groupuser_id = serializers.ReadOnlyField(source='userprofile.default_groupuser_id',
-					 help_text="Идентификатор для добавления пользователя в события, если он не создал ни одной группы")
+					                 help_text="Идентификатор для добавления пользователя в качестве участника события")
 
 	class Meta:
 		model = User

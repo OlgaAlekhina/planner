@@ -141,11 +141,14 @@ class EventViewSet(viewsets.ModelViewSet):
 				status=400)
 
 		try:
+			group_users = user.group_users.all()
+			group_users_ids = [group_user.id for group_user in group_users]
 			# получаем все события без повторений в переданном временном интервале
-			events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), title__icontains=search, repeats=False,
+			# выводятся те события, в которых пользователь является автором или участником
+			events = Event.objects.filter(Q(users__pk__in=group_users_ids) | Q(author=user), title__icontains=search, repeats=False,
 										  start_date__lte=filter_end, end_date__gte=filter_start).distinct()
 			# получаем все события с повторениями в интервале start_date - end_repeat
-			repeated_events = Event.objects.filter(Q(users__pk=user.id) | Q(author=user), Q(end_repeat__gte=filter_start)
+			repeated_events = Event.objects.filter(Q(users__pk__in=group_users_ids) | Q(author=user), Q(end_repeat__gte=filter_start)
 												   | Q(end_repeat__isnull=True), title__icontains=search, repeats=True,
 												   start_date__lte=filter_end).distinct()
 		except ValidationError:
@@ -185,7 +188,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				cancel_date = datetime.combine(canceled_event.cancel_date, time.min)
 				if cancel_date in event_dates:
 					event_dates.remove(cancel_date)
-
+			# устанавливаем новые даты начала и конца события
 			for event_date in event_dates:
 				repeated_event.start_date = datetime.date(event_date)
 				repeated_event.end_date = datetime.date(event_date) + duration
@@ -233,7 +236,8 @@ class EventViewSet(viewsets.ModelViewSet):
 					event_meta = event.eventmeta
 					if event_meta:
 						event_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
-				users = set([obj.id for obj in event.users.filter(is_active=True)])
+				group_users = event.users.filter(is_active=True)
+				users = set([group_user.user.id for group_user in group_users])
 				users.add(event.author.id)
 				cache.set(cache_key, [users, event_data])
 		except:
@@ -244,8 +248,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				if event_meta:
 					event_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
 
-		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные события получены."},
-					"data": event_data}
+		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные события получены."}, "data": event_data}
 		return Response(response, status=200)
 
 	@swagger_auto_schema(
@@ -340,12 +343,12 @@ class EventViewSet(viewsets.ModelViewSet):
 							  "Пользователь может редактировать только созданное им событие."
 	)
 	def partial_update(self, request, pk):
+		event = self.get_object()
 		serializer = self.get_serializer(data=request.data)
 		change_date = request.GET.get('change_date')
 		all_param = request.GET.get('all')
 
 		if serializer.is_valid():
-			event = self.get_object()
 			event_data = serializer.validated_data.get('event_data')
 			event_meta = serializer.validated_data.get('repeat_pattern')
 
@@ -414,7 +417,8 @@ class EventViewSet(viewsets.ModelViewSet):
 			cache_key = f"event_{pk}"
 			try:
 				logger.info(f'Keys in cache before update: {cache.keys("*")}')
-				users = set([obj.id for obj in event.users.filter(is_active=True)])
+				group_users = event.users.filter(is_active=True)
+				users = set([group_user.user.id for group_user in group_users])
 				users.add(event.author.id)
 				cache.set(cache_key, [users, event_data])
 				logger.info(f'Keys in cache after update: {cache.keys("*")}')
@@ -422,8 +426,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				logger.info('Redis unavailable')
 
 			return Response(
-				{"detail": {"code": "HTTP_200_OK", "message": "Событие успешно изменено"},
-				 "data": event_data}, status=200)
+				{"detail": {"code": "HTTP_200_OK", "message": "Событие успешно изменено"}, "data": event_data}, status=200)
 
 		response = {'detail': {
 			"code": "BAD_REQUEST",

@@ -331,7 +331,7 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 															defaults={'name': 'default_group', 'color': 'default_color'})
 					if created:
 						GroupUser.objects.get_or_create(user=user, group=group, defaults={'user_name': 'me'})
-					# создаем токен авторизации для пользователя
+					# получаем токен авторизации для пользователя
 					token = Token.objects.get(user=user)
 					user_data = UserLoginSerializer(user).data
 					response = {
@@ -383,20 +383,20 @@ class GroupViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Создание новой группы",
 		operation_description="Создает новую группу для данного пользователя.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+		  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
 	)
 	def create(self, request):
 		user = request.user
 		# проверяем тип аккаунта пользователя и количество групп, в которых он состоит
 		premium_end = user.userprofile.premium_end
 		premium_account = True if premium_end and premium_end >= date.today() else False
-		group_number = len(user.users.all())
-		# если у пользователя премиум аккаунт, то он может иметь не более 3 групп
-		if premium_account and group_number > 2:
+		group_number = len(user.group_users.all())
+		# если у пользователя премиум аккаунт, то он может иметь не более 3 групп (не считая дефолтной группы)
+		if premium_account and group_number > 3:
 			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с премиум-аккаунтом "
 								 "не может иметь больше трех групп"}}, status=403)
-		# если у пользователя бесплатный аккаунт, то он может иметь не более 1 группы
-		if not premium_account and group_number > 0:
+		# если у пользователя бесплатный аккаунт, то он может иметь не более 1 группы (не считая дефолтной группы)
+		if not premium_account and group_number > 1:
 			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с бесплатным аккаунтом "
 								 "не может иметь больше одной группы"}}, status=403)
 		serializer = self.get_serializer(data=request.data)
@@ -408,7 +408,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			logger.info(f"{user.username} created new group '{name}'")
 			GroupUser.objects.create(user=user, group=group, user_name=user.userprofile.nickname)
 			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Группа создана"},
-							 "data": GroupSerializer(group, context={'request': request}).data}, status=201)
+							            "data": GroupSerializer(group, context={'request': request}).data}, status=201)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
@@ -431,7 +431,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 	def destroy(self, request, pk):
 		group = self.get_object()
 		# получаем список участников группы
-		group_users = group.group_users.all()
+		group_users = group.users.all()
 		# для каждого участника группы получаем его профиль, и если он не был активирован, то удаляем его из БД
 		for group_user in group_users:
 			user = group_user.user
@@ -450,13 +450,14 @@ class GroupViewSet(viewsets.ModelViewSet):
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Редактирование группы по id",
-		operation_description="Эндпоинт для редактирования данных группы.\nУсловия доступа к эндпоинту: токен авторизации в "
-							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\nПользователь может редактировать только созданную им группу."
+		operation_description="Эндпоинт для редактирования данных группы.\n"
+			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+			  "Пользователь может редактировать только созданную им группу."
 	)
 	def partial_update(self, request, pk):
+		group = self.get_object()
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
-			group = self.get_object()
 			group.name = serializer.validated_data.get('name', group.name)
 			group.color = serializer.validated_data.get('color', group.color)
 			group.save()
@@ -488,17 +489,21 @@ class GroupViewSet(viewsets.ModelViewSet):
 			if not groups_data:
 				# если данных нет в кэше, добавляем их туда
 				logger.info(f'Groups for user with id = {user.id} are absent in cache')
-				group_users = user.users.all()
+				group_users = user.group_users.all()
 				groups_data = []
 				for group_user in group_users:
-					groups_data.append(GroupSerializer(group_user.group, context={'request': request}).data)
+					group = group_user.group
+					if not group.default:
+						groups_data.append(GroupSerializer(group, context={'request': request}).data)
 				cache.set(cache_key, groups_data)
 		except:
 			logger.info('Redis unavailable')
-			group_users = user.users.all()
+			group_users = user.group_users.all()
 			groups_data = []
 			for group_user in group_users:
-				groups_data.append(GroupSerializer(group_user.group, context={'request': request}).data)
+				group = group_user.group
+				if not group.default:
+					groups_data.append(GroupSerializer(group, context={'request': request}).data)
 
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
 						 "data": groups_data}, status=200)
@@ -520,13 +525,13 @@ class GroupViewSet(viewsets.ModelViewSet):
 	def retrieve(self, request, pk):
 		group = self.get_object()
 		user = request.user
-		group_users = group.group_users.all()
+		group_users = group.users.all()
 		response = []
 		for group_user in group_users:
 			if group_user.user.id != user.id:
 				response.append(GroupUserSerializer(group_user).data)
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список участников группы"},
-						 "data": response}, status=200)
+						 													"data": response}, status=200)
 
 	@action(detail=False, methods=['get'], url_path=r'users')
 	@swagger_auto_schema(
@@ -550,29 +555,33 @@ class GroupViewSet(viewsets.ModelViewSet):
 			if not groupusers_data:
 				# если данных нет в кэше, добавляем их туда
 				logger.info(f'Groupusers for user with id = {user.id} are absent in cache')
-				group_users = user.users.all()
+				group_users = user.group_users.all()
 				groupusers_data = []
 				for group_user in group_users:
 					group = group_user.group
-					users = group.group_users.all()
+					if not group.default:
+						users = group.users.all()
+						users_list = []
+						for u in users:
+							if u.user.id != user.id:
+								users_list.append(GroupUserSerializer(u).data)
+						groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,
+																								'users': users_list})
+				cache.set(cache_key, groupusers_data)
+		except:
+			logger.info('Redis unavailable')
+			group_users = user.group_users.all()
+			groupusers_data = []
+			for group_user in group_users:
+				group = group_user.group
+				if not group.default:
+					users = group.users.all()
 					users_list = []
 					for u in users:
 						if u.user.id != user.id:
 							users_list.append(GroupUserSerializer(u).data)
-					groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data, 'users': users_list})
-				cache.set(cache_key, groupusers_data)
-		except:
-			logger.info('Redis unavailable')
-			group_users = user.users.all()
-			groupusers_data = []
-			for group_user in group_users:
-				group = group_user.group
-				users = group.group_users.all()
-				users_list = []
-				for u in users:
-					if u.user.id != user.id:
-						users_list.append(GroupUserSerializer(u).data)
-				groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data, 'users': users_list})
+					groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,
+																							'users': users_list})
 
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
 						 "data": groupusers_data}, status=200)
@@ -594,12 +603,12 @@ class GroupViewSet(viewsets.ModelViewSet):
 							  "Добавить участника может только владелец группы."
 	)
 	def add_user(self, request, pk):
+		group = self.get_object()
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			user_name = serializer.validated_data.get('user_name')
 			user_role = serializer.validated_data.get('user_role')
 			user_color = serializer.validated_data.get('user_color')
-			group = self.get_object()
 			# генерируем уникальное имя для создания нового пользователя и проверяем, что такого имени нет в БД
 			for _ in range(10):
 				username = f"{user_name}-{''.join(random.choices(string.ascii_letters + string.digits, k=8))}"
@@ -612,8 +621,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 			user.save()
 			# затем добавляем его в группу
 			group_user = GroupUser.objects.create(user=user, group=group, user_name=user_name, user_role=user_role,
-												  user_color=user_color)
-			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Участник добавлен в группу"}, "data": GroupUserSerializer(group_user).data}, status=201)
+												  												user_color=user_color)
+			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Участник добавлен в группу"},
+							 						"data": GroupUserSerializer(group_user).data}, status=201)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
@@ -667,7 +677,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			group_user.user_color = serializer.validated_data.get('user_color', group_user.user_color)
 			group_user.save()
 			return Response({"detail": {"code": "HTTP_200_OK", "message": "Данные участника успешно отредактированы"},
-							 "data": GroupUserSerializer(group_user).data}, status=200)
+							 								"data": GroupUserSerializer(group_user).data}, status=200)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
@@ -703,12 +713,12 @@ class GroupViewSet(viewsets.ModelViewSet):
 		# проверяем тип аккаунта пользователя и количество групп, в которых он состоит
 		premium_end = user.userprofile.premium_end
 		premium_account = True if premium_end and premium_end >= date.today() else False
-		group_number = len(user.users.all())
-		# если у пользователя премиум аккаунт, то он может иметь не более 3 групп (плюс 1 дефолтная)
+		group_number = len(user.group_users.all())
+		# если у пользователя премиум аккаунт, то он может иметь не более 3 групп (не считая дефолтной группы)
 		if premium_account and group_number > 3:
 			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с премиум-аккаунтом "
 											                      "не может иметь больше трех групп"}}, status=403)
-		# если у пользователя бесплатный аккаунт, то он может иметь не более 1 группы
+		# если у пользователя бесплатный аккаунт, то он может иметь не более 1 группы (не считая дефолтной группы)
 		if not premium_account and group_number > 1:
 			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с бесплатным аккаунтом "
 																	"не может иметь больше одной группы"}}, status=403)
@@ -756,7 +766,7 @@ def add_default_group(request):
 def remove_users_from_event(request):
 	events = Event.objects.all()
 	for event in events:
-		event_users = event.users
+		event_users = event.users.all()
 		for user in event_users:
 			event.users.remove(user)
 	return HttpResponse("It's done.")

@@ -26,7 +26,7 @@ class UserProfile(models.Model):
 		user = self.user
 		try:
 			default_group = user.group_set.get(default=True)
-			default_groupuser = user.users.get(group=default_group)
+			default_groupuser = user.group_users.get(group=default_group)
 			return default_groupuser.id
 		except:
 			return None
@@ -43,8 +43,8 @@ class Group(models.Model):
 
 
 class GroupUser(models.Model):
-	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='users')
-	group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='group_users')
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_users')
+	group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='users')
 	user_name = models.CharField(max_length=30)
 	user_role = models.CharField(max_length=30, blank=True, null=True)
 	user_color = models.CharField(max_length=30, blank=True, null=True)
