@@ -425,8 +425,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Удаление группы по id",
 		operation_description="Удаляет группу из базы данных по ее id и всех добавленных в нее пользователей с неактивными профилями.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
-							  "Пользователь может удалить только созданную им группу."
+			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+			  "Пользователь может удалить только созданную им группу."
 	)
 	def destroy(self, request, pk):
 		group = self.get_object()
@@ -447,7 +447,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса",
+								  examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Редактирование группы по id",
 		operation_description="Эндпоинт для редактирования данных группы.\n"
@@ -477,8 +478,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Получение всех групп пользователя",
-		operation_description="Выводит список всех групп пользователя.\nУсловия доступа к эндпоинту: токен авторизации в "
-							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+		operation_description="Выводит список всех групп пользователя.\n"
+			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
 	)
 	def list(self, request):
 		user = request.user
@@ -519,8 +520,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Получение всех участников группы",
 		operation_description="Выводит всех участников данной группы кроме пользователя, который сделал запрос.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
-							  "Пользователь может просматривать участников только тех групп, в которых он состоит."
+		  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+		  "Пользователь может просматривать участников только тех групп, в которых он состоит."
 	)
 	def retrieve(self, request, pk):
 		group = self.get_object()
