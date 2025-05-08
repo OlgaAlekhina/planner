@@ -23,7 +23,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic.base import RedirectView
 from rest_framework import routers
-from users.views import UserViewSet, GroupViewSet, add_missing_profiles, remove_users_from_event
+from users.views import UserViewSet, GroupViewSet, add_missing_profiles, add_default_group, remove_users_from_event
 from events.views import EventViewSet
 
 
@@ -51,5 +51,6 @@ urlpatterns = [
     path('planner/api-auth/', include('rest_framework.urls')),
     path('planner/api/', include(router.urls)),
     path('planner/add_missing_profiles/', add_missing_profiles, name='add_missing_profiles'),
+    path('planner/add_default_group/', add_default_group, name='add_default_group'),
     path('planner/remove_users_from_event/', remove_users_from_event, name='remove_users_from_event'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

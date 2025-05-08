@@ -20,19 +20,31 @@ class UserProfile(models.Model):
 	def __str__(self):
 		return f"{self.user.username}-{self.user.id}"
 
+	@property
+	def default_groupuser_id(self):
+		""" Добавляет идентификатор участника дефолтной группы к профилю пользователя """
+		user = self.user
+		try:
+			default_group = user.group_set.get(default=True)
+			default_groupuser = user.group_users.get(group=default_group)
+			return default_groupuser.id
+		except:
+			return None
+
 
 class Group(models.Model):
 	owner = models.ForeignKey(User, on_delete=models.CASCADE)
 	name = models.CharField(max_length=100)
 	color = models.CharField(max_length=50)
+	default = models.BooleanField(default=False)
 
 	def __str__(self):
 		return f"group-{self.id}"
 
 
 class GroupUser(models.Model):
-	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='users')
-	group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='group_users')
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_users')
+	group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='users')
 	user_name = models.CharField(max_length=30)
 	user_role = models.CharField(max_length=30, blank=True, null=True)
 	user_color = models.CharField(max_length=30, blank=True, null=True)
