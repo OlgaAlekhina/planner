@@ -430,6 +430,16 @@ class GroupViewSet(viewsets.ModelViewSet):
 	)
 	def destroy(self, request, pk):
 		group = self.get_object()
+		user = request.user
+		try:
+			cache_keys = [f"groups_{user.id}", f"groupusers_{user.id}"]
+			for cache_key in cache_keys:
+				logger.info(f'Groups data in cache before removal: {cache.get(cache_key)}')
+				if cache_key in cache.keys("*"):
+					cache.delete(cache_key)
+					logger.info(f'Groups data in cache after removal: {cache.get(cache_key)}')
+		except:
+			logger.info('Something went wrong with cache proccessing')
 		# получаем список участников группы
 		group_users = group.users.all()
 		# для каждого участника группы получаем его профиль, и если он не был активирован, то удаляем его из БД
@@ -490,21 +500,17 @@ class GroupViewSet(viewsets.ModelViewSet):
 			if not groups_data:
 				# если данных нет в кэше, добавляем их туда
 				logger.info(f'Groups for user with id = {user.id} are absent in cache')
-				group_users = user.group_users.all()
-				groups_data = []
-				for group_user in group_users:
-					group = group_user.group
-					if not group.default:
-						groups_data.append(GroupSerializer(group, context={'request': request}).data)
+				group_users = user.group_users.all().distinct('group')
+				groups = [group_user.group for group_user in group_users]
+				groups_data = [GroupSerializer(group, context={'request': request}).data for group in groups if
+							   not group.default]
 				cache.set(cache_key, groups_data)
 		except:
-			logger.info('Redis unavailable')
-			group_users = user.group_users.all()
-			groups_data = []
-			for group_user in group_users:
-				group = group_user.group
-				if not group.default:
-					groups_data.append(GroupSerializer(group, context={'request': request}).data)
+			logger.info('Something went wrong with cache processing')
+			group_users = user.group_users.all().distinct('group')
+			groups = [group_user.group for group_user in group_users]
+			groups_data = [GroupSerializer(group, context={'request': request}).data for group in groups if
+						   not group.default]
 
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
 						 "data": groups_data}, status=200)
@@ -544,8 +550,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 								  examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Получение всех групп пользователя со списком участников",
-		operation_description="Выводит список всех групп пользователя со списком участников.\nУсловия доступа к эндпоинту: токен авторизации в "
-							  "формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+		operation_description="Выводит список всех групп пользователя со списком участников.\n"
+			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
 	)
 	def groups_with_users(self, request):
 		user = request.user
@@ -556,33 +562,23 @@ class GroupViewSet(viewsets.ModelViewSet):
 			if not groupusers_data:
 				# если данных нет в кэше, добавляем их туда
 				logger.info(f'Groupusers for user with id = {user.id} are absent in cache')
-				group_users = user.group_users.all()
+				group_users = user.group_users.all().distinct('group')
+				groups = [group_user.group for group_user in group_users if not group_user.group.default]
 				groupusers_data = []
-				for group_user in group_users:
-					group = group_user.group
-					if not group.default:
-						users = group.users.all()
-						users_list = []
-						for u in users:
-							if u.user.id != user.id:
-								users_list.append(GroupUserSerializer(u).data)
-						groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,
-																								'users': users_list})
+				for group in groups:
+					users = [GroupUserSerializer(u).data for u in group.users.all() if u.user.id != user.id]
+					groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,
+																							'users': users})
 				cache.set(cache_key, groupusers_data)
 		except:
-			logger.info('Redis unavailable')
-			group_users = user.group_users.all()
+			logger.info('Something went wrong with cache processing')
+			group_users = user.group_users.all().distinct('group')
+			groups = [group_user.group for group_user in group_users if not group_user.group.default]
 			groupusers_data = []
-			for group_user in group_users:
-				group = group_user.group
-				if not group.default:
-					users = group.users.all()
-					users_list = []
-					for u in users:
-						if u.user.id != user.id:
-							users_list.append(GroupUserSerializer(u).data)
-					groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,
-																							'users': users_list})
+			for group in groups:
+				users = [GroupUserSerializer(u).data for u in group.users.all() if u.user.id != user.id]
+				groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,
+																							'users': users})
 
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
 						 "data": groupusers_data}, status=200)

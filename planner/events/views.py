@@ -286,8 +286,8 @@ class EventViewSet(viewsets.ModelViewSet):
 	def destroy(self, request, pk):
 		event = self.get_object()
 		# удаляем событие из кэша, если оно там есть
-		cache_key = f"event_{pk}"
 		try:
+			cache_key = f"event_{pk}"
 			logger.info(f'Event data in cache before removal: {cache.get(cache_key)}')
 			if cache_key in cache.keys("*"):
 				cache.delete(cache_key)
