@@ -555,31 +555,13 @@ class GroupViewSet(viewsets.ModelViewSet):
 	)
 	def groups_with_users(self, request):
 		user = request.user
-		try:
-			# пробуем получить группы с пользователями из кэша
-			cache_key = f"groupusers_{user.id}"
-			groupusers_data = cache.get(cache_key)
-			if not groupusers_data:
-				# если данных нет в кэше, добавляем их туда
-				logger.info(f'Groupusers for user with id = {user.id} are absent in cache')
-				group_users = user.group_users.all().distinct('group')
-				groups = [group_user.group for group_user in group_users if not group_user.group.default]
-				groupusers_data = []
-				for group in groups:
-					users = [GroupUserSerializer(u).data for u in group.users.all() if u.user.id != user.id]
-					groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,
-																							'users': users})
-				cache.set(cache_key, groupusers_data)
-		except:
-			logger.info('Something went wrong with cache processing')
-			group_users = user.group_users.all().distinct('group')
-			groups = [group_user.group for group_user in group_users if not group_user.group.default]
-			groupusers_data = []
-			for group in groups:
-				users = [GroupUserSerializer(u).data for u in group.users.all() if u.user.id != user.id]
-				groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,
-																							'users': users})
-
+		group_users = user.group_users.all().distinct('group')
+		groups = [group_user.group for group_user in group_users if not group_user.group.default]
+		groupusers_data = []
+		for group in groups:
+			users = [GroupUserSerializer(u).data for u in group.users.all() if u.user.id != user.id]
+			groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,
+																					'users': users})
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
 						 "data": groupusers_data}, status=200)
 
@@ -596,16 +578,15 @@ class GroupViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Добавление участника в группу",
 		operation_description="Добавляет нового участника в группу.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
-							  "Добавить участника может только владелец группы."
+			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+			  "Добавить участника может только владелец группы."
 	)
 	def add_user(self, request, pk):
 		group = self.get_object()
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			user_name = serializer.validated_data.get('user_name')
-			user_role = serializer.validated_data.get('user_role')
-			user_color = serializer.validated_data.get('user_color')
+			groupuser_data = serializer.validated_data
 			# генерируем уникальное имя для создания нового пользователя и проверяем, что такого имени нет в БД
 			for _ in range(10):
 				username = f"{user_name}-{''.join(random.choices(string.ascii_letters + string.digits, k=8))}"
@@ -617,8 +598,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			user.is_active = False
 			user.save()
 			# затем добавляем его в группу
-			group_user = GroupUser.objects.create(user=user, group=group, user_name=user_name, user_role=user_role,
-												  												user_color=user_color)
+			group_user = GroupUser.objects.create(user=user, group=group, **groupuser_data)
 			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Участник добавлен в группу"},
 							 						"data": GroupUserSerializer(group_user).data}, status=201)
 		response = {'detail': {
