@@ -473,8 +473,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 			group.color = serializer.validated_data.get('color', group.color)
 			group.save()
 			return Response(
-				{"detail": {"code": "HTTP_200_OK", "message": "Группа успешно изменена"}, "data": GroupSerializer(group,
-																	  context={'request': request}).data}, status=200)
+				{"detail": {"code": "HTTP_200_OK", "message": "Группа успешно изменена"}, "data":
+					GroupSerializer(group, context={'request': request}).data}, status=200)
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
@@ -484,8 +484,10 @@ class GroupViewSet(viewsets.ModelViewSet):
 	@swagger_auto_schema(
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=GroupListResponseSerializer()),
-			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json":
+																					 {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Получение всех групп пользователя",
 		operation_description="Выводит список всех групп пользователя.\n"
@@ -493,25 +495,10 @@ class GroupViewSet(viewsets.ModelViewSet):
 	)
 	def list(self, request):
 		user = request.user
-		try:
-			# пробуем получить группы из кэша
-			cache_key = f"groups_{user.id}"
-			groups_data = cache.get(cache_key)
-			if not groups_data:
-				# если данных нет в кэше, добавляем их туда
-				logger.info(f'Groups for user with id = {user.id} are absent in cache')
-				group_users = user.group_users.all().distinct('group')
-				groups = [group_user.group for group_user in group_users]
-				groups_data = [GroupSerializer(group, context={'request': request}).data for group in groups if
-							   not group.default]
-				cache.set(cache_key, groups_data)
-		except:
-			logger.info('Something went wrong with cache processing')
-			group_users = user.group_users.all().distinct('group')
-			groups = [group_user.group for group_user in group_users]
-			groups_data = [GroupSerializer(group, context={'request': request}).data for group in groups if
-						   not group.default]
-
+		group_users = user.group_users.all().distinct('group')
+		groups = [group_user.group for group_user in group_users]
+		groups_data = [GroupSerializer(group, context={'request': request}).data for group in groups if
+					   not group.default]
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
 						 "data": groups_data}, status=200)
 
@@ -574,7 +561,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Добавление участника в группу",
 		operation_description="Добавляет нового участника в группу.\n"
