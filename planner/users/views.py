@@ -222,11 +222,13 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			200: openapi.Response(description="Успешный запрос", schema=ErrorResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Восстановление пароля пользователя",
 		operation_description="Восстановление пароля пользователя по email.\n"
-							  "Принимает email пользователя, и если такой email найден в БД, высылает на него новый случайно сгенерированный пароль."
+							  "Принимает email пользователя, и если такой email найден в БД, высылает на него новый "
+							  "случайно сгенерированный пароль."
 	)
 	def reset_password(self, request):
 		serializer = self.get_serializer(data=request.data)
@@ -280,7 +282,8 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 	def vk_auth(self, request):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
-			code_verifier = serializer.validated_data['code_verifier'] if 'code_verifier' in serializer.validated_data else None
+			code_verifier = serializer.validated_data['code_verifier'] if 'code_verifier' in serializer.validated_data \
+				else None
 			code = serializer.validated_data['code'] if 'code' in serializer.validated_data else None
 			device_id = serializer.validated_data['device_id']
 			state = serializer.validated_data['state']
@@ -304,8 +307,10 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			200: openapi.Response(description="Успешное подтверждение регистрации", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
-			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			404: openapi.Response(description="Пользователь не найден", examples={"application/json":
+																					  {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Подтверждение регистрации пользователя по коду",
 		operation_description="Эндпоинт для подтверждения кода, высланного по email при регистрации.\n"
@@ -379,7 +384,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Создание новой группы",
 		operation_description="Создает новую группу для данного пользователя.\n"
@@ -418,13 +424,16 @@ class GroupViewSet(viewsets.ModelViewSet):
 	@swagger_auto_schema(
 		responses={
 			204: openapi.Response(description="Успешное удаление группы"),
-			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json":
+																					 {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Удаление группы по id",
-		operation_description="Удаляет группу из базы данных по ее id и всех добавленных в нее пользователей с неактивными профилями.\n"
+		operation_description="Удаляет группу из базы данных по ее id и всех добавленных в нее пользователей с "
+							  "неактивными профилями.\n"
 			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
 			  "Пользователь может удалить только созданную им группу."
 	)
