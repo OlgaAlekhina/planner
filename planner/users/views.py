@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
-from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
+from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, DetailSerializer,
 						  ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, GroupSerializer,
@@ -61,12 +61,13 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Удаление пользователей по id",
-		operation_description="Удаляет учетную запись пользователя из базы данных по его id."
-				"\nУсловия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
-				"\nПользователь может удалить только свой собственный профиль.")
+		operation_description="Удаляет учетную запись пользователя из базы данных по его id.\n"
+			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+			  "Пользователь может удалить только свой собственный профиль.")
 	def destroy(self, request, pk):
 		user = self.get_object()
 		user.delete()
@@ -88,12 +89,13 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Получение данных пользователя по id",
 		operation_description="Получает данные профиля пользователя по его id.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
-							  "Пользователь может просматривать только свой собственный профиль.")
+			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+			  "Пользователь может просматривать только свой собственный профиль.")
 	def retrieve(self, request, pk):
 		try:
 			# пробуем получить данные пользователя из кэша
@@ -109,6 +111,7 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 				user_data = self.get_serializer(user).data
 				cache.set(cache_key, user_data)
 		except:
+			logger.info('Something went wrong with cache processing.')
 			user = self.get_object()
 			user_data = self.get_serializer(user).data
 
@@ -121,12 +124,13 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Пользователь не найден", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Редактирование данных пользователя по id",
 		operation_description="Редактирует данные профиля пользователя по его id.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
-							  "Пользователь может реактировать только свой собственный профиль.")
+			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+			  "Пользователь может реактировать только свой собственный профиль.")
 	def partial_update(self, request, pk):
 		user = self.get_object()
 		serializer = self.get_serializer(data=request.data)
@@ -142,7 +146,7 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 				cache.set(cache_key, user_data)
 				logger.info(f'Data in cache after update: {cache.get(cache_key)}')
 			except:
-				logger.info('Redis unavailable')
+				logger.info('Something went wrong with cache processing.')
 
 			return Response({"detail": {"code": "HTTP_200_OK", "message": "Данные пользователя отредактированы."},
 																			"data": user_data}, status=200)
@@ -439,16 +443,6 @@ class GroupViewSet(viewsets.ModelViewSet):
 	)
 	def destroy(self, request, pk):
 		group = self.get_object()
-		user = request.user
-		try:
-			cache_keys = [f"groups_{user.id}", f"groupusers_{user.id}"]
-			for cache_key in cache_keys:
-				logger.info(f'Groups data in cache before removal: {cache.get(cache_key)}')
-				if cache_key in cache.keys("*"):
-					cache.delete(cache_key)
-					logger.info(f'Groups data in cache after removal: {cache.get(cache_key)}')
-		except:
-			logger.info('Something went wrong with cache proccessing')
 		# получаем список участников группы
 		group_users = group.users.all()
 		# для каждого участника группы получаем его профиль, и если он не был активирован, то удаляем его из БД
@@ -632,8 +626,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Удаление участника из группы",
 		operation_description="Удаляет участников из группы.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
-							  "Удалить участника может только владелец группы."
+			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+			  "Удалить участника может только владелец группы."
 	)
 	@action(detail=True, methods=['patch', 'delete'], url_path=r'users/(?P<user_id>\d+)')
 	def groups_actions(self, request, *args, **kwargs):
