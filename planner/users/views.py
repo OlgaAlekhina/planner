@@ -66,8 +66,9 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		},
 		operation_summary="Удаление пользователей по id",
 		operation_description="Удаляет учетную запись пользователя из базы данных по его id.\n"
-			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
-			  "Пользователь может удалить только свой собственный профиль.")
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Пользователь может удалить только свой собственный профиль.")
 	def destroy(self, request, pk):
 		user = self.get_object()
 		user.delete()
@@ -79,7 +80,7 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 				cache.delete(cache_key)
 				logger.info(f'User data in cache after removal: {cache.get(cache_key)}')
 		except:
-			logger.info('Redis unavailable')
+			logger.info('Something went wrong with cache processing.')
 
 		return Response(status=204)
 
@@ -94,8 +95,9 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		},
 		operation_summary="Получение данных пользователя по id",
 		operation_description="Получает данные профиля пользователя по его id.\n"
-			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
-			  "Пользователь может просматривать только свой собственный профиль.")
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Пользователь может просматривать только свой собственный профиль.")
 	def retrieve(self, request, pk):
 		try:
 			# пробуем получить данные пользователя из кэша
@@ -129,8 +131,9 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		},
 		operation_summary="Редактирование данных пользователя по id",
 		operation_description="Редактирует данные профиля пользователя по его id.\n"
-			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
-			  "Пользователь может реактировать только свой собственный профиль.")
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Пользователь может реактировать только свой собственный профиль.")
 	def partial_update(self, request, pk):
 		user = self.get_object()
 		serializer = self.get_serializer(data=request.data)
@@ -162,23 +165,29 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		responses={
 			200: openapi.Response(description="Успешная авторизация", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
-			401: openapi.Response(description="Требуется подтвеждение авторизации по коду", examples={"application/json": {"detail": {"code": "string", "message": "string"}, "data": "string"}}),
+			401: openapi.Response(description="Требуется подтвеждение авторизации по коду", examples={"application/json":
+												  {"detail": {"code": "string", "message": "string"}, "data": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Авторизация пользователей по email",
 		operation_description="Авторизация пользователей по email и пароль.\n"
-							  "Если пользователь ранее регистрировался через соцсети, ему на почту высылается код подтверждения, а в поле 'data' возвращается его id."
-							  "Полученный id следует передать в эндпоинте api/users/verify_code для верификации введенного пользователем кода.\n"
+							  "Если пользователь ранее регистрировался через соцсети, ему на почту высылается код "
+							  "подтверждения, а в поле 'data' возвращается его id. Полученный id следует передать в "
+							  "эндпоинте api/users/verify_code для верификации введенного пользователем кода.\n"
 							  "После успешной верификации в БД записывается введенный пароль и разрешается вход в приложение."
 	)
 	def mail_auth(self, request):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
-			email = serializer.validated_data['email']
-			password = serializer.validated_data['password']
-			response_data = get_user(email, password)
+			# email = serializer.validated_data['email']
+			# password = serializer.validated_data['password']
+			response_data = get_user(**serializer.validated_data)
+			logger.info(f"Попытка авторизации пользователя по почте {serializer.validated_data['email']}. Результат -"
+						f"{response_data[0]}")
 			return Response(response_data[0], status=response_data[1])
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
