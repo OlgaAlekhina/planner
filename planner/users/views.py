@@ -181,8 +181,6 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 	def mail_auth(self, request):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
-			# email = serializer.validated_data['email']
-			# password = serializer.validated_data['password']
 			response_data = get_user(**serializer.validated_data)
 			logger.info(f"Попытка авторизации пользователя по почте {serializer.validated_data['email']}. Результат -"
 						f"{response_data[0]}")
