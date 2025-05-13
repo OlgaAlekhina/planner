@@ -23,8 +23,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic.base import RedirectView
 from rest_framework import routers
-from users.views import UserViewSet, GroupViewSet, add_missing_profiles, add_default_group, remove_users_from_event
-from events.views import EventViewSet
+from users.groups_views import GroupViewSet, add_default_group
+from users.views import UserViewSet, add_missing_profiles
+from events.views import EventViewSet, remove_users_from_event
 
 
 # чтобы выводить 500 ошибку в формате JSON, а не HTML

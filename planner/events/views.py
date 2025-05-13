@@ -17,6 +17,7 @@ from django.core.cache import cache
 from planner.permissions import EventPermission
 import logging
 from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse
 
 
 logger = logging.getLogger('events')
@@ -433,5 +434,15 @@ class EventViewSet(viewsets.ModelViewSet):
 			"message": serializer.errors
 		}}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+
+# функция для удаления участников события, чтобы без ошибок провести изменение структуры БД на проде
+def remove_users_from_event(request):
+	events = Event.objects.all()
+	for event in events:
+		event_users = event.users.all()
+		for user in event_users:
+			event.users.remove(user)
+	return HttpResponse("It's done.")
 
 
