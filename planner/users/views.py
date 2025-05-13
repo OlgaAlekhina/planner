@@ -176,7 +176,7 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			response_data = get_user(**serializer.validated_data)
-			logger.info(f"Попытка авторизации пользователя по почте {serializer.validated_data['email']}. Результат -"
+			logger.info(f"Attempt to sign in by email {serializer.validated_data['email']}. Result -"
 						f"{response_data[0]}")
 			return Response(response_data[0], status=response_data[1])
 
@@ -188,33 +188,42 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 
 	@swagger_auto_schema(
 		responses={
-			201: openapi.Response(description="Успешная регистрация", examples={"application/json": {"detail": {"code": "string", "message": "string"}, "data": "string"}}),
+			201: openapi.Response(description="Успешная регистрация", examples={"application/json": {"detail":
+														 {"code": "string", "message": "string"}, "data": "string"}}),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Регистрация пользователей по email",
 		operation_description="Регистрация пользователей по email и пароль.\n"
 							  "Создает нового пользователя в базе данных с неактивным статусом.\n"
 							  "Принимает email и пароль пользователя и при успешной регистрации возвращает его id.\n"
-							  "Полученный id следует передать в эндпоинте api/users/verify_code для верификации введенного пользователем кода.\n"
-							  "Регистрация разрешается, только если пользователя с таким email не существует в базе данных или его профиль не был активирован."
+							  "Полученный id следует передать в эндпоинте api/users/verify_code для верификации введенного "
+							  "пользователем кода.\n"
+							  "Регистрация разрешается, только если пользователя с таким email не существует в базе данных "
+							  "или его профиль не был активирован."
 	)
 	def create(self, request):
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			email = serializer.validated_data['email']
 			password = serializer.validated_data['password']
+
 			# проверяем, есть ли пользователь с таким email в БД
 			user = User.objects.filter(email__iexact=email).first()
 			# если найден пользователь с неактивным аккаунтом, то удаляем его
 			if user and not user.is_active:
 				user.delete()
 			# если найден пользователь с активным аккаунтом, запрещаем регистрацию
-			if user and user.is_active:
-				return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом уже зарегистрирован в приложении"}}, status=403)
+			elif user and user.is_active:
+				logger.info(f"Attempt to sign up by existing email {email}.")
+				return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом "
+																	 "уже зарегистрирован в приложении"}}, status=403)
 			response_data = create_user(email, password)
+			logger.info(f"A user was sign up by email {email}.")
 			return Response(response_data[0], status=response_data[1])
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors

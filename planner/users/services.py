@@ -34,7 +34,7 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 
 	user = user[0]
 	# если в БД нет пароля, значит, пользователь регистрировался через соцсети
-	# генерируем код подтверждения и высылаем на почту
+	# генерируем код подтверждения и высылаем на почту (через асинхронные задачи в Celery)
 	if not user.password:
 		code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 		send_letter.delay(email, code.code, 'signup', 'signup_code.html')
@@ -60,13 +60,15 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 def create_user(email: str, password: str) -> tuple[dict, int]:
 	"""
 	создает нового пользователя в БД, но делает его неактивным до подтверждения кода
-	высылает код подтверждения на почту
+	высылает код подтверждения на почту (через асинхронные задачи в Celery)
 	"""
 	user = User.objects.create_user(username=email, email=email, password=password)
 	user.is_active = False
 	user.save()
+
 	code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 	send_letter.delay(email, code.code, 'signup', 'signup_code.html')
+
 	return {"detail": {"code": "HTTP_201_CREATED", "message": "Пользователь зарегистрирован. На электронную почту выслан "
 															  "код подтверждения."}, "data": {"user_id": user.id}}, 201
 
