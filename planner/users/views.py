@@ -4,17 +4,16 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, ErrorResponseSerializer,
-						  VKAuthSerializer, MailAuthSerializer, SignupSerializer, ResetPasswordSerializer,
-						  UserResponseSerializer, UserUpdateSerializer, CodeSerializer)
+                          VKAuthSerializer, MailAuthSerializer, SignupSerializer, ResetPasswordSerializer,
+                          UserResponseSerializer, UserUpdateSerializer, CodeSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .models import UserProfile, Group, SignupCode, GroupUser
-from events.models import Event
 from django.http import JsonResponse, HttpResponse
 from drf_yasg import openapi
 from planner.permissions import UserPermission, GroupPermission
-from datetime import timedelta, datetime, date
+from datetime import timedelta
 from django.utils import timezone
 import logging
 from django.core.cache import cache
@@ -24,7 +23,7 @@ logger = logging.getLogger('users')
 
 
 class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
-																		viewsets.GenericViewSet):
+                  viewsets.GenericViewSet):
 	""" Эндпоинты для работы с пользователями """
 	queryset = User.objects.all()
 	http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
@@ -249,7 +248,9 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		if serializer.is_valid():
 			email = serializer.validated_data['email']
 			response_data = send_password(email)
+			logger.info(f"Attempt to reset password by email {email}. Result - {response_data[0]}")
 			return Response(response_data[0], status=response_data[1])
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors

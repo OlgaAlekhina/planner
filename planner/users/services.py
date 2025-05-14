@@ -34,7 +34,7 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 
 	user = user[0]
 	# если в БД нет пароля, значит, пользователь регистрировался через соцсети
-	# генерируем код подтверждения и высылаем на почту (через асинхронные задачи в Celery)
+	# генерируем код подтверждения и высылаем на почту (через асинхронные задачи Celery)
 	if not user.password:
 		code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 		send_letter.delay(email, code.code, 'signup', 'signup_code.html')
@@ -60,7 +60,7 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 def create_user(email: str, password: str) -> tuple[dict, int]:
 	"""
 	создает нового пользователя в БД, но делает его неактивным до подтверждения кода
-	высылает код подтверждения на почту (через асинхронные задачи в Celery)
+	высылает код подтверждения на почту (через асинхронные задачи Celery)
 	"""
 	user = User.objects.create_user(username=email, email=email, password=password)
 	user.is_active = False
@@ -80,10 +80,12 @@ def send_password(email: str) -> tuple[dict, int]:
 	"""
 	user = User.objects.filter(email__iexact=email, is_active=True).first()
 	if not user:
-		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом не зарегистрирован в приложении"}}, 403
+		return {"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с таким email адресом не "
+																					"зарегистрирован в приложении"}}, 403
 	new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 	user.set_password(new_password)
 	user.save()
+	# посылаем пароль на почту через асинхронные задачи Celery
 	send_letter.delay(email, new_password, 'reset', 'reset_password.html')
 	return {"detail": {"code": "HTTP_200_OK", "message": "Новый пароль успешно отправлен пользователю"}}, 200
 
