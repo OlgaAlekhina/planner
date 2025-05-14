@@ -1,11 +1,6 @@
 from rest_framework import serializers
 from .models import Group, GroupUser
-
-
-class DetailSerializer(serializers.Serializer):
-	""" Сериализатор для деталей ответа """
-	code = serializers.CharField()
-	message = serializers.CharField()
+from .serializers import DetailSerializer
 
 
 class CustomBoolField(serializers.BooleanField):
