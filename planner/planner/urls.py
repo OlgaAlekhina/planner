@@ -24,7 +24,7 @@ from django.conf.urls.static import static
 from django.views.generic.base import RedirectView
 from rest_framework import routers
 from users.groups_views import GroupViewSet, add_default_group
-from users.views import UserViewSet, add_missing_profiles
+from users.users_views import UserViewSet, add_missing_profiles
 from events.views import EventViewSet, remove_users_from_event
 
 

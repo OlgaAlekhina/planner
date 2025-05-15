@@ -1,4 +1,3 @@
-import os
 import random
 import string
 from random import randint

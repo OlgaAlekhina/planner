@@ -1,6 +1,5 @@
 from rest_framework import serializers
 import re
-from django.contrib.auth.models import User
 
 
 def validate_password_symbols(password):
