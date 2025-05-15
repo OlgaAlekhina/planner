@@ -280,6 +280,7 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 				}
 				return Response(response, status=status.HTTP_200_OK)
 			return Response(response_data[0], status=response_data[1])
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors

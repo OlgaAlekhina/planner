@@ -6,7 +6,7 @@ import requests
 from requests.exceptions import RequestException, HTTPError
 from django.contrib.auth.models import User
 from .models import UserProfile, SignupCode, Group, GroupUser
-from .serializers import (UserLoginSerializer,)
+from .serializers import UserLoginSerializer
 from rest_framework.authtoken.models import Token
 from django.conf import settings
 from .tasks import send_letter
@@ -89,10 +89,11 @@ def send_password(email: str) -> tuple[dict, int]:
 	return {"detail": {"code": "HTTP_200_OK", "message": "Новый пароль успешно отправлен пользователю"}}, 200
 
 
-def get_or_create_user(email: str, first_name: str, last_name: str, nickname: str, gender: str, birthday: str, avatar: str) -> dict:
+def get_or_create_user(email: str, first_name: str, last_name: str, nickname: str, gender: str, birthday: str,
+					   avatar: str) -> dict:
 	"""
 	создает нового пользователя или получает его данные из БД
-	используется для авторизации через яндекс и ВК
+	используется для авторизации через Яндекс и ВК
 	возвращает данные пользователя и токен авторизации
 	"""
 	user, created = User.objects.get_or_create(
@@ -102,11 +103,14 @@ def get_or_create_user(email: str, first_name: str, last_name: str, nickname: st
 	user_id = user.id
 	user.is_active = True
 	user.save()
+
 	# создаем дефолтную группу и ее участника, если они отсутствуют
 	group, group_created = Group.objects.get_or_create(owner=user, default=True,
 												defaults={'name': 'default_group', 'color': 'default_color'})
 	if group_created:
 		GroupUser.objects.get_or_create(user=user, group=group, defaults={'user_name': 'me'})
+
+	# если пользователь только что создан, добавляем его данные в таблицу UserProfile
 	if created:
 		if gender in ('male', 2):
 			gender = 'M'
@@ -124,6 +128,7 @@ def get_or_create_user(email: str, first_name: str, last_name: str, nickname: st
 		profile.avatar = avatar
 		profile.save()
 		user = User.objects.get(id=user_id)
+
 	token = Token.objects.get(user=user)
 	user_data = UserLoginSerializer(user).data
 	result = {"user_data": user_data, "user_auth_token": token.key}
@@ -138,6 +143,7 @@ def get_user_from_yandex(token: str) -> tuple[dict, int]:
 	"""
 	headers = {"Authorization": f"OAuth {token}"}
 	url = "https://login.yandex.ru/info"
+	# делаем запрос в Яндекс с токеном авторизации для получения данных пользователя
 	try:
 		response = requests.get(url, headers=headers)
 		response.raise_for_status()
@@ -149,8 +155,10 @@ def get_user_from_yandex(token: str) -> tuple[dict, int]:
 		first_name = response_data.get('first_name')
 		last_name = response_data.get('last_name')
 		gender = response_data.get('sex')
+		# получаем пользователя из БД, а при его отсутствии создаем нового
 		user_data = get_or_create_user(email, first_name, last_name, nickname, gender, birthday, avatar)
 		return user_data, 200
+
 	except HTTPError as http_err:
 		result_data = {
 			"detail": {
