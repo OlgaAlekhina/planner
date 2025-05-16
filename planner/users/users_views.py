@@ -3,14 +3,14 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.decorators import action
-from .serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, ErrorResponseSerializer,
-                          VKAuthSerializer, MailAuthSerializer, SignupSerializer, ResetPasswordSerializer,
-                          UserResponseSerializer, UserUpdateSerializer, CodeSerializer)
+from .users_serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer,
+								ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, SignupSerializer,
+								ResetPasswordSerializer, UserResponseSerializer, UserUpdateSerializer, CodeSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .models import UserProfile, Group, SignupCode, GroupUser
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse
 from drf_yasg import openapi
 from planner.permissions import UserPermission, GroupPermission
 from datetime import timedelta

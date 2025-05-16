@@ -6,13 +6,13 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.decorators import action
-from .serializers import ErrorResponseSerializer
+from .users_serializers import ErrorResponseSerializer
 from .groups_serializers import (GroupSerializer, GroupUserSerializer, GroupResponseSerializer,
                                  GroupUserResponseSerializer, GroupUsersResponseSerializer, GroupListResponseSerializer,
                                  InvitationSerializer, GroupUserListResponseSerializer)
 from rest_framework.response import Response
 from .models import Group, GroupUser
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse
 from drf_yasg import openapi
 from planner.permissions import UserPermission, GroupPermission
 from datetime import date

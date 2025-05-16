@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Group, GroupUser
-from .serializers import DetailSerializer
+from .users_serializers import DetailSerializer
 
 
 class CustomBoolField(serializers.BooleanField):

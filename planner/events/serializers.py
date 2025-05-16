@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Event, EventMeta
-from users.serializers import DetailSerializer
+from users.users_serializers import DetailSerializer
 
 
 class EventAuthorBoolField(serializers.BooleanField):

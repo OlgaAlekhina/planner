@@ -8,9 +8,9 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Event, EventMeta, CanceledEvent
-from .serializers import EventSerializer, EventMetaSerializer, EventCreateSerializer, EventListSerializer, \
-	EventResponseSerializer
-from users.serializers import ErrorResponseSerializer
+from .serializers import (EventSerializer, EventMetaSerializer, EventCreateSerializer, EventListSerializer,
+						  EventResponseSerializer)
+from users.users_serializers import ErrorResponseSerializer
 from django.db.models import Q
 from .services import get_dates
 from django.core.cache import cache

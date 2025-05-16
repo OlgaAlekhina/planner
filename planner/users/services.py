@@ -6,7 +6,7 @@ import requests
 from requests.exceptions import RequestException, HTTPError
 from django.contrib.auth.models import User
 from .models import UserProfile, SignupCode, Group, GroupUser
-from .serializers import UserLoginSerializer
+from .users_serializers import UserLoginSerializer
 from rest_framework.authtoken.models import Token
 from django.conf import settings
 from .tasks import send_letter
