@@ -279,6 +279,7 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 					"data": response_data[0]
 				}
 				return Response(response, status=status.HTTP_200_OK)
+			logger.info(f"Authorization with Yandex failed. Details: {response_data[0]}")
 			return Response(response_data[0], status=response_data[1])
 
 		response = {'detail': {
@@ -305,12 +306,16 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			state = serializer.validated_data['state']
 			response_data = get_user_from_vk(code_verifier, code, device_id, state)
 			if response_data[1] == 200:
+				logger.info(f"User with email {response_data[0].get('user_data').get('email')} and "
+							f"id = {response_data[0].get('user_data').get('id')} was authorized")
 				response = {
 					"detail": {"code": "HTTP_200_OK", "message": "Авторизация прошла успешно"},
 					"data": response_data[0]
 				}
 				return Response(response, status=status.HTTP_200_OK)
+			logger.info(f"Authorization with VK failed. Details: {response_data[0]}")
 			return Response(response_data[0], status=response_data[1])
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors

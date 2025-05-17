@@ -195,6 +195,7 @@ def get_user_from_vk(code_verifier: str, code: str, device_id: str, state: str) 
 			"state": state,
 			"redirect_uri": f"vk{client_id}://vk.com/blank.html"
 	}
+
 	try:
 		response = requests.post(url_1, headers=headers, data=data)
 		response.raise_for_status()
@@ -202,12 +203,14 @@ def get_user_from_vk(code_verifier: str, code: str, device_id: str, state: str) 
 		access_token = response_data.get("access_token")
 		if not access_token:
 			return {'detail': {'code': '400_BAD_REQUEST', 'message': response.json()}}, 400
+
 		data = {"client_id": client_id, "access_token": access_token}
 		response = requests.post(url_2, headers=headers, data=data)
 		response.raise_for_status()
 		response_data = response.json().get('user')
 		if not response_data:
 			return {'detail': {'code': '400_BAD_REQUEST', 'message': response.json()}}, 400
+
 		email = response_data.get('email')
 		nickname = email.split('@')[0]
 		avatar = response_data.get('avatar')
@@ -217,6 +220,7 @@ def get_user_from_vk(code_verifier: str, code: str, device_id: str, state: str) 
 		gender = response_data.get('sex')
 		user_data = get_or_create_user(email, first_name, last_name, nickname, gender, birthday, avatar)
 		return user_data, 200
+
 	except HTTPError as http_err:
 		result_data = {
 			"detail": {
