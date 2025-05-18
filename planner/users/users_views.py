@@ -339,13 +339,14 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 							  "Код работает в течение 1 часа, после чего выдается ошибка 'код устарел'."
 	)
 	def verify_code(self, request, pk=None):
+		user = self.get_object()
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			code = serializer.validated_data['code']
-			user = self.get_object()
 			# проверяем принадлежность кода пользователю
 			if SignupCode.objects.filter(code=code, user=user).exists():
 				signup_code = SignupCode.objects.get(code=code, user=user)
+				# проверяем, что код действителен
 				if timezone.now() - signup_code.code_time < timedelta(minutes=60):
 					# активируем профиль пользователя
 					user.is_active = True
@@ -360,23 +361,27 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 					# получаем токен авторизации для пользователя
 					token = Token.objects.get(user=user)
 					user_data = UserLoginSerializer(user).data
+
 					response = {
 						"detail": {"code": "HTTP_200_OK", "message": "Код успешно подтвержден"},
 						"data": {"user_data": user_data, "user_auth_token": token.key}
 					}
 					return Response(response, status=status.HTTP_200_OK)
+
 				else:
 					response = {
 						"code": "HTTP_403_FORBIDDEN",
 						"message": "Код устарел",
 					}
 					return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
 			else:
 				response = {
 					"code": "HTTP_403_FORBIDDEN",
 					"message": "Код введен неверно",
 				}
 				return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
 		response = {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
