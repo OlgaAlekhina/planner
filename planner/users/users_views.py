@@ -358,8 +358,8 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 															defaults={'name': 'default_group', 'color': 'default_color'})
 					if created:
 						GroupUser.objects.get_or_create(user=user, group=group, defaults={'user_name': 'me'})
-					# получаем токен авторизации для пользователя
-					token = Token.objects.get(user=user)
+					# генерируем или получаем токен авторизации для пользователя
+					token, created = Token.objects.get_or_create(user=user)
 					user_data = UserLoginSerializer(user).data
 
 					response = {

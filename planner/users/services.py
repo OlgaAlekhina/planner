@@ -129,7 +129,8 @@ def get_or_create_user(email: str, first_name: str, last_name: str, nickname: st
 		profile.save()
 		user = User.objects.get(id=user_id)
 
-	token = Token.objects.get(user=user)
+	# генерируем или получаем токен авторизации для пользователя
+	token, created = Token.objects.get_or_create(user=user)
 	user_data = UserLoginSerializer(user).data
 	result = {"user_data": user_data, "user_auth_token": token.key}
 	return result
@@ -167,6 +168,7 @@ def get_user_from_yandex(token: str) -> tuple[dict, int]:
 			}
 		}
 		return result_data, response.status_code
+
 	except RequestException as err:
 		result_data = {
 			"detail": {
@@ -229,6 +231,7 @@ def get_user_from_vk(code_verifier: str, code: str, device_id: str, state: str) 
 			}
 		}
 		return result_data, response.status_code
+
 	except RequestException as err:
 		result_data = {
 			"detail": {
