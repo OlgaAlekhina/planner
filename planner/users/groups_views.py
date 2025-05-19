@@ -49,7 +49,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Создание новой группы",
 		operation_description="Создает новую группу для данного пользователя.\n"
-		  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
 	)
 	def create(self, request):
 		user = request.user
@@ -60,21 +61,23 @@ class GroupViewSet(viewsets.ModelViewSet):
 		# если у пользователя премиум аккаунт, то он может иметь не более 3 групп (не считая дефолтной группы)
 		if premium_account and group_number > 3:
 			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с премиум-аккаунтом "
-								 "не может иметь больше трех групп"}}, status=403)
+																	 "не может иметь больше трех групп"}}, status=403)
 		# если у пользователя бесплатный аккаунт, то он может иметь не более 1 группы (не считая дефолтной группы)
 		if not premium_account and group_number > 1:
 			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с бесплатным аккаунтом "
-								 "не может иметь больше одной группы"}}, status=403)
+																	 "не может иметь больше одной группы"}}, status=403)
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			name = serializer.validated_data['name']
 			color = serializer.validated_data['color']
-			user = request.user
+			# создаем группу
 			group = Group.objects.create(owner=user, name=name, color=color)
 			logger.info(f"{user.username} created new group '{name}'")
+			# добавляем пользователя в созданную им группу
 			GroupUser.objects.create(user=user, group=group, user_name=user.userprofile.nickname)
 			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Группа создана"},
 							            "data": GroupSerializer(group, context={'request': request}).data}, status=201)
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
