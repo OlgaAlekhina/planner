@@ -87,8 +87,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 	@swagger_auto_schema(
 		responses={
 			204: openapi.Response(description="Успешное удаление группы"),
-			401: openapi.Response(description="Требуется авторизация", examples={"application/json":
-																					 {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
@@ -97,8 +96,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 		operation_summary="Удаление группы по id",
 		operation_description="Удаляет группу из базы данных по ее id и всех добавленных в нее пользователей с "
 							  "неактивными профилями.\n"
-			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
-			  "Пользователь может удалить только созданную им группу."
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Пользователь может удалить только созданную им группу."
 	)
 	def destroy(self, request, pk):
 		group = self.get_object()
