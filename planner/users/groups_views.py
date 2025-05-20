@@ -111,6 +111,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 				user.delete()
 		# удаляем группу
 		group.delete()
+		logger.info(f"Group #{pk} was deleted")
 		return Response(status=204)
 
 	@swagger_auto_schema(

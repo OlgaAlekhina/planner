@@ -1,3 +1,4 @@
+import logging
 import random
 import string
 from random import randint
@@ -10,8 +11,12 @@ from .users_serializers import UserLoginSerializer
 from rest_framework.authtoken.models import Token
 from django.conf import settings
 from .tasks import send_letter
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 
 client_id = settings.VK_CLIENT_ID
+
+logger = logging.getLogger('users')
 
 
 def convert_date(birthday: str, date_format='%d.%m.%Y') -> date | str:
@@ -36,7 +41,11 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 	# генерируем код подтверждения и высылаем на почту (через асинхронные задачи Celery)
 	if not user.password:
 		code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
-		send_letter.delay(email, code.code, 'signup', 'signup_code.html')
+		try:
+			send_letter.delay(email, code.code, 'signup', 'signup_code.html')
+		except:
+			send_letter(email, code.code, 'signup', 'signup_code.html')
+			logger.info("Celery and Redis was unavailable while sending mail.")
 		# сохраняем переданный пароль и делаем профиль неактивным до подтверждения кода
 		user.is_active = False
 		user.set_password(password)
@@ -66,8 +75,11 @@ def create_user(email: str, password: str) -> tuple[dict, int]:
 	user.save()
 
 	code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
-	send_letter.delay(email, code.code, 'signup', 'signup_code.html')
-
+	try:
+		send_letter.delay(email, code.code, 'signup', 'signup_code.html')
+	except:
+		send_letter(email, code.code, 'signup', 'signup_code.html')
+		logger.info("Celery and Redis was unavailable while sending mail.")
 	return {"detail": {"code": "HTTP_201_CREATED", "message": "Пользователь зарегистрирован. На электронную почту выслан "
 															  "код подтверждения."}, "data": {"user_id": user.id}}, 201
 
@@ -85,7 +97,11 @@ def send_password(email: str) -> tuple[dict, int]:
 	user.set_password(new_password)
 	user.save()
 	# посылаем пароль на почту через асинхронные задачи Celery
-	send_letter.delay(email, new_password, 'reset', 'reset_password.html')
+	try:
+		send_letter.delay(email, new_password, 'reset', 'reset_password.html')
+	except:
+		send_letter(email, new_password, 'reset', 'reset_password.html')
+		logger.info("Celery and Redis was unavailable while sending mail.")
 	return {"detail": {"code": "HTTP_200_OK", "message": "Новый пароль успешно отправлен пользователю"}}, 200
 
 
