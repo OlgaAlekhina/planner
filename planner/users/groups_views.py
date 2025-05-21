@@ -3,7 +3,7 @@ import string
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import viewsets, mixins, status
+from rest_framework import viewsets, status
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .users_serializers import ErrorResponseSerializer
@@ -120,13 +120,14 @@ class GroupViewSet(viewsets.ModelViewSet):
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса",
-								  examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Редактирование группы по id",
 		operation_description="Эндпоинт для редактирования данных группы.\n"
-			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
-			  "Пользователь может редактировать только созданную им группу."
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Пользователь может редактировать только созданную им группу."
 	)
 	def partial_update(self, request, pk):
 		group = self.get_object()
@@ -138,6 +139,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			return Response(
 				{"detail": {"code": "HTTP_200_OK", "message": "Группа успешно изменена"}, "data":
 					GroupSerializer(group, context={'request': request}).data}, status=200)
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
