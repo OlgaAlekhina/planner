@@ -149,21 +149,20 @@ class GroupViewSet(viewsets.ModelViewSet):
 	@swagger_auto_schema(
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=GroupListResponseSerializer()),
-			401: openapi.Response(description="Требуется авторизация", examples={"application/json":
-																					 {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
 																									{"error": "string"}})
 		},
 		operation_summary="Получение всех групп пользователя",
 		operation_description="Выводит список всех групп пользователя.\n"
-			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+							  "Условия доступа к эндпоинту: токен авторизации в формате '"
+							  "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
 	)
 	def list(self, request):
 		user = request.user
 		group_users = user.group_users.all().distinct('group')
 		groups = [group_user.group for group_user in group_users]
-		groups_data = [GroupSerializer(group, context={'request': request}).data for group in groups if
-					   not group.default]
+		groups_data = [GroupSerializer(group, context={'request': request}).data for group in groups if not group.default]
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
 						 "data": groups_data}, status=200)
 
