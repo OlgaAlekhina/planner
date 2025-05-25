@@ -169,27 +169,24 @@ class GroupViewSet(viewsets.ModelViewSet):
 	@swagger_auto_schema(
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=GroupUsersResponseSerializer),
-			401: openapi.Response(description="Требуется авторизация",
-								  examples={"application/json": {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Группа не найдена", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса",
 								  examples={"application/json": {"error": "string"}})
 		},
 		operation_summary="Получение всех участников группы",
 		operation_description="Выводит всех участников данной группы кроме пользователя, который сделал запрос.\n"
-		  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
-		  "Пользователь может просматривать участников только тех групп, в которых он состоит."
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Пользователь может просматривать участников только тех групп, в которых он состоит."
 	)
 	def retrieve(self, request, pk):
 		group = self.get_object()
 		user = request.user
 		group_users = group.users.all()
-		response = []
-		for group_user in group_users:
-			if group_user.user.id != user.id:
-				response.append(GroupUserSerializer(group_user).data)
+		response = [GroupUserSerializer(group_user).data for group_user in group_users if group_user.user.id != user.id]
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список участников группы"},
-						 													"data": response}, status=200)
+						 "data": response}, status=200)
 
 	@action(detail=False, methods=['get'], url_path=r'users')
 	@swagger_auto_schema(
