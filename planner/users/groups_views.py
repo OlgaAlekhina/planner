@@ -199,7 +199,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Получение всех групп пользователя со списком участников",
 		operation_description="Выводит список всех групп пользователя со списком участников.\n"
-			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer "
+							  "3fa85f64-5717-4562-b3fc-2c963f66afa6'"
 	)
 	def groups_with_users(self, request):
 		user = request.user
@@ -208,8 +209,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 		groupusers_data = []
 		for group in groups:
 			users = [GroupUserSerializer(u).data for u in group.users.all() if u.user.id != user.id]
-			groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,
-																					'users': users})
+			groupusers_data.append({'group': GroupSerializer(group, context={'request': request}).data,	'users': users})
+
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список групп пользователя"},
 						 "data": groupusers_data}, status=200)
 
