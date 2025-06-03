@@ -228,8 +228,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Добавление участника в группу",
 		operation_description="Добавляет нового участника в группу.\n"
-			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
-			  "Добавить участника может только владелец группы."
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Добавить участника может только владелец группы."
 	)
 	def add_user(self, request, pk):
 		group = self.get_object()
@@ -237,20 +238,21 @@ class GroupViewSet(viewsets.ModelViewSet):
 		if serializer.is_valid():
 			user_name = serializer.validated_data.get('user_name')
 			groupuser_data = serializer.validated_data
-			# генерируем уникальное имя для создания нового пользователя и проверяем, что такого имени нет в БД
+			# генерируем уникальное имя для нового пользователя и проверяем, что такого имени нет в БД
 			for _ in range(10):
 				username = f"{user_name}-{''.join(random.choices(string.ascii_letters + string.digits, k=8))}"
 				if not User.objects.filter(username=username):
 					break
 			# сначала создаем нового пользователя
 			user = User.objects.create_user(username=username)
-			logger.info(f"User {user.username} was added to group '{group.name}'")
 			user.is_active = False
 			user.save()
 			# затем добавляем его в группу
 			group_user = GroupUser.objects.create(user=user, group=group, **groupuser_data)
-			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Участник добавлен в группу"},
-							 						"data": GroupUserSerializer(group_user).data}, status=201)
+			logger.info(f"User {user.username} was added to group '{group.name}'")
+			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Участник добавлен в группу"}, "data":
+																			GroupUserSerializer(group_user).data}, status=201)
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
