@@ -267,28 +267,31 @@ class GroupViewSet(viewsets.ModelViewSet):
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Объект не найден", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Редактирование участника группы",
 		operation_description="Редактирует данные участников группы.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
 							  "Редактировать участника может только владелец группы."
 	)
 	@swagger_auto_schema(
 		method='delete',
 		responses={
 			204: openapi.Response(description="Успешное удаление участника из группы"),
-			401: openapi.Response(description="Требуется авторизация",
-								  examples={"application/json": {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json":
+																					 {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Объект не найден", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса",
-								  examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Удаление участника из группы",
 		operation_description="Удаляет участников из группы.\n"
-			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
-			  "Удалить участника может только владелец группы."
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "Удалить участника может только владелец группы."
 	)
 	@action(detail=True, methods=['patch', 'delete'], url_path=r'users/(?P<user_id>\d+)')
 	def groups_actions(self, request, *args, **kwargs):
@@ -306,7 +309,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 			group_user.user_color = serializer.validated_data.get('user_color', group_user.user_color)
 			group_user.save()
 			return Response({"detail": {"code": "HTTP_200_OK", "message": "Данные участника успешно отредактированы"},
-							 								"data": GroupUserSerializer(group_user).data}, status=200)
+							 "data": GroupUserSerializer(group_user).data}, status=200)
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
