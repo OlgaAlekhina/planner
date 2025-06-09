@@ -334,12 +334,14 @@ class GroupViewSet(viewsets.ModelViewSet):
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Объект не найден", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Добавление пользователя в группу по приглашению",
 		operation_description="Добавляет пользователя в группу по приглашению владельца группы.\n"
 							  "Меняет пользователя, созданного владельцем группы, на авторизованного пользователя.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'."
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'."
 	)
 	def accept_invitation(self, request):
 		user = request.user
@@ -349,12 +351,12 @@ class GroupViewSet(viewsets.ModelViewSet):
 		group_number = len(user.group_users.all())
 		# если у пользователя премиум аккаунт, то он может иметь не более 3 групп (не считая дефолтной группы)
 		if premium_account and group_number > 3:
-			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с премиум-аккаунтом "
-											                      "не может иметь больше трех групп"}}, status=403)
+			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с премиум-аккаунтом не "
+																		 "может иметь больше трех групп"}}, status=403)
 		# если у пользователя бесплатный аккаунт, то он может иметь не более 1 группы (не считая дефолтной группы)
 		if not premium_account and group_number > 1:
-			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с бесплатным аккаунтом "
-																	"не может иметь больше одной группы"}}, status=403)
+			return Response({"detail": {"code": "HTTP_403_FORBIDDEN", "message": "Пользователь с бесплатным аккаунтом не "
+																		 "может иметь больше одной группы"}}, status=403)
 		serializer = self.get_serializer(data=request.data)
 		if serializer.is_valid():
 			user_id = serializer.validated_data['user_id']
@@ -364,6 +366,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			group_user.save()
 			old_user.delete()
 			return Response({"detail": {"code": "HTTP_200_OK", "message": "Приглашение в группу принято"}}, status=200)
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
