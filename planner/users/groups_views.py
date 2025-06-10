@@ -374,14 +374,16 @@ class GroupViewSet(viewsets.ModelViewSet):
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
-# функция для добавления дефолтной группы пользователям на проде
 def add_default_group(request):
+	""" Добавляет дефолтную группу для пользователей, у которых она отсутствует """
 	users = User.objects.all()
 	for user in users:
 		if user.is_active:
+			# создаем или получаем группу для активного пользователя
 			created_group = Group.objects.get_or_create(owner=user, default=True, defaults={'name': 'default_group',
-																					  'color': 'default_color'})
+																							'color': 'default_color'})
 			print(user.username, 'create group : ', created_group)
+			# добавляем пользователя в группу, если он еще не добавлен
 			created_groupuser = GroupUser.objects.get_or_create(user=user, group=created_group[0], defaults={'user_name': 'me'})
 			print(user.username, 'create groupuser : ', created_groupuser)
 	print("all done")
