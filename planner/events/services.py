@@ -12,14 +12,18 @@ def get_dates(
 		event_end: datetime.date,
 		end_repeat: datetime.date
 	) -> list[datetime]:
-	""" Функция для вычисления списка дат для повторяющихся событий с помощью библиотеки rrule """
-	saved_args = {**locals()}
-	print("saved_args is", saved_args)
+	"""
+	Функция для вычисления списка дат для повторяющихся событий с помощью библиотеки rrule.
+	Ее основная задача - правильно определить даты начала (filter_start) и конца (until) повторов, которые надо передать
+	в функцию rrule() вместе с метаданными события, описывающими паттерн повторений.
+	"""
+
 	filter_start = parse(filter_start)
 	filter_end = parse(filter_end)
-	# считаем продолжительность события (начиная от 1)
-	duration = (event_end - event_start).days + 1
 	interval = metadata['interval']
+
+	# считаем продолжительность события (начиная от 1 дня)
+	duration = (event_end - event_start).days + 1
 
 	# если стартовая дата поиска меньше даты окончания события
 	if datetime.date(filter_start) <= event_end:
@@ -28,7 +32,8 @@ def get_dates(
 	else:
 		# сдвигаем дату начала периодического события, если оно длится более 1 дня
 		filter_start -= timedelta(days=duration - 1)
-		# вычисляем дату начала для периодических событий
+
+		# вычисляем дату начала для периодических событий для разных паттернов
 		if interval > 1:
 			# если событие повторяется по дням
 			if metadata['freq'] == 3:
@@ -75,6 +80,7 @@ def get_dates(
 
 	# определяем конец повторений
 	until = filter_end if not end_repeat or datetime.date(filter_end) <= end_repeat else end_repeat
+
 	metadata['dtstart'] = filter_start
 	metadata['until'] = until
 	print('filter_start: ', filter_start)
