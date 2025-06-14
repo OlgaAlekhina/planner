@@ -41,7 +41,8 @@ class EventViewSet(viewsets.ModelViewSet):
 			201: openapi.Response(description="Успешное создание события", schema=EventResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Создание нового события",
 		operation_description="Создает новое событие в календаре.\n"
@@ -86,6 +87,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				response['repeat_pattern'] = EventMetaSerializer(meta).data
 			return Response({"detail": {"code": "HTTP_201_OK", "message": "Событие создано"}, "data": response},
 							status=201)
+
 		response = {'detail': {
 			"code": "BAD_REQUEST",
 			"message": serializer.errors
