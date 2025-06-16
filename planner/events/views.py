@@ -123,7 +123,8 @@ class EventViewSet(viewsets.ModelViewSet):
 			200: openapi.Response(description="Успешный ответ", schema=EventListSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Получение всех событий пользователя",
 		operation_description="Выводит список всех событий пользователя за определенный временной интервал.\n"
@@ -148,11 +149,12 @@ class EventViewSet(viewsets.ModelViewSet):
 			group_users_ids = [group_user.id for group_user in group_users]
 			# получаем все события без повторений в переданном временном интервале
 			# выводятся те события, в которых пользователь является автором или участником
-			events = Event.objects.filter(Q(users__pk__in=group_users_ids) | Q(author=user), title__icontains=search, repeats=False,
-										  start_date__lte=filter_end, end_date__gte=filter_start).distinct()
+			events = Event.objects.filter(Q(users__pk__in=group_users_ids) | Q(author=user), title__icontains=search,
+									repeats=False, start_date__lte=filter_end, end_date__gte=filter_start).distinct()
 			# получаем все события с повторениями в интервале start_date - end_repeat
-			repeated_events = Event.objects.filter(Q(users__pk__in=group_users_ids) | Q(author=user), Q(end_repeat__gte=filter_start)
-												   | Q(end_repeat__isnull=True), title__icontains=search, repeats=True,
+			repeated_events = Event.objects.filter(Q(users__pk__in=group_users_ids) | Q(author=user),
+												   Q(end_repeat__gte=filter_start)  | Q(end_repeat__isnull=True),
+												   title__icontains=search, repeats=True,
 												   start_date__lte=filter_end).distinct()
 		except ValidationError:
 			return Response(
@@ -167,11 +169,11 @@ class EventViewSet(viewsets.ModelViewSet):
 				metadata = EventMetaSerializer(repeated_event.eventmeta).data
 			except:
 				continue
-			# передаем данные в функцию, которая вычисляет все повторения в заданном диапазоне времени,
+
+			# передаем данные в функцию, которая вычисляет все повторения в заданном диапазоне времени
 			# и возвращает список объектов datetime
 			event_dates = get_dates(metadata, filter_start, filter_end, repeated_event.start_date, repeated_event.end_date,
 									repeated_event.end_repeat)
-			print('dates: ', event_dates)
 
 			# переводим date в datetime с помощью функции combine
 			event_start_datetime = datetime.combine(repeated_event.start_date, time.min)
@@ -185,18 +187,19 @@ class EventViewSet(viewsets.ModelViewSet):
 			# получаем даты отмененных событий в заданном временном интервале и удаляем их из списка
 			canceled_events = CanceledEvent.objects.filter(event=repeated_event, cancel_date__lte=filter_end,
 														   cancel_date__gte=parse(filter_start)-duration)
-			print('canceled_events: ', canceled_events)
 			for canceled_event in canceled_events:
 				# переводим date в datetime с помощью функции combine
 				cancel_date = datetime.combine(canceled_event.cancel_date, time.min)
 				if cancel_date in event_dates:
 					event_dates.remove(cancel_date)
-			# устанавливаем новые даты начала и конца события
+
+			# устанавливаем новые даты начала и конца события и добавляем его в список выдачи
 			for event_date in event_dates:
 				repeated_event.start_date = datetime.date(event_date)
 				repeated_event.end_date = datetime.date(event_date) + duration
 				response.append(EventListSerializer(repeated_event, context={'request': request}).data)
 
+		# добавляем в список неповторяющиеся события
 		for event in events:
 			response.append(EventListSerializer(event, context={'request': request}).data)
 		# сортируем итоговый список событий сперва по дате, а затем по времени
