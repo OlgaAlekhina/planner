@@ -75,11 +75,11 @@ class EventMetaSerializer(serializers.ModelSerializer):
 	bymonthday = serializers.CharField(max_length=50, required=False,
 									  help_text='Список дней месяца через запятую, например, "1, 28" - для повторов 1-ого и 28-ого числа')
 	bymonth = serializers.IntegerField(min_value=1, max_value=12, help_text='Номер месяца', required=False)
-	byweekno = serializers.IntegerField(min_value=1, max_value=6, help_text='Номер недели', required=False)
+	#byweekno = serializers.IntegerField(min_value=1, max_value=6, help_text='Номер недели', required=False)
 
 	class Meta:
 		model = EventMeta
-		exclude = ['id', 'event']
+		exclude = ['id', 'event', 'byweekno']
 
 	def to_representation(self, instance):
 		ret = super().to_representation(instance)
@@ -98,6 +98,14 @@ class EventMetaSerializer(serializers.ModelSerializer):
 		if request and getattr(request, 'method', None) == "PATCH":
 			fields['freq'].required = False
 		return fields
+
+
+class EventMetaResponseSerializer(serializers.ModelSerializer):
+	""" Сериализатор для метаданных события для Response """
+
+	class Meta:
+		model = EventMeta
+		exclude = ['id', 'event', 'byweekno']
 
 
 class EventCreateSerializer(serializers.Serializer):

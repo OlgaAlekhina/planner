@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Event, EventMeta, CanceledEvent
 from .serializers import (EventSerializer, EventMetaSerializer, EventCreateSerializer, EventListSerializer,
-						  EventResponseSerializer)
+						  EventResponseSerializer, EventMetaResponseSerializer)
 from users.users_serializers import ErrorResponseSerializer
 from django.db.models import Q
 from .services import get_dates
@@ -84,7 +84,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			# если были получены метаданные, делаем запись в таблице
 			if event_meta:
 				meta = EventMeta.objects.create(event=event, **event_meta)
-				response['repeat_pattern'] = EventMetaSerializer(meta).data
+				response['repeat_pattern'] = EventMetaResponseSerializer(meta).data
 			return Response({"detail": {"code": "HTTP_201_OK", "message": "Событие создано"}, "data": response},
 							status=201)
 
@@ -249,7 +249,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			if event.repeats:
 				event_meta = event.eventmeta
 				if event_meta:
-					event_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
+					event_data["repeat_pattern"] = EventMetaResponseSerializer(event.eventmeta).data
 
 		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные события получены."}, "data": event_data}
 		return Response(response, status=200)
@@ -419,7 +419,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			if event.repeats:
 				event_meta = event.eventmeta
 				if event_meta:
-					event_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
+					event_data["repeat_pattern"] = EventMetaResponseSerializer(event.eventmeta).data
 
 			# обновляем событие в кэше
 			cache_key = f"event_{pk}"
