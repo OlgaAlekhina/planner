@@ -195,12 +195,15 @@ class EventViewSet(viewsets.ModelViewSet):
 			for event_date in event_dates:
 				repeated_event.start_date = datetime.date(event_date)
 				repeated_event.end_date = datetime.date(event_date) + duration
-				response.append(EventListSerializer(repeated_event, context={'request': request}).data)
+				event_data = {"event_data": EventListSerializer(repeated_event, context={'request': request}).data,
+							  "repeat_pattern": EventMetaResponseSerializer(repeated_event.eventmeta).data}
+				response.append(event_data)
 
 		for event in events:
-			response.append(EventListSerializer(event, context={'request': request}).data)
+			event_data = {"event_data": EventListSerializer(event, context={'request': request}).data}
+			response.append(event_data)
 		# сортируем итоговый список событий сперва по дате, а затем по времени
-		response.sort(key=lambda x: (x['start_date'], x['start_time'] if x['start_time'] is not None else ''))
+		response.sort(key=lambda x: (x['event_data']['start_date'], x['event_data']['start_time'] if x['event_data']['start_time'] is not None else ''))
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"},
 						 "data": response}, status=200)
 
