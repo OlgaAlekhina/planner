@@ -54,7 +54,7 @@ class EventListSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Event
-		exclude = ['author', 'repeats', 'end_repeat']
+		exclude = ['author']
 
 	def get_fields(self, *args, **kwargs):
 		fields = super(EventListSerializer, self).get_fields(*args, **kwargs)
