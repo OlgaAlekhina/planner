@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Event, EventMeta, CanceledEvent
 from .serializers import (EventSerializer, EventMetaSerializer, EventCreateSerializer, EventListSerializer,
-						  EventResponseSerializer)
+						  EventResponseSerializer, EventMetaResponseSerializer)
 from users.users_serializers import ErrorResponseSerializer
 from django.db.models import Q
 from .services import get_dates
@@ -84,7 +84,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			# если были получены метаданные, делаем запись в таблице
 			if event_meta:
 				meta = EventMeta.objects.create(event=event, **event_meta)
-				response['repeat_pattern'] = EventMetaSerializer(meta).data
+				response['repeat_pattern'] = EventMetaResponseSerializer(meta).data
 			return Response({"detail": {"code": "HTTP_201_OK", "message": "Событие создано"}, "data": response},
 							status=201)
 
@@ -197,13 +197,16 @@ class EventViewSet(viewsets.ModelViewSet):
 			for event_date in event_dates:
 				repeated_event.start_date = datetime.date(event_date)
 				repeated_event.end_date = datetime.date(event_date) + duration
-				response.append(EventListSerializer(repeated_event, context={'request': request}).data)
+				event_data = {"event_data": EventListSerializer(repeated_event, context={'request': request}).data,
+							  "repeat_pattern": EventMetaResponseSerializer(repeated_event.eventmeta).data}
+				response.append(event_data)
 
 		# добавляем в список неповторяющиеся события
 		for event in events:
-			response.append(EventListSerializer(event, context={'request': request}).data)
+			event_data = {"event_data": EventListSerializer(event, context={'request': request}).data}
+			response.append(event_data)
 		# сортируем итоговый список событий сперва по дате, а затем по времени
-		response.sort(key=lambda x: (x['start_date'], x['start_time'] if x['start_time'] is not None else ''))
+		response.sort(key=lambda x: (x['event_data']['start_date'], x['event_data']['start_time'] if x['event_data']['start_time'] is not None else ''))
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"},
 						 "data": response}, status=200)
 
@@ -252,7 +255,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			if event.repeats:
 				event_meta = event.eventmeta
 				if event_meta:
-					event_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
+					event_data["repeat_pattern"] = EventMetaResponseSerializer(event.eventmeta).data
 
 		response = {"detail": {"code": "HTTP_200_OK", "message": "Данные события получены."}, "data": event_data}
 		return Response(response, status=200)
@@ -343,7 +346,8 @@ class EventViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Редактирование события по id",
 		operation_description="Эндпоинт для редактирования события.\n"
-							  "При редактировании повторяющихся событий надо передавать параметр change_date, соответствующий дате начала события.\n"
+							  "При редактировании повторяющихся событий надо передавать параметр change_date, соответствующий "
+							  "дате того повтора, который редактируется.\n"
 							  "Если редактируются все повторы события, то надо передать параметр all=true.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
 							  "Пользователь может редактировать только созданное им событие."
@@ -353,13 +357,16 @@ class EventViewSet(viewsets.ModelViewSet):
 		serializer = self.get_serializer(data=request.data)
 		change_date = request.GET.get('change_date')
 		all_param = request.GET.get('all')
+		all_param = True if all_param == 'true' else False
 
 		if serializer.is_valid():
 			event_data = serializer.validated_data.get('event_data')
 			event_meta = serializer.validated_data.get('repeat_pattern')
 
-			# если надо отредактировать повторяющееся событие, то создаем его копию в БД и редактируем именно ее
-			if change_date:
+			# если надо отредактировать повторяющееся событие, то создаем его копию в БД и редактируем именно ее,
+			# но если мы редактируем первый повтор события, это не нужно
+			if (change_date and all_param and event.start_date != datetime.date(parse(change_date))) or (change_date and
+			not all_param):
 				old_users = event.users.all()
 				event_duration = event.end_date - event.start_date
 				# копируем исходное событие и создаем новый объект, меняя даты начала и конца события
@@ -372,31 +379,27 @@ class EventViewSet(viewsets.ModelViewSet):
 
 				# достаем исходное событие
 				old_event = Event.objects.get(id=pk)
-				# если редактируем все повторы события, то меняем дату окончания повторов исходного события на
-				# предшествующую change_date, то есть удаляем все повторы в будущем
-				if all_param == 'true':
+				# если редактируем все повторы события, то добавляем старые метаданные к новому событию и удаляем все
+				# повторы старого события в будущем
+				if all_param:
 					if not event_data or 'repeats' not in event_data or event_data['repeats'] is True:
 						# добавляем старые метаданные к новому событию, если пользователь при редактировании не убрал повторы
 						old_meta = old_event.eventmeta
 						old_meta.pk = None
 						old_meta.event = event
 						old_meta.save()
-					# меняем дату окончания повторов исходного события
+					# меняем дату окончания повторов исходного события, чтобы удалить все повторы в будущем
 					old_event.end_repeat = datetime.date(parse(change_date) - timedelta(days=1))
 					old_event.save()
-				# если надо отредактировать только одно повторяющееся событие, то удаляем его из повторяющихся и ставим
-				# отдельной записью в таблицу, как неповторяющееся
+				# если надо отредактировать только одно повторяющееся событие, то добавляем его в таблицу отмененных
 				else:
-					event.repeats = False
-					event.end_repeat = None
-					event.save()
-					# добавляем событие в таблицу отмененных
 					CanceledEvent.objects.create(event=old_event, cancel_date=change_date)
 
 			# если переданы данные события, то обновляем их
 			if event_data:
 				new_users = event_data.pop('users', None)
 				Event.objects.filter(id=event.id).update(**event_data)
+				event = Event.objects.get(id=event.id)
 				# если передан список участников события, обновляем его в БД
 				if new_users:
 					old_users = event.users.all()
@@ -406,10 +409,15 @@ class EventViewSet(viewsets.ModelViewSet):
 					for user in new_users:
 						if user not in old_users:
 							event.users.add(user)
-				event = Event.objects.get(id=event.id)
+
+			# если редактируем только одно повторяющееся событие, то убираем у него повторы
+			if change_date and not all_param:
+				event.repeats = False
+				event.end_repeat = None
+				event.save()
 
 			# если переданы метаданные события, то обновляем их
-			if event_meta:
+			if (event_meta and not change_date) or (event_meta and change_date and all_param):
 				EventMeta.objects.update_or_create(event=event, defaults=event_meta)
 
 			# сериализуем данные события с метаданными
@@ -417,7 +425,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			if event.repeats:
 				event_meta = event.eventmeta
 				if event_meta:
-					event_data["repeat_pattern"] = EventMetaSerializer(event.eventmeta).data
+					event_data["repeat_pattern"] = EventMetaResponseSerializer(event.eventmeta).data
 
 			# обновляем событие в кэше
 			cache_key = f"event_{pk}"
