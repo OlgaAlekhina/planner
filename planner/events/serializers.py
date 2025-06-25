@@ -127,3 +127,9 @@ class EventResponseSerializer(serializers.Serializer):
 	detail = DetailSerializer()
 	data = EventCreateSerializer()
 
+
+class EventListResponseSerializer(serializers.Serializer):
+	""" Сериализатор для ответа сервера в list методе """
+	detail = DetailSerializer()
+	data = serializers.ListSerializer(child=EventCreateSerializer())
+

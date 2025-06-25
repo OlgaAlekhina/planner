@@ -271,7 +271,7 @@ LOGGING = {
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['errors', 'mail_admins'],
+            'handlers': ['console', 'errors', 'mail_admins'],
             'propagate': False,
         },
         'django.server': {

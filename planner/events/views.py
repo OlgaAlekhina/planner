@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Event, EventMeta, CanceledEvent
 from .serializers import (EventSerializer, EventMetaSerializer, EventCreateSerializer, EventListSerializer,
-						  EventResponseSerializer, EventMetaResponseSerializer)
+						  EventResponseSerializer, EventMetaResponseSerializer, EventListResponseSerializer)
 from users.users_serializers import ErrorResponseSerializer
 from django.db.models import Q
 from .services import get_dates
@@ -120,7 +120,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			)
 		],
 		responses={
-			200: openapi.Response(description="Успешный ответ", schema=EventListSerializer()),
+			200: openapi.Response(description="Успешный ответ", schema=EventListResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
