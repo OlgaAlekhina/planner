@@ -307,7 +307,7 @@ class EventViewSet(viewsets.ModelViewSet):
 		cancel_date = request.GET.get('cancel_date')
 		all_param = request.GET.get('all')
 		# удаляем неповторяющиеся события
-		if not cancel_date:
+		if not cancel_date or (cancel_date and event.start_date == datetime.date(parse(cancel_date)) and all_param == 'true'):
 			event.delete()
 		# удаляем повторяющиеся события
 		else:
