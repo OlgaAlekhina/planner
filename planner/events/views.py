@@ -278,18 +278,18 @@ class EventViewSet(viewsets.ModelViewSet):
 			],
 		responses={
 			204: openapi.Response(description="Успешное удаление события"),
-			401: openapi.Response(description="Требуется авторизация",
-								  examples={"application/json": {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Событие не найдено", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса",
-								  examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Удаление события по id",
 		operation_description="Удаляет событие из базы данных по его id.\n"
 							  "При удалении повторяющихся событий надо передать параметр cancel_date.\n"
 							  "Если удаляются все повторы события в будущем, надо передать параметр all=true.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
 							  "Пользователь может удалить только созданное им событие."
 	)
 	def destroy(self, request, pk):
@@ -303,6 +303,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				logger.info(f'Event data in cache after removal: {cache.get(cache_key)}')
 		except:
 			logger.info('Redis unavailable')
+
 		cancel_date = request.GET.get('cancel_date')
 		all_param = request.GET.get('all')
 		# удаляем неповторяющиеся события
