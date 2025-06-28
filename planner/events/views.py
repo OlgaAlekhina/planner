@@ -306,7 +306,8 @@ class EventViewSet(viewsets.ModelViewSet):
 
 		cancel_date = request.GET.get('cancel_date')
 		all_param = request.GET.get('all')
-		# удаляем неповторяющиеся события
+		# удаляем неповторяющиеся события или повторяющееся событие в том случае, если надо удалить все повторы, начиная
+		# с самого первого
 		if not cancel_date or (cancel_date and event.start_date == datetime.date(parse(cancel_date)) and all_param == 'true'):
 			event.delete()
 		# удаляем повторяющиеся события
@@ -342,8 +343,8 @@ class EventViewSet(viewsets.ModelViewSet):
 								  examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Событие не найдено", examples={"application/json": {"detail": "string"}}),
-			500: openapi.Response(description="Ошибка сервера при обработке запроса",
-								  examples={"application/json": {"error": "string"}})
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
 		},
 		operation_summary="Редактирование события по id",
 		operation_description="Эндпоинт для редактирования события.\n"
@@ -365,9 +366,9 @@ class EventViewSet(viewsets.ModelViewSet):
 			event_meta = serializer.validated_data.get('repeat_pattern')
 
 			# если надо отредактировать повторяющееся событие, то создаем его копию в БД и редактируем именно ее,
-			# но если мы редактируем первый повтор события, это не нужно
+			# но если мы редактируем первый повтор события и все последующие, то это не нужно
 			if (change_date and all_param and event.start_date != datetime.date(parse(change_date))) or (change_date and
-			not all_param):
+				not all_param):
 				old_users = event.users.all()
 				event_duration = event.end_date - event.start_date
 				# копируем исходное событие и создаем новый объект, меняя даты начала и конца события
@@ -421,7 +422,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			if (event_meta and not change_date) or (event_meta and change_date and all_param):
 				EventMeta.objects.update_or_create(event=event, defaults=event_meta)
 
-			# сериализуем данные события с метаданными
+			# сериализуем событие с метаданными
 			event_data = {"event_data": EventSerializer(event, context={'request': request}).data}
 			if event.repeats:
 				event_meta = event.eventmeta
@@ -441,7 +442,8 @@ class EventViewSet(viewsets.ModelViewSet):
 				logger.info('Redis unavailable')
 
 			return Response(
-				{"detail": {"code": "HTTP_200_OK", "message": "Событие успешно изменено"}, "data": event_data}, status=200)
+				{"detail": {"code": "HTTP_200_OK", "message": "Событие успешно изменено"}, "data": event_data},
+																										status=200)
 
 		response = {'detail': {
 			"code": "BAD_REQUEST",
