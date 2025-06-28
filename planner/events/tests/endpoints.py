@@ -1,3 +1,6 @@
+# тестовые запросы к апи для работы с пользователями, группами и событиями
+
+
 import requests
 import pytest
 from .config import config

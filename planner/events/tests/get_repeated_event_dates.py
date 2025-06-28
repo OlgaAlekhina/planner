@@ -1,3 +1,6 @@
+# тестирование функции get_dates, рассчитывающей даты для повторяющихся событий
+
+
 from events.services import get_dates
 import datetime
 

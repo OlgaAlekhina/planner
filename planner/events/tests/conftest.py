@@ -4,7 +4,7 @@ def pytest_addoption(parser):
         '--env',
         action='store',
         default='dev',
-        help='Choose prod when test app in production'
+        help='You can pass "--env prod" in pytest command for testing app in production'
     )
 
 
