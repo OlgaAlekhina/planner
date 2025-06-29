@@ -27,6 +27,7 @@ MONTHS = [
 
 
 class Event(models.Model):
+	""" Модель для хранения событий """
 	author = models.ForeignKey(User, on_delete=models.CASCADE)
 	title = models.CharField(max_length=100)
 	location = models.CharField(max_length=100, blank=True, null=True)
@@ -43,12 +44,14 @@ class Event(models.Model):
 
 
 class EventMeta(models.Model):
+	""" Модель для хранения паттернов повторений событий """
 	event = models.OneToOneField(Event, on_delete=models.CASCADE)
 	freq = models.IntegerField(choices=EVENT_FREQ)
 	interval = models.IntegerField(default=1)
 	byweekday = models.CharField(max_length=50, blank=True, null=True)
 	bymonthday = models.CharField(max_length=50, blank=True, null=True)
 	bymonth = models.IntegerField(choices=MONTHS, blank=True, null=True)
+	# это поле пока не используется
 	byweekno = models.IntegerField(blank=True, null=True)
 
 	def __str__(self):
@@ -56,6 +59,7 @@ class EventMeta(models.Model):
 
 
 class CanceledEvent(models.Model):
+	""" Модель для хранения отмененных событий """
 	event = models.ForeignKey(Event, on_delete=models.CASCADE)
 	cancel_date = models.DateField()
 

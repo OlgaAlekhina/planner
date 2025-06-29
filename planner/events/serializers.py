@@ -49,7 +49,7 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class EventListSerializer(serializers.ModelSerializer):
-	""" Сериализатор для кратких данных события """
+	""" Сериализатор для кратких данных события (был видоизменен и теперь дублирует EventSerializer) """
 	is_creator = EventAuthorBoolField(source='*', read_only=True)
 
 	class Meta:
@@ -65,15 +65,14 @@ class EventListSerializer(serializers.ModelSerializer):
 
 class EventMetaSerializer(serializers.ModelSerializer):
 	""" Сериализатор для метаданных события """
-	freq = serializers.IntegerField(min_value=0, max_value=3,
-									help_text='Паттерн повторений, возможные значения: 3 - для повторений по дням, 2 - по неделям,'
-																		' 1 - по месяцам, 0 - по годам')
-	interval = serializers.IntegerField(min_value=1, max_value=1000, required=False,
-										help_text='Интервал повторений, где 1 означает, что повторяется каждый день (неделю и т.д.)')
-	byweekday = serializers.CharField(max_length=50, required=False,
-									  help_text='Список дней недели через запятую, где 0 - понедельник, 6 - воскресенье')
-	bymonthday = serializers.CharField(max_length=50, required=False,
-									  help_text='Список дней месяца через запятую, например, "1, 28" - для повторов 1-ого и 28-ого числа')
+	freq = serializers.IntegerField(min_value=0, max_value=3, help_text='Паттерн повторений, возможные значения: 3 - для'
+													' повторений по дням, 2 - по неделям, 1 - по месяцам, 0 - по годам')
+	interval = serializers.IntegerField(min_value=1, max_value=1000, required=False, help_text='Интервал повторений, где'
+														     ' 1 означает, что повторяется каждый день (неделю и т.д.)')
+	byweekday = serializers.CharField(max_length=50, required=False, help_text='Список дней недели через запятую, где 0'
+																			   ' - понедельник, 6 - воскресенье')
+	bymonthday = serializers.CharField(max_length=50, required=False, help_text='Список дней месяца через запятую,'
+															   ' например, "1, 28" - для повторов 1-ого и 28-ого числа')
 	bymonth = serializers.IntegerField(min_value=1, max_value=12, help_text='Номер месяца', required=False)
 	#byweekno = serializers.IntegerField(min_value=1, max_value=6, help_text='Номер недели', required=False)
 

@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'rest_framework_swagger',
     'drf_yasg',
     'rest_framework.authtoken',
-    'django_filters',
     'users',
     'events'
 ]
