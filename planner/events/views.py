@@ -358,6 +358,8 @@ class EventViewSet(viewsets.ModelViewSet):
 		event = self.get_object()
 		serializer = self.get_serializer(data=request.data)
 		change_date = request.GET.get('change_date')
+		if change_date:
+			change_date = datetime.date(parse(change_date))
 		all_param = request.GET.get('all')
 		all_param = True if all_param == 'true' else False
 
@@ -367,14 +369,14 @@ class EventViewSet(viewsets.ModelViewSet):
 
 			# если надо отредактировать повторяющееся событие, то создаем его копию в БД и редактируем именно ее,
 			# но если мы редактируем первый повтор события и все последующие, то это не нужно
-			if (change_date and all_param and event.start_date != datetime.date(parse(change_date))) or (change_date and
+			if (change_date and all_param and event.start_date != change_date) or (change_date and
 				not all_param):
 				old_users = event.users.all()
 				event_duration = event.end_date - event.start_date
 				# копируем исходное событие и создаем новый объект, меняя даты начала и конца события
 				event.pk = None
 				event.start_date = change_date
-				event.end_date = datetime.date(parse(change_date)) + event_duration
+				event.end_date = change_date + event_duration
 				event.save()
 				# добавляем прежних участников события
 				event.users.set(old_users)
@@ -391,7 +393,8 @@ class EventViewSet(viewsets.ModelViewSet):
 						old_meta.event = event
 						old_meta.save()
 					# меняем дату окончания повторов исходного события, чтобы удалить все повторы в будущем
-					old_event.end_repeat = datetime.date(parse(change_date) - timedelta(days=1))
+					#end_repeat = change_date if change_date <= ev
+					old_event.end_repeat = change_date - timedelta(days=1)
 					old_event.save()
 				# если надо отредактировать только одно повторяющееся событие, то добавляем его в таблицу отмененных
 				else:
