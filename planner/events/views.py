@@ -366,6 +366,11 @@ class EventViewSet(viewsets.ModelViewSet):
 		if serializer.is_valid():
 			event_data = serializer.validated_data.get('event_data')
 			event_meta = serializer.validated_data.get('repeat_pattern')
+			# на случай, если дата начала события переносится в прошлое, надо в прошлом закрыть повторы события
+			if event_data and event_data.get('start_date'):
+				event_start = event_data.get('start_date')
+			else:
+				event_start = change_date
 
 			# если надо отредактировать повторяющееся событие, то создаем его копию в БД и редактируем именно ее,
 			# но если мы редактируем первый повтор события и все последующие, то это не нужно
@@ -393,8 +398,8 @@ class EventViewSet(viewsets.ModelViewSet):
 						old_meta.event = event
 						old_meta.save()
 					# меняем дату окончания повторов исходного события, чтобы удалить все повторы в будущем
-					#end_repeat = change_date if change_date <= ev
-					old_event.end_repeat = change_date - timedelta(days=1)
+					end_repeat = change_date if change_date < event_start else event_start
+					old_event.end_repeat = end_repeat - timedelta(days=1)
 					old_event.save()
 				# если надо отредактировать только одно повторяющееся событие, то добавляем его в таблицу отмененных
 				else:
@@ -430,7 +435,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			if event.repeats:
 				event_meta = event.eventmeta
 				if event_meta:
-					event_data["repeat_pattern"] = EventMetaResponseSerializer(event.eventmeta).data
+					event_data["repeat_pattern"] = EventMetaResponseSerializer(event_meta).data
 
 			# обновляем событие в кэше
 			cache_key = f"event_{pk}"
