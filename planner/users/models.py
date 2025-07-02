@@ -10,6 +10,7 @@ USER_SEX = [
 
 
 class UserProfile(models.Model):
+	""" Модель для хранения дополнительных данных пользователя """
 	user = models.OneToOneField(User, on_delete=models.CASCADE)
 	avatar = models.CharField(max_length=200, blank=True)
 	gender = models.CharField(max_length=1, choices=USER_SEX, blank=True)
@@ -33,6 +34,7 @@ class UserProfile(models.Model):
 
 
 class Group(models.Model):
+	""" Модель для хранения данных группы """
 	owner = models.ForeignKey(User, on_delete=models.CASCADE)
 	name = models.CharField(max_length=100)
 	color = models.CharField(max_length=50)
@@ -43,6 +45,7 @@ class Group(models.Model):
 
 
 class GroupUser(models.Model):
+	""" Модель для хранения данных участников группы """
 	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_users')
 	group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='users')
 	user_name = models.CharField(max_length=30)
@@ -54,6 +57,7 @@ class GroupUser(models.Model):
 
 
 class SignupCode(models.Model):
+	""" Модель для хранения кодов, высылаемых при регистрации и восстановлении пароля """
 	code = models.IntegerField()
 	user = models.ForeignKey(User, on_delete=models.CASCADE)
 	code_time = models.DateTimeField(auto_now_add=True)
