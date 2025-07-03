@@ -11,8 +11,6 @@ from .users_serializers import UserLoginSerializer
 from rest_framework.authtoken.models import Token
 from django.conf import settings
 from .tasks import send_letter
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
 
 client_id = settings.VK_CLIENT_ID
 

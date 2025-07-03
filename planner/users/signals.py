@@ -6,6 +6,7 @@ from .models import UserProfile
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
+    """ Создает профиль пользователя при создании нового пользователя"""
     if created:
         email = instance.email
         nickname = email.split('@')[0]
@@ -14,6 +15,7 @@ def create_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_profile(sender, instance, **kwargs):
+    """ Обновляет пофиль пользователя при сохранении основных данных пользователя """
     instance.userprofile.save()
 
 
