@@ -54,13 +54,13 @@ class GroupListResponseSerializer(serializers.Serializer):
 
 class GroupUserSerializer(serializers.ModelSerializer):
 	""" Сериализатор для участников группы """
-	default_groupid = serializers.SerializerMethodField()
+	default_groupuser_id = serializers.SerializerMethodField()
 
 	class Meta:
 		model = GroupUser
-		fields = ('id', 'default_groupid', 'user_name', 'user_role', 'user_color')
+		fields = ('id', 'default_groupuser_id', 'user_name', 'user_role', 'user_color')
 
-	def get_default_groupid(self, obj):
+	def get_default_groupuser_id(self, obj):
 		user = obj.user
 		default_groupuser = GroupUser.objects.filter(user=user, group__default=True).first()
 		if default_groupuser:

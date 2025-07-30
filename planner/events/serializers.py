@@ -16,6 +16,7 @@ class EventAuthorBoolField(serializers.BooleanField):
 class EventSerializer(serializers.ModelSerializer):
 	""" Общий сериализатор для события """
 	is_creator = EventAuthorBoolField(source='*', read_only=True)
+	users = serializers.SerializerMethodField()
 
 	class Meta:
 		model = Event
@@ -34,6 +35,13 @@ class EventSerializer(serializers.ModelSerializer):
 			}
 		}
 
+	def get_users(self, obj):
+		current_user = self.context.get('request').user
+		current_groupuser_ids = [user.id for user in current_user.group_users.all()]
+		current_default_groupuser_id = current_user.group_users.filter(group__default=True).first().id
+		users_ids = [groupuser.id for groupuser in obj.users.all()]
+		return [current_default_groupuser_id if id in current_groupuser_ids else id for id in users_ids]
+
 	def get_fields(self, *args, **kwargs):
 		fields = super(EventSerializer, self).get_fields(*args, **kwargs)
 		request = self.context.get('request', None)
@@ -51,10 +59,18 @@ class EventSerializer(serializers.ModelSerializer):
 class EventListSerializer(serializers.ModelSerializer):
 	""" Сериализатор для кратких данных события (был видоизменен и теперь дублирует EventSerializer) """
 	is_creator = EventAuthorBoolField(source='*', read_only=True)
+	users = serializers.SerializerMethodField()
 
 	class Meta:
 		model = Event
 		exclude = ['author']
+
+	def get_users(self, obj):
+		current_user = self.context.get('request').user
+		current_groupuser_ids = [user.id for user in current_user.group_users.all()]
+		current_default_groupuser_id = current_user.group_users.filter(group__default=True).first().id
+		users_ids = [groupuser.id for groupuser in obj.users.all()]
+		return [current_default_groupuser_id if id in current_groupuser_ids else id for id in users_ids]
 
 	def get_fields(self, *args, **kwargs):
 		fields = super(EventListSerializer, self).get_fields(*args, **kwargs)
