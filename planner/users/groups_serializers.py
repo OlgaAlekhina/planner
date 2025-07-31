@@ -1,3 +1,4 @@
+from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from .models import Group, GroupUser
 from .users_serializers import DetailSerializer
@@ -60,6 +61,7 @@ class GroupUserSerializer(serializers.ModelSerializer):
 		model = GroupUser
 		fields = ('id', 'default_groupuser_id', 'user_name', 'user_role', 'user_color')
 
+	@swagger_serializer_method(serializer_or_field=serializers.IntegerField())
 	def get_default_groupuser_id(self, obj):
 		user = obj.user
 		default_groupuser = GroupUser.objects.filter(user=user, group__default=True).first()

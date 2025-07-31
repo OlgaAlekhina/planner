@@ -1,3 +1,4 @@
+from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from .models import Event, EventMeta
 from users.users_serializers import DetailSerializer
@@ -35,6 +36,9 @@ class EventSerializer(serializers.ModelSerializer):
 			}
 		}
 
+	@swagger_serializer_method(serializer_or_field=serializers.ListField(
+		child=serializers.IntegerField()
+	))
 	def get_users(self, obj):
 		current_user = self.context.get('request').user
 		current_groupuser_ids = [user.id for user in current_user.group_users.all()]
@@ -65,6 +69,9 @@ class EventListSerializer(serializers.ModelSerializer):
 		model = Event
 		exclude = ['author']
 
+	@swagger_serializer_method(serializer_or_field=serializers.ListField(
+		child=serializers.IntegerField()
+	))
 	def get_users(self, obj):
 		current_user = self.context.get('request').user
 		current_groupuser_ids = [user.id for user in current_user.group_users.all()]
