@@ -15,26 +15,16 @@ class EventAuthorBoolField(serializers.BooleanField):
 
 
 class EventSerializer(serializers.ModelSerializer):
-	""" Общий сериализатор для события """
+	"""
+	Общий сериализатор для вывода основных данных события. Используется только для Response, так как в списке участников
+	события ID текущего пользователя заменяется на его default groupuser ID.
+	"""
 	is_creator = EventAuthorBoolField(source='*', read_only=True)
 	users = serializers.SerializerMethodField()
 
 	class Meta:
 		model = Event
 		exclude = ['author']
-		extra_kwargs = {
-			'start_time': {
-				'help_text': 'Время начала события в формате 06:30:00'
-			},
-			'end_time': {
-				'help_text': 'Время завершения события в формате 07:30:00'
-			}
-			,
-			'users': {
-				'help_text': 'Список id пользователей-участников события',
-				'required': False
-			}
-		}
 
 	@swagger_serializer_method(serializer_or_field=serializers.ListField(
 		child=serializers.IntegerField()
@@ -130,9 +120,31 @@ class EventMetaResponseSerializer(serializers.ModelSerializer):
 		exclude = ['id', 'event', 'byweekno']
 
 
+class EventDataSerializer(serializers.ModelSerializer):
+	""" Сериализатор для записи основных данных события """
+	is_creator = EventAuthorBoolField(source='*', read_only=True)
+
+	class Meta:
+		model = Event
+		exclude = ['author']
+		extra_kwargs = {
+			'start_time': {
+				'help_text': 'Время начала события в формате 06:30:00'
+			},
+			'end_time': {
+				'help_text': 'Время завершения события в формате 07:30:00'
+			}
+			,
+			'users': {
+				'help_text': 'Список id пользователей-участников события',
+				'required': False
+			}
+		}
+
+
 class EventCreateSerializer(serializers.Serializer):
-	""" Сериализатор для создания события """
-	event_data = EventSerializer()
+	""" Общий сериализатор для создания события вместе с метаданными """
+	event_data = EventDataSerializer()
 	repeat_pattern = EventMetaSerializer(required=False)
 
 	def get_fields(self, *args, **kwargs):
@@ -144,14 +156,20 @@ class EventCreateSerializer(serializers.Serializer):
 		return fields
 
 
+class EventMetaDataSerializer(serializers.Serializer):
+	""" Сериализатор ответа сервера для получения данных и метаданных события """
+	event_data = EventSerializer()
+	repeat_pattern = EventMetaSerializer()
+
+
 class EventResponseSerializer(serializers.Serializer):
 	""" Сериализатор ответа сервера для получения события """
 	detail = DetailSerializer()
-	data = EventCreateSerializer()
+	data = EventMetaDataSerializer()
 
 
 class EventListResponseSerializer(serializers.Serializer):
 	""" Сериализатор для ответа сервера в list методе """
 	detail = DetailSerializer()
-	data = serializers.ListSerializer(child=EventCreateSerializer())
+	data = serializers.ListSerializer(child=EventMetaDataSerializer())
 
