@@ -356,7 +356,7 @@ class EventViewSet(viewsets.ModelViewSet):
 	)
 	def partial_update(self, request, pk):
 		event = self.get_object()
-		serializer = self.get_serializer(data=request.data)
+		serializer = self.get_serializer(data=request.data, partial=True)
 		change_date = request.GET.get('change_date')
 		if change_date:
 			change_date = datetime.date(parse(change_date))
