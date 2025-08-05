@@ -8,8 +8,10 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Event, EventMeta, CanceledEvent
-from .serializers import (EventSerializer, EventMetaSerializer, EventCreateSerializer, EventListSerializer,
-						  EventResponseSerializer, EventMetaResponseSerializer, EventListResponseSerializer)
+from .serializers import (
+	EventSerializer, EventMetaSerializer, EventCreateSerializer, EventResponseSerializer, EventMetaResponseSerializer,
+	EventListResponseSerializer
+)
 from users.users_serializers import ErrorResponseSerializer
 from django.db.models import Q
 from .services import get_dates
@@ -47,6 +49,7 @@ class EventViewSet(viewsets.ModelViewSet):
 		operation_summary="Создание нового события",
 		operation_description="Создает новое событие в календаре.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+							  "При добавлении участников события надо передавать id для участников группы и default_groupuser_id для создателя события.\n"
 							  "Если событие повторяется, надо передать данные о повторах в поле 'repeat_pattern'.\n\n"
 							  "Пока реализованы следующие паттерны повторов событий:\n"
 							  "1) По дням - через сколько дней повторяется событие: надо передать параметры freq=3 и int (например, int=1 - "
@@ -197,13 +200,13 @@ class EventViewSet(viewsets.ModelViewSet):
 			for event_date in event_dates:
 				repeated_event.start_date = datetime.date(event_date)
 				repeated_event.end_date = datetime.date(event_date) + duration
-				event_data = {"event_data": EventListSerializer(repeated_event, context={'request': request}).data,
+				event_data = {"event_data": EventSerializer(repeated_event, context={'request': request}).data,
 							  "repeat_pattern": EventMetaResponseSerializer(repeated_event.eventmeta).data}
 				response.append(event_data)
 
 		# добавляем в список неповторяющиеся события
 		for event in events:
-			event_data = {"event_data": EventListSerializer(event, context={'request': request}).data}
+			event_data = {"event_data": EventSerializer(event, context={'request': request}).data}
 			response.append(event_data)
 		# сортируем итоговый список событий сперва по дате, а затем по времени
 		response.sort(key=lambda x: (x['event_data']['start_date'], x['event_data']['start_time'] if x['event_data']['start_time'] is not None else ''))
@@ -348,6 +351,7 @@ class EventViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Редактирование события по id",
 		operation_description="Эндпоинт для редактирования события.\n"
+							  "При изменении участников события надо передавать id для участников группы и default_groupuser_id для создателя события.\n"
 							  "При редактировании повторяющихся событий надо передавать параметр change_date, соответствующий "
 							  "дате того повтора, который редактируется.\n"
 							  "Если редактируются все повторы события, то надо передать параметр all=true.\n"
