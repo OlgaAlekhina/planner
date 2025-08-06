@@ -100,7 +100,7 @@ class EventDataSerializer(serializers.ModelSerializer):
 
 
 class EventCreateSerializer(serializers.Serializer):
-	""" Общий сериализатор для создания события вместе с метаданными """
+	""" Общий сериализатор для создания и редактирования события вместе с метаданными """
 	event_data = EventDataSerializer()
 	repeat_pattern = EventMetaSerializer(required=False)
 

@@ -74,7 +74,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 			group = Group.objects.create(owner=user, name=name, color=color)
 			logger.info(f"{user.username} created new group '{name}'")
 			# добавляем пользователя в созданную им группу
-			GroupUser.objects.create(user=user, group=group, user_name=user.userprofile.nickname)
+			GroupUser.objects.create(user=user, group=group, user_name=user.first_name)
 			return Response({"detail": {"code": "HTTP_201_CREATED", "message": "Группа создана"},
 							            "data": GroupSerializer(group, context={'request': request}).data}, status=201)
 
@@ -372,6 +372,40 @@ class GroupViewSet(viewsets.ModelViewSet):
 			"message": serializer.errors
 		}}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=True, methods=['delete'])
+	@swagger_auto_schema(
+		responses={
+			204: openapi.Response(description="Успешное удаление участника из группы"),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Объект не найден", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
+		},
+		operation_summary="Выход из группы",
+		operation_description="Удаляет авторизованного пользователя из группы и вместо него создает виртуального участника.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате "
+							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+	)
+	def quit_group(self, request, pk):
+		group = self.get_object()
+		user = request.user
+		groupuser = get_object_or_404(GroupUser, user=user, group=group)
+		# генерируем уникальное имя для нового виртуального пользователя и проверяем, что такого имени нет в БД
+		for _ in range(10):
+			username = f"{groupuser.user_name}-{''.join(random.choices(string.ascii_letters + string.digits, k=8))}"
+			if not User.objects.filter(username=username):
+				break
+		# сначала создаем нового виртуального пользователя
+		new_user = User.objects.create_user(username=username)
+		new_user.is_active = False
+		new_user.save()
+		# затем добавляем его в группу вместо ушедшего
+		groupuser.user = new_user
+		groupuser.save()
+		logger.info(f"User {user.username} left the group '{group.name}'")
+		return Response(status=204)
 
 
 def add_default_group(request):
