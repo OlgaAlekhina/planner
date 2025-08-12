@@ -271,7 +271,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 																									{"error": "string"}})
 		},
 		operation_summary="Редактирование участника группы",
-		operation_description="Редактирует данные участников группы.\n"
+		operation_description="Редактирует данные участников группы по переданному id.\n"
 							  "Условия доступа к эндпоинту: токен авторизации в формате "
 							  "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
 							  "Редактировать участника может только владелец группы."
