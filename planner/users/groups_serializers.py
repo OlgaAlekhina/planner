@@ -27,10 +27,6 @@ class GroupSerializer(serializers.ModelSerializer):
 		request = self.context.get('request', None)
 		# добавляем объект Request в поле 'is_owner'
 		fields['is_owner'].contex = self.context
-		# делаем поля необязательными в методе PATCH
-		if request and getattr(request, 'method', None) == "PATCH":
-			fields['name'].required = False
-			fields['color'].required = False
 		return fields
 
 
@@ -72,9 +68,6 @@ class GroupUserSerializer(serializers.ModelSerializer):
 	def get_fields(self, *args, **kwargs):
 		fields = super(GroupUserSerializer, self).get_fields(*args, **kwargs)
 		request = self.context.get('request', None)
-		# делаем поля необязательными в методе PATCH
-		if request and getattr(request, 'method', None) == "PATCH":
-			fields['user_name'].required = False
 		return fields
 
 

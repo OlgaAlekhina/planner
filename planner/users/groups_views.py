@@ -131,7 +131,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 	)
 	def partial_update(self, request, pk):
 		group = self.get_object()
-		serializer = self.get_serializer(data=request.data)
+		serializer = self.get_serializer(data=request.data, partial=True)
 		if serializer.is_valid():
 			group.name = serializer.validated_data.get('name', group.name)
 			group.color = serializer.validated_data.get('color', group.color)
@@ -302,7 +302,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
 	def update_group_user(self, request, pk, user_id):
 		group_user = get_object_or_404(GroupUser, id=user_id)
-		serializer = self.get_serializer(data=request.data)
+		serializer = self.get_serializer(data=request.data, partial=True)
 		if serializer.is_valid():
 			group_user.user_name = serializer.validated_data.get('user_name', group_user.user_name)
 			group_user.user_role = serializer.validated_data.get('user_role', group_user.user_role)
