@@ -17,7 +17,7 @@ class UserPermission(permissions.BasePermission):
 
 class GroupPermission(permissions.BasePermission):
     """
-    разрешает пользователю удалять, редактировать и добавлять участников только в свою собственную группу
+    разрешает пользователю удалять, редактировать, добавлять и просматривать участников только в своей собственной группе
     """
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
@@ -35,7 +35,8 @@ class GroupPermission(permissions.BasePermission):
 
 class EventPermission(permissions.BasePermission):
     """
-    разрешает пользователю удалять и редактировать только созданные им события
+    разрешает пользователю удалять и редактировать только созданные им события и просматривать только те события, в
+    которых он является автором или участником
     """
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
@@ -50,6 +51,17 @@ class EventPermission(permissions.BasePermission):
             return request.user.is_authenticated and (obj.author == request.user or request.user in [groupuser.user for
                                                                                          groupuser in obj.users.all()])
         return True
+
+
+class NotePermission(permissions.BasePermission):
+    """
+    разрешает пользователю работать только со своими собственными заметками
+    """
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser:
+            return True
+
+        return obj.author == request.user
 
 
 
