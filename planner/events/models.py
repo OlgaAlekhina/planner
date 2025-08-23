@@ -38,6 +38,8 @@ class Event(models.Model):
 	repeats = models.BooleanField(default=False)
 	end_repeat = models.DateField(blank=True, null=True)
 	users = models.ManyToManyField(GroupUser, related_name='events')
+	reminder_1 = models.IntegerField(blank=True, null=True)
+	reminder_2 = models.IntegerField(blank=True, null=True)
 
 	def __str__(self):
 		return f"event{self.id}, {self.title}"
