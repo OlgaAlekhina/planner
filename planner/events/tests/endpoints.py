@@ -15,6 +15,8 @@ test_user_token = None
 test_user_id = None
 group_id = None
 group_user_id = None
+note_id = None
+note_id_2 = None
 
 
 @pytest.fixture
@@ -216,6 +218,77 @@ def test_delete_event(base_url):
     global event_id
     global test_user_token
     r = requests.delete(f'{base_url}/events/{event_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 204
+
+
+def test_create_note(base_url):
+    """ Создание тестовой заметки """
+    global note_id
+    global test_user_token
+    payload = {
+        "title": "Note with title",
+        "text": "some text"
+    }
+    r = requests.post(f'{base_url}/notes/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    note_id = r.json().get('id')
+    assert r.status_code == 201
+    assert r.json().get('title') == "Note with title"
+    assert r.json().get('text') == "some text"
+
+
+def test_create_note_2(base_url):
+    """ Создание тестовой заметки без заголовка """
+    global note_id_2
+    global test_user_token
+    payload = {
+        "text": "Note without title\nAnd some another text."
+    }
+    r = requests.post(f'{base_url}/notes/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    note_id_2 = r.json().get('id')
+    assert r.status_code == 201
+    assert r.json().get('title') == "Note without title"
+    assert r.json().get('text') == "Note without title\nAnd some another text."
+
+
+def test_get_note(base_url):
+    """ Получение конкретной заметки """
+    global note_id
+    global test_user_token
+    r = requests.get(f'{base_url}/notes/{note_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 200
+
+
+def test_patch_note(base_url):
+    """ Изменение заметки """
+    global note_id
+    global test_user_token
+    payload = {"title": "New title"}
+    r = requests.patch(f'{base_url}/notes/{note_id}/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    assert r.status_code == 200
+    assert r.json().get('title') == 'New title'
+
+
+def test_get_notes(base_url):
+    """ Получение всех заметок тестового пользователя """
+    global test_user_token
+    r = requests.get(f'{base_url}/notes/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 200
+    assert len(r.json()) == 2
+
+
+def test_delete_note(base_url):
+    """ Удаление заметки """
+    global note_id
+    global test_user_token
+    r = requests.delete(f'{base_url}/notes/{note_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 204
+
+
+def test_delete_note_2(base_url):
+    """ Удаление второй заметки """
+    global note_id_2
+    global test_user_token
+    r = requests.delete(f'{base_url}/notes/{note_id_2}/', headers={"Authorization": f"Bearer {test_user_token}"})
     assert r.status_code == 204
 
 
