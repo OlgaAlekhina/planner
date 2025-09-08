@@ -24,3 +24,21 @@ class Note(models.Model):
 
     class Meta:
         ordering = ['-update_at']
+
+
+class Task(models.Model):
+    """ Модель для хранения задач """
+    text = models.TextField()
+    date = models.DateField(blank=True, null=True)
+    time = models.TimeField(blank=True, null=True)
+    important = models.BooleanField(default=False)
+    done = models.BooleanField(default=False)
+    create_at = models.DateTimeField(default=timezone.now)
+    update_at = models.DateTimeField(auto_now=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        ordering = ['-time', '-date', '-important']
