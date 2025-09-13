@@ -64,6 +64,17 @@ class NotePermission(permissions.BasePermission):
         return obj.author == request.user
 
 
+class TaskPermission(permissions.BasePermission):
+    """
+    разрешает пользователю работать только со своими собственными задачами
+    """
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser:
+            return True
+
+        return obj.author == request.user
+
+
 
 
 

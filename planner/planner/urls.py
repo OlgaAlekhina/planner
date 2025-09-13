@@ -26,7 +26,7 @@ from rest_framework import routers
 from users.groups_views import GroupViewSet, add_default_group
 from users.users_views import UserViewSet, add_missing_profiles
 from events.views import EventViewSet, remove_users_from_event
-from notes.views import NoteViewSet
+from notes.views import NoteViewSet, TaskViewSet
 
 
 # чтобы выводить 500 ошибку в формате JSON, а не HTML
@@ -46,6 +46,7 @@ router.register(r'users', UserViewSet)
 router.register(r'groups', GroupViewSet)
 router.register(r'events', EventViewSet)
 router.register(r'notes', NoteViewSet, basename='notes')
+router.register(r'tasks', TaskViewSet, basename='tasks')
 
 urlpatterns = [
     path('planner/admin/', admin.site.urls),
