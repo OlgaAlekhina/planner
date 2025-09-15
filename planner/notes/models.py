@@ -5,10 +5,10 @@ from django.utils import timezone
 
 class Note(models.Model):
     """ Модель для хранения заметок """
-    title = models.CharField(max_length=200, blank=True)
-    text = models.TextField()
-    create_at = models.DateTimeField(default=timezone.now)
-    update_at = models.DateTimeField(auto_now=True)
+    title = models.CharField('Заголовок заметки', max_length=200, blank=True)
+    text = models.TextField('Текст заметки')
+    create_at = models.DateTimeField('Когда создана', default=timezone.now)
+    update_at = models.DateTimeField('Когда изменена', auto_now=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
@@ -28,17 +28,17 @@ class Note(models.Model):
 
 class Task(models.Model):
     """ Модель для хранения задач """
-    text = models.TextField()
-    date = models.DateField(blank=True, null=True)
-    time = models.TimeField(blank=True, null=True)
-    important = models.BooleanField(default=False)
-    done = models.BooleanField(default=False)
-    create_at = models.DateTimeField(default=timezone.now)
-    update_at = models.DateTimeField(auto_now=True)
+    text = models.TextField('Текст задачи')
+    date = models.DateField('Дата в формате "2025-09-14"', blank=True, null=True)
+    time = models.TimeField('Время в формате "18:30:00"', blank=True, null=True)
+    important = models.BooleanField('Важная или нет', default=False)
+    done = models.BooleanField('Сделана или нет', default=False)
+    create_at = models.DateTimeField('Когда создана', default=timezone.now)
+    update_at = models.DateTimeField('Когда изменена', auto_now=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.text
 
     class Meta:
-        ordering = ['-time', '-date', '-important']
+        ordering = ['date', '-important', 'time']
