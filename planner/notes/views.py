@@ -1,5 +1,8 @@
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from django_filters import rest_framework as filters
 
 from .mixins import AutoDocMixin
 from .models import Note, Task
@@ -54,10 +57,11 @@ class TaskViewSet(AutoDocMixin, viewsets.ModelViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated, TaskPermission]
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_fields = ['done']
 
     # Переопределяем summary
     summary_mapping = {
-        'list': 'Получение списка задач',
         'create': 'Создание новой задачи',
         'retrieve': 'Получение задачи по id',
         'partial_update': 'Редактирование задачи по id',
@@ -66,8 +70,6 @@ class TaskViewSet(AutoDocMixin, viewsets.ModelViewSet):
 
     # Переопределяем description
     description_mapping = {
-        'list': 'Выводит список всех задач пользователя.\n'
-                'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
         'create': 'Создает новую задачу пользователя.\n'
                   'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
         'retrieve': 'Выводит одну задачу пользователя по переданному id.\n'
@@ -91,6 +93,23 @@ class TaskViewSet(AutoDocMixin, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """ При создании задачи делаем ее автором текущего пользователя """
         serializer.save(author=self.request.user)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'done',
+                openapi.IN_QUERY,
+                description="Фильтрация по статусу задач (сделаны или нет)",
+                type=openapi.TYPE_BOOLEAN
+            )
+        ],
+        operation_summary="Получение списка задач",
+        operation_description="Выводит список всех задач пользователя с сортировкой сперва по дате, затем по важности, затем по времени.\n"
+                "Можно фильтровать задачи по статусу (сделанные, не сделанные, все задачи).\n"
+                "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'."
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 

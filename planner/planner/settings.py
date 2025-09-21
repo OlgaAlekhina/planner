@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework_swagger',
     'drf_yasg',
     'rest_framework.authtoken',
+    'django_filters',
     'users',
     'events',
     'notes'
@@ -173,6 +174,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'users.authentication.BearerTokenAuthentication',
     ],
+    'DEFAULT_FILTER_BACKENDS': [
+            'django_filters.rest_framework.DjangoFilterBackend',
+        ],
 }
 
 # mail settings
