@@ -6,6 +6,7 @@ from django_filters import rest_framework as filters
 
 from .mixins import AutoDocMixin
 from .models import Note, Task
+from .paginators import TaskPagination
 from .serializers import NoteSerializer, TaskSerializer
 from planner.permissions import NotePermission, TaskPermission
 
@@ -59,6 +60,7 @@ class TaskViewSet(AutoDocMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, TaskPermission]
     filter_backends = [filters.DjangoFilterBackend]
     filterset_fields = ['done']
+    pagination_class = TaskPagination
 
     # Переопределяем summary
     summary_mapping = {
@@ -106,6 +108,7 @@ class TaskViewSet(AutoDocMixin, viewsets.ModelViewSet):
         operation_summary="Получение списка задач",
         operation_description="Выводит список всех задач пользователя с сортировкой сперва по дате, затем по важности, затем по времени.\n"
                 "Можно фильтровать задачи по статусу (сделанные, не сделанные, все задачи).\n"
+                "Есть возможность использовать постраничный вывод результатов.\n"
                 "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'."
     )
     def list(self, request, *args, **kwargs):
