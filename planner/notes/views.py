@@ -15,6 +15,7 @@ class NoteViewSet(AutoDocMixin, viewsets.ModelViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     serializer_class = NoteSerializer
     permission_classes = [IsAuthenticated, NotePermission]
+    pagination_class = TaskPagination
 
     # Переопределяем summary
     summary_mapping = {
@@ -27,7 +28,8 @@ class NoteViewSet(AutoDocMixin, viewsets.ModelViewSet):
 
     # Переопределяем description
     description_mapping = {
-        'list': 'Выводит список всех заметок пользователя.\n'
+        'list': 'Выводит список всех заметок пользователя с сортировкой по дате изменения или создания.\n'
+                'Есть возможность использовать постраничный вывод результатов.\n'
                 'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
         'create': 'Создает новую заметку пользователя.\n'
                   'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
