@@ -159,8 +159,7 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		responses={
 			200: openapi.Response(description="Успешная авторизация", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
-			401: openapi.Response(description="Требуется подтвеждение авторизации по коду", examples={"application/json":
-												  {"detail": {"code": "string", "message": "string"}, "data": "string"}}),
+			401: openapi.Response(description="Требуется подтвеждение авторизации по коду", schema=SignupResponseSerializer),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
 																									{"error": "string"}})
