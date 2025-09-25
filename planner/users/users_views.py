@@ -5,7 +5,8 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.decorators import action
 from .users_serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer,
 								ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, SignupSerializer,
-								ResetPasswordSerializer, UserResponseSerializer, UserUpdateSerializer, CodeSerializer)
+								ResetPasswordSerializer, UserResponseSerializer, UserUpdateSerializer, CodeSerializer,
+								SignupResponseSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -187,8 +188,7 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 
 	@swagger_auto_schema(
 		responses={
-			201: openapi.Response(description="Успешная регистрация", examples={"application/json": {"detail":
-														 {"code": "string", "message": "string"}, "data": "string"}}),
+			201: openapi.Response(description="Успешная регистрация", schema=SignupResponseSerializer),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":

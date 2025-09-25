@@ -112,3 +112,14 @@ class CodeSerializer(serializers.ModelSerializer):
 		model = SignupCode
 		fields = ('code', )
 
+
+class UserIDSerializer(serializers.Serializer):
+	""" Сериализатор для ID пользователя """
+	user_id = serializers.IntegerField()
+
+
+class SignupResponseSerializer(serializers.Serializer):
+	""" Сериализатор для ответа сервера при регистрации пользователя по email """
+	detail = DetailSerializer()
+	data = UserIDSerializer()
+
