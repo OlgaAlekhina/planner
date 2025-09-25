@@ -40,8 +40,18 @@ class Group(models.Model):
 	color = models.CharField(max_length=50)
 	default = models.BooleanField(default=False)
 
+	# добавила, так как был инцидент с созданием 2-х дефолтных групп, что привело к критическим ошибкам при авторизации
+	class Meta:
+		constraints = [
+			models.UniqueConstraint(
+				fields=['owner'],
+				condition=models.Q(default=True),
+				name='unique_default_group_per_user'
+			)
+		]
+
 	def __str__(self):
-		return f"group-{self.id}"
+		return f"group-{self.id}-({self.owner.username})-default" if self.default else f"group-{self.id}-({self.owner.username})"
 
 
 class GroupUser(models.Model):
