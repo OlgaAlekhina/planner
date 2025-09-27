@@ -41,6 +41,46 @@ class NoteViewSet(AutoDocMixin, viewsets.ModelViewSet):
                    'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
     }
 
+    # Переопределяем responses
+    responses_mapping = {
+        'list': {
+            200: openapi.Response(description="Получен список заметок пользователя", schema=NoteSerializer(many=True)),
+            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                                    {"error": "string"}})
+        },
+        'create': {
+            201: openapi.Response(description="Создана новая заметка", schema=NoteSerializer()),
+            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                                    {"error": "string"}})
+        },
+        'retrieve': {
+            200: openapi.Response(description="Получена заметка", schema=NoteSerializer()),
+            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+            403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+            404: openapi.Response(description="Заметка не найдена", examples={"application/json": {"detail": "string"}}),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                                    {"error": "string"}})
+        },
+        'partial_update': {
+            200: openapi.Response(description="Заметка изменена", schema=NoteSerializer()),
+            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+            403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+            404: openapi.Response(description="Заметка не найдена", examples={"application/json": {"detail": "string"}}),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                                    {"error": "string"}})
+        },
+        'destroy': {
+            204: openapi.Response(description="Заметка удалена"),
+            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+            403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+            404: openapi.Response(description="Заметка не найдена", examples={"application/json": {"detail": "string"}}),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                                    {"error": "string"}})
+        },
+    }
+
     def get_queryset(self):
         """ Получаем только заметки авторизованного пользователя """
         # Проверяем, не генерируется ли схема Swagger

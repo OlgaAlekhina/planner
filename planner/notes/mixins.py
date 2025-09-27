@@ -1,3 +1,4 @@
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 
@@ -22,6 +23,41 @@ class AutoDocMixin:
         'destroy': 'Удаляет объект из базы данных',
     }
 
+    # Маппинг responses
+    responses_mapping = {
+        'list': {
+            200: openapi.Response(description="Получен список объектов"),
+            401: openapi.Response(description="Требуется авторизация"),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса")
+        },
+        'create': {
+            201: openapi.Response(description="Объект создан"),
+            401: openapi.Response(description="Требуется авторизация"),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса")
+        },
+        'retrieve': {
+            200: openapi.Response(description="Получен объект"),
+            401: openapi.Response(description="Требуется авторизация"),
+            403: openapi.Response(description="Доступ запрещен"),
+            404: openapi.Response(description="Объект не найден"),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса")
+        },
+        'partial_update': {
+            200: openapi.Response(description="Объект изменен"),
+            401: openapi.Response(description="Требуется авторизация"),
+            403: openapi.Response(description="Доступ запрещен"),
+            404: openapi.Response(description="Объект не найден"),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса")
+        },
+        'destroy': {
+            204: openapi.Response(description="Объект удален"),
+            401: openapi.Response(description="Требуется авторизация"),
+            403: openapi.Response(description="Доступ запрещен"),
+            404: openapi.Response(description="Объект не найден"),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса")
+        },
+    }
+
     def __init_subclass__(cls, **kwargs):
         """ Вызывается автоматически при создании подкласса """
         super().__init_subclass__(**kwargs)
@@ -37,11 +73,14 @@ class AutoDocMixin:
                 # Получаем summary и description
                 summary = cls.summary_mapping.get(action_name)
                 description = cls.description_mapping.get(action_name)
+                responses = cls.responses_mapping.get(action_name, {})
 
                 # Создаем параметры для декоратора
                 decorator_kwargs = {'operation_summary': summary}
                 if description:
                     decorator_kwargs['operation_description'] = description
+                if responses:
+                    decorator_kwargs['responses'] = responses
 
                 # Применяем декоратор, только если метод еще не декорирован
                 if not hasattr(method, '_swagger_auto_schema'):
