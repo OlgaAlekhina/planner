@@ -11,6 +11,18 @@ from .serializers import NoteSerializer, TaskSerializer
 from planner.permissions import NotePermission, TaskPermission
 
 
+COMMON_RESPONSES = {
+    401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+    500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                            {"error": "string"}})
+}
+
+OBJECT_RESPONSES = {
+    403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
+    404: openapi.Response(description="Объект не найден", examples={"application/json": {"detail": "string"}}),
+}
+
+
 class NoteViewSet(AutoDocMixin, viewsets.ModelViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     serializer_class = NoteSerializer
@@ -104,26 +116,6 @@ class TaskViewSet(AutoDocMixin, viewsets.ModelViewSet):
     filterset_fields = ['done']
     pagination_class = TaskPagination
 
-    # Переопределяем summary
-    summary_mapping = {
-        'create': 'Создание новой задачи',
-        'retrieve': 'Получение задачи по id',
-        'partial_update': 'Редактирование задачи по id',
-        'destroy': 'Удаление задачи по id',
-    }
-
-    # Переопределяем description
-    description_mapping = {
-        'create': 'Создает новую задачу пользователя.\n'
-                  'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
-        'retrieve': 'Выводит одну задачу пользователя по переданному id.\n'
-                    'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
-        'partial_update': 'Частичное обновление задачи. Можно обновить только отдельные поля задачи.\n'
-                          'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
-        'destroy': 'Удаляет задачу из базы данных.\n'
-                   'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
-    }
-
     def get_queryset(self):
         """ Получаем только задачи авторизованного пользователя """
         # Проверяем, не генерируется ли схема Swagger
@@ -151,10 +143,65 @@ class TaskViewSet(AutoDocMixin, viewsets.ModelViewSet):
         operation_description="Выводит список всех задач пользователя с сортировкой сперва по дате, затем по важности, затем по времени.\n"
                 "Можно фильтровать задачи по статусу (сделанные, не сделанные, все задачи).\n"
                 "Есть возможность использовать постраничный вывод результатов.\n"
-                "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'."
+                "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Получен список задач пользователя", schema=TaskSerializer(many=True)),
+            ** COMMON_RESPONSES
+        }
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Создание новой задачи",
+        operation_description="Создает новую задачу пользователя.\n"
+            "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Создана новая задача", schema=TaskSerializer()),
+            **COMMON_RESPONSES
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Получение задачи по id",
+        operation_description="Выводит одну задачу пользователя по переданному id.\n"
+            "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Получена задача", schema=TaskSerializer()),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Редактирование задачи по id",
+        operation_description="Частичное обновление задачи. Можно обновить только отдельные поля задачи.\n"
+            "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Задача изменена", schema=TaskSerializer()),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Удаление задачи по id",
+        operation_description="Удаляет задачу из базы данных.\n"
+                "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            204: openapi.Response(description="Задача удалена"),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
 
 
 
