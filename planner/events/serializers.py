@@ -47,11 +47,11 @@ class EventMetaSerializer(serializers.ModelSerializer):
 													' повторений по дням, 2 - по неделям, 1 - по месяцам, 0 - по годам')
 	interval = serializers.IntegerField(min_value=1, max_value=1000, required=False, help_text='Интервал повторений, где'
 														     ' 1 означает, что повторяется каждый день (неделю и т.д.)')
-	byweekday = serializers.CharField(max_length=50, required=False, help_text='Список дней недели через запятую, где 0'
-																			   ' - понедельник, 6 - воскресенье')
-	bymonthday = serializers.CharField(max_length=50, required=False, help_text='Список дней месяца через запятую,'
-															   ' например, "1, 28" - для повторов 1-ого и 28-ого числа')
-	bymonth = serializers.IntegerField(min_value=1, max_value=12, help_text='Номер месяца', required=False)
+	byweekday = serializers.CharField(max_length=50, required=False, allow_null=True, help_text='Список дней недели через '
+																		'запятую, где 0 - понедельник, 6 - воскресенье')
+	bymonthday = serializers.CharField(max_length=50, required=False, allow_null=True, help_text='Список дней месяца через '
+														'запятую, например, "1, 28" - для повторов 1-ого и 28-ого числа')
+	bymonth = serializers.IntegerField(min_value=1, max_value=12, allow_null=True, help_text='Номер месяца', required=False)
 	#byweekno = serializers.IntegerField(min_value=1, max_value=6, help_text='Номер недели', required=False)
 
 	class Meta:
