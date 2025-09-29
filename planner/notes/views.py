@@ -4,7 +4,6 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from django_filters import rest_framework as filters
 
-from .mixins import AutoDocMixin
 from .models import Note, Task
 from .paginators import TaskPagination
 from .serializers import NoteSerializer, TaskSerializer
@@ -23,75 +22,11 @@ OBJECT_RESPONSES = {
 }
 
 
-class NoteViewSet(AutoDocMixin, viewsets.ModelViewSet):
+class NoteViewSet(viewsets.ModelViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     serializer_class = NoteSerializer
     permission_classes = [IsAuthenticated, NotePermission]
     pagination_class = TaskPagination
-
-    # Переопределяем summary
-    summary_mapping = {
-        'list': 'Получение списка заметок',
-        'create': 'Создание новой заметки',
-        'retrieve': 'Получение заметки по id',
-        'partial_update': 'Редактирование заметки по id',
-        'destroy': 'Удаление заметки по id',
-    }
-
-    # Переопределяем description
-    description_mapping = {
-        'list': 'Выводит список всех заметок пользователя с сортировкой по дате изменения или создания.\n'
-                'Есть возможность использовать постраничный вывод результатов.\n'
-                'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
-        'create': 'Создает новую заметку пользователя.\n'
-                  'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
-        'retrieve': 'Выводит одну заметку пользователя по переданному id.\n'
-                    'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
-        'partial_update': 'Частичное обновление заметки. Можно обновить только отдельные поля заметки.\n'
-                          'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
-        'destroy': 'Удаляет заметку из базы данных.\n'
-                   'Условия доступа к эндпоинту: токен авторизации в формате "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6".',
-    }
-
-    # Переопределяем responses
-    responses_mapping = {
-        'list': {
-            200: openapi.Response(description="Получен список заметок пользователя", schema=NoteSerializer(many=True)),
-            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
-                                                                                                    {"error": "string"}})
-        },
-        'create': {
-            201: openapi.Response(description="Создана новая заметка", schema=NoteSerializer()),
-            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
-                                                                                                    {"error": "string"}})
-        },
-        'retrieve': {
-            200: openapi.Response(description="Получена заметка", schema=NoteSerializer()),
-            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-            403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
-            404: openapi.Response(description="Заметка не найдена", examples={"application/json": {"detail": "string"}}),
-            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
-                                                                                                    {"error": "string"}})
-        },
-        'partial_update': {
-            200: openapi.Response(description="Заметка изменена", schema=NoteSerializer()),
-            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-            403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
-            404: openapi.Response(description="Заметка не найдена", examples={"application/json": {"detail": "string"}}),
-            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
-                                                                                                    {"error": "string"}})
-        },
-        'destroy': {
-            204: openapi.Response(description="Заметка удалена"),
-            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
-            403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
-            404: openapi.Response(description="Заметка не найдена", examples={"application/json": {"detail": "string"}}),
-            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
-                                                                                                    {"error": "string"}})
-        },
-    }
 
     def get_queryset(self):
         """ Получаем только заметки авторизованного пользователя """
@@ -107,8 +42,72 @@ class NoteViewSet(AutoDocMixin, viewsets.ModelViewSet):
         """ При создании заметки делаем ее автором текущего пользователя """
         serializer.save(author=self.request.user)
 
+    @swagger_auto_schema(
+        operation_summary="Получение списка заметок",
+        operation_description="Выводит список всех заметок пользователя с сортировкой по дате изменения или создания.\n"
+                              "Есть возможность использовать постраничный вывод результатов.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Получен список заметок пользователя", schema=NoteSerializer(many=True)),
+            **COMMON_RESPONSES
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
-class TaskViewSet(AutoDocMixin, viewsets.ModelViewSet):
+    @swagger_auto_schema(
+        operation_summary="Создание новой заметки",
+        operation_description="Создает новую заметку пользователя.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Создана новая заметка", schema=NoteSerializer()),
+            **COMMON_RESPONSES
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Получение заметки по id",
+        operation_description="Выводит одну заметку пользователя по переданному id.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Получена заметка", schema=NoteSerializer()),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Редактирование заметки по id",
+        operation_description="Частичное обновление заметки. Можно обновить только отдельные поля заметки.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Заметка изменена", schema=NoteSerializer()),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Удаление заметки по id",
+        operation_description="Удаляет заметку из базы данных.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            204: openapi.Response(description="Заметка удалена"),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+
+class TaskViewSet(viewsets.ModelViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated, TaskPermission]
