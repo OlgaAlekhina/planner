@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -16,7 +18,6 @@ class Note(models.Model):
         if not self.title and self.text:
             first_line = self.text.split('\n')[0]
             self.title = first_line[:200]
-
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -42,3 +43,31 @@ class Task(models.Model):
 
     class Meta:
         ordering = ['date', '-important', 'time']
+
+
+class List(models.Model):
+    """ Модель для хранения списков """
+    title = models.CharField('Название списка', max_length=200, blank=True)
+    create_at = models.DateTimeField('Когда создан', default=timezone.now)
+    update_at = models.DateTimeField('Когда изменен', auto_now=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['-update_at']
+
+
+class ListItem(models.Model):
+    """ Модель для хранения элементов списков """
+    text = models.CharField('Текст', max_length=200)
+    create_at = models.DateTimeField('Когда создан', default=timezone.now)
+    checked = models.BooleanField('Отмечен или нет', default=False)
+    list = models.ForeignKey(List, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        ordering = ['create_at']
