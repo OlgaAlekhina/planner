@@ -56,5 +56,23 @@ class ListSerializer(serializers.ModelSerializer):
 
         return list_obj
 
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items', None)
+
+        # Обновляем основные поля списка
+        instance.title = validated_data.get('title', instance.title)
+        instance.save()
+
+        # Если переданы items, обновляем их
+        if items_data is not None:
+            # Удаляем старые items
+            instance.items.all().delete()
+
+            # Создаем новые
+            for item_data in items_data:
+                ListItem.objects.create(list=instance, **item_data)
+
+        return instance
+
 
 

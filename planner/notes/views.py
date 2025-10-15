@@ -4,9 +4,9 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from django_filters import rest_framework as filters
 
-from .models import Note, Task
+from .models import Note, Task, List
 from .paginators import TaskPagination
-from .serializers import NoteSerializer, TaskSerializer
+from .serializers import NoteSerializer, TaskSerializer, ListSerializer
 from planner.permissions import NotePermission, TaskPermission
 
 
@@ -195,6 +195,92 @@ class TaskViewSet(viewsets.ModelViewSet):
                 "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
         responses={
             204: openapi.Response(description="Задача удалена"),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+
+class ListViewSet(viewsets.ModelViewSet):
+    http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
+    serializer_class = ListSerializer
+    permission_classes = [IsAuthenticated, TaskPermission]
+    pagination_class = TaskPagination
+
+    def get_queryset(self):
+        """ Получаем только списки авторизованного пользователя """
+        # Проверяем, не генерируется ли схема Swagger
+        if getattr(self, 'swagger_fake_view', False):
+            # Возвращаем пустой queryset для генерации схемы
+            return List.objects.none()
+
+        # Для реальных запросов возвращаем отфильтрованный queryset
+        return List.objects.filter(author=self.request.user)
+
+    def perform_create(self, serializer):
+        """ При создании списка делаем его автором текущего пользователя """
+        serializer.save(author=self.request.user)
+
+    @swagger_auto_schema(
+        operation_summary="Получение списков пользователя",
+        operation_description="Выводит все списки пользователя с сортировкой по дате.\n"
+                "Есть возможность использовать постраничный вывод результатов.\n"
+                "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Получены списки пользователя", schema=ListSerializer(many=True)),
+            ** COMMON_RESPONSES
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Создание нового списка",
+        operation_description="Создает новый список пользователя.\n"
+            "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Создан новый список", schema=ListSerializer()),
+            **COMMON_RESPONSES
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Получение списка по id",
+        operation_description="Выводит один список пользователя по переданному id.\n"
+            "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Получен список", schema=TaskSerializer()),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Редактирование списка по id",
+        operation_description="Частичное обновление списка. Можно обновить только отдельные поля списка.\n"
+                              "Если поле items не пустое, то его элементы полностью заменяют старые элементы списка.\n"
+            "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Список обновлен", schema=TaskSerializer()),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Удаление списка по id",
+        operation_description="Удаляет список из базы данных.\n"
+                "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            204: openapi.Response(description="Список удален"),
             **COMMON_RESPONSES,
             **OBJECT_RESPONSES
         }

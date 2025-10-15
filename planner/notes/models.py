@@ -64,7 +64,7 @@ class ListItem(models.Model):
     text = models.CharField('Текст', max_length=200)
     create_at = models.DateTimeField('Когда создан', default=timezone.now)
     checked = models.BooleanField('Отмечен или нет', default=False)
-    list = models.ForeignKey(List, on_delete=models.CASCADE)
+    list = models.ForeignKey(List, on_delete=models.CASCADE, related_name='items')
 
     def __str__(self):
         return self.text
