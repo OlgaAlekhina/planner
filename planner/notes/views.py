@@ -1,14 +1,17 @@
+from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from django_filters import rest_framework as filters
+from rest_framework.response import Response
 
-from .models import Note, Task, List
+from .models import Note, Task, List, ListItem
 from .paginators import TaskPagination
-from .serializers import NoteSerializer, TaskSerializer, ListSerializer
+from .serializers import NoteSerializer, TaskSerializer, ListSerializer, ListItemSerializer
 from planner.permissions import NotePermission, TaskPermission
-
+from users.users_serializers import ErrorResponseSerializer
 
 COMMON_RESPONSES = {
     401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
@@ -205,9 +208,14 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 class ListViewSet(viewsets.ModelViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
-    serializer_class = ListSerializer
     permission_classes = [IsAuthenticated, TaskPermission]
     pagination_class = TaskPagination
+
+    def get_serializer_class(self):
+        if self.action in ('list_items_actions',):
+            return ListItemSerializer
+        else:
+            return ListSerializer
 
     def get_queryset(self):
         """ Получаем только списки авторизованного пользователя """
@@ -287,6 +295,59 @@ class ListViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        method='patch',
+        responses={
+            200: openapi.Response(description="Успешное редактирование элемента списка", schema=ListItemSerializer()),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        },
+        operation_summary="Редактирование элемента списка",
+        operation_description="Редактирует элемент списка по переданному id.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате "
+                              "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+                              "Редактировать список может только его автор."
+    )
+    @swagger_auto_schema(
+        method='delete',
+        responses={
+            204: openapi.Response(description="Успешное удаление элемента списка"),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        },
+        operation_summary="Удаление элемента списка",
+        operation_description="Удаляет элемент списка.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате "
+                              "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+                              "Удалить элемент списка может только его автор."
+    )
+    @action(detail=True, methods=['patch', 'delete'], url_path=r'items/(?P<item_id>\d+)')
+    def list_items_actions(self, request, *args, **kwargs):
+        if request.method == 'DELETE':
+            return self.delete_item(request, *args, **kwargs)
+        else:
+            return self.update_item(request, *args, **kwargs)
+
+    def update_item(self, request, pk, item_id):
+        list_item = get_object_or_404(ListItem, id=item_id)
+        serializer = self.get_serializer(data=request.data, partial=True)
+        if serializer.is_valid():
+            list_item.text = serializer.validated_data.get('text', list_item.text)
+            list_item.checked = serializer.validated_data.get('checked', list_item.checked)
+            list_item.save()
+            return Response(ListItemSerializer(list_item).data, status=200)
+
+        response = {'detail': {
+            "code": "BAD_REQUEST",
+            "message": serializer.errors
+        }}
+        return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete_item(self, request, pk, item_id):
+        list_item = get_object_or_404(ListItem, id=item_id)
+        list_item.delete()
+        return Response(status=204)
 
 
 
