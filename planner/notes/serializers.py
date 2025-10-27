@@ -76,6 +76,7 @@ class ListSerializer(serializers.ModelSerializer):
 
 
 class PlannerResponseSerializer(serializers.Serializer):
+    """ Сериализатор ответа для получения всех задач, заметок и списков пользователя """
     type = serializers.CharField()
     id = serializers.IntegerField()
     title = serializers.CharField()

@@ -213,7 +213,7 @@ class ListViewSet(viewsets.ModelViewSet):
     pagination_class = TaskPagination
 
     def get_serializer_class(self):
-        if self.action in ('list_items_actions',):
+        if self.action in ('list_items_actions', 'create_item'):
             return ListItemSerializer
         else:
             return ListSerializer
@@ -349,6 +349,30 @@ class ListViewSet(viewsets.ModelViewSet):
         list_item = get_object_or_404(ListItem, id=item_id)
         list_item.delete()
         return Response(status=204)
+
+    @action(detail=True, methods=['post'], url_path='items')
+    @swagger_auto_schema(
+        responses={
+            201: openapi.Response(description="Успешное создание элемента списка", schema=ListItemSerializer()),
+            **COMMON_RESPONSES
+        },
+        operation_summary="Создание элемента списка",
+        operation_description="Создает элемент списка.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате "
+                              "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+    )
+    def create_item(self, request, pk=None):
+        user_list = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            new_item = ListItem.objects.create(list=user_list, **serializer.validated_data)
+            return Response(ListItemSerializer(new_item).data, status=201)
+
+        response = {'detail': {
+            "code": "BAD_REQUEST",
+            "message": serializer.errors
+        }}
+        return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PlannerView(APIView):
