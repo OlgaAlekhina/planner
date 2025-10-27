@@ -75,4 +75,12 @@ class ListSerializer(serializers.ModelSerializer):
         return instance
 
 
+class PlannerResponseSerializer(serializers.Serializer):
+    type = serializers.CharField()
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    important = serializers.BooleanField()
+    done = serializers.BooleanField()
+    update_at = serializers.DateTimeField()
+
 

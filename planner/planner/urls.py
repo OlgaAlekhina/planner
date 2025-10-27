@@ -26,7 +26,7 @@ from rest_framework import routers
 from users.groups_views import GroupViewSet, add_default_group
 from users.users_views import UserViewSet, add_missing_profiles
 from events.views import EventViewSet, remove_users_from_event
-from notes.views import NoteViewSet, TaskViewSet, ListViewSet
+from notes.views import NoteViewSet, TaskViewSet, ListViewSet, PlannerView
 
 
 # чтобы выводить 500 ошибку в формате JSON, а не HTML
@@ -58,4 +58,5 @@ urlpatterns = [
     path('planner/add_missing_profiles/', add_missing_profiles, name='add_missing_profiles'),
     path('planner/add_default_group/', add_default_group, name='add_default_group'),
     path('planner/remove_users_from_event/', remove_users_from_event, name='remove_users_from_event'),
+    path('planner/api/get_planner_items', PlannerView.as_view(), name='get_planner_items'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
