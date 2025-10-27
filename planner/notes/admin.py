@@ -2,8 +2,13 @@ from django.contrib import admin
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
 
-from .models import Note, Task
+from .models import Note, Task, List, ListItem
 
+
+class ListItemInline(admin.TabularInline):
+    model = ListItem
+    autocomplete_fields = ['list']
+    extra = 0
 
 @admin.register(Note)
 class NoteAdmin(admin.ModelAdmin):
@@ -21,3 +26,11 @@ class TaskAdmin(admin.ModelAdmin):
         return Truncator(clean_text).chars(60, truncate='...')
 
     short_text_display.short_description = 'Текст'
+
+
+@admin.register(List)
+class ListAdmin(admin.ModelAdmin):
+    """ Админка для списков """
+    list_display = ['title', 'author', 'create_at', 'update_at']
+    search_fields = ['title', 'author']
+    inlines = [ListItemInline]
