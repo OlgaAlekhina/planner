@@ -382,9 +382,11 @@ class PlannerView(APIView):
             **COMMON_RESPONSES,
         },
         operation_summary="Получение всех задач, заметок, списков пользователя",
-        operation_description="Выводит все задачи, заметки и списки авторизованного пользователя.\n"
+        operation_description="Выводит все задачи, заметки и списки авторизованного пользователя с возможностью "
+                              "фильтрации по типу.\n"
                               "Условия доступа к эндпоинту: токен авторизации в формате "
-                              "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n",
+                              "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
+                              "Возможные значения поля 'type': 'task', 'note', 'list'.\n",
         tags=['planner'],
     )
     def get(self, request):
