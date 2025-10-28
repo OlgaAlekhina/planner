@@ -370,7 +370,7 @@ class PlannerView(APIView):
             openapi.Parameter(
                 'type',
                 openapi.IN_QUERY,
-                description="Item's type: tasks, notes or lists",
+                description="Item's type: task, note or list",
                 type=openapi.TYPE_STRING,
             ),
         ],
@@ -394,7 +394,7 @@ class PlannerView(APIView):
         item_type = request.GET.get('type', '')
         all_items = []
 
-        if not item_type or item_type == 'tasks':
+        if not item_type or item_type == 'task':
             user_tasks = Task.objects.filter(author=user)
             for task in user_tasks:
                 all_items.append({
@@ -406,7 +406,7 @@ class PlannerView(APIView):
                     'update_at': task.update_at,
                 })
 
-        if not item_type or item_type == 'notes':
+        if not item_type or item_type == 'note':
             user_notes = Note.objects.filter(author=user)
             for note in user_notes:
                 all_items.append({
@@ -418,7 +418,7 @@ class PlannerView(APIView):
                     'update_at': note.update_at,
                 })
 
-        if not item_type or item_type == 'lists':
+        if not item_type or item_type == 'list':
             user_lists = List.objects.filter(author=user)
             for list in user_lists:
                 all_items.append({
