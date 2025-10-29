@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import viewsets, status, generics, mixins
+from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from django_filters import rest_framework as filters
@@ -11,8 +11,9 @@ from rest_framework.views import APIView
 from .models import Note, Task, List, ListItem
 from .paginators import TaskPagination
 from .serializers import NoteSerializer, TaskSerializer, ListSerializer, ListItemSerializer, PlannerResponseSerializer
-from planner.permissions import NotePermission, TaskPermission
+from planner.permissions import AuthorPermission
 from users.users_serializers import ErrorResponseSerializer
+
 
 COMMON_RESPONSES = {
     401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
@@ -33,7 +34,7 @@ class NoteViewSet(mixins.CreateModelMixin,
                   viewsets.GenericViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated, NotePermission]
+    permission_classes = [IsAuthenticated, AuthorPermission]
     pagination_class = TaskPagination
     queryset = Note.objects.all()
 
@@ -110,7 +111,7 @@ class TaskViewSet(mixins.CreateModelMixin,
                   viewsets.GenericViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated, TaskPermission]
+    permission_classes = [IsAuthenticated, AuthorPermission]
     filter_backends = [filters.DjangoFilterBackend]
     filterset_fields = ['done']
     pagination_class = TaskPagination
@@ -210,7 +211,7 @@ class ListViewSet(mixins.CreateModelMixin,
                   mixins.DestroyModelMixin,
                   viewsets.GenericViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
-    permission_classes = [IsAuthenticated, TaskPermission]
+    permission_classes = [IsAuthenticated, AuthorPermission]
     pagination_class = TaskPagination
     queryset = List.objects.all()
 
@@ -314,6 +315,8 @@ class ListViewSet(mixins.CreateModelMixin,
     )
     @action(detail=True, methods=['patch', 'delete'], url_path=r'items/(?P<item_id>\d+)')
     def list_items_actions(self, request, *args, **kwargs):
+        # вызываем этот метод, чтобы проверить права пользователя на объект
+        self.get_object()
         if request.method == 'DELETE':
             return self.delete_item(request, *args, **kwargs)
         else:

@@ -2,9 +2,7 @@ from rest_framework import permissions
 
 
 class UserPermission(permissions.BasePermission):
-    """
-    разрешает пользователю просматривать, редактировать и удалять только свой собственный профиль
-    """
+    """ Разрешает пользователю просматривать, редактировать и удалять только свой собственный профиль """
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
             return True
@@ -16,9 +14,8 @@ class UserPermission(permissions.BasePermission):
 
 
 class GroupPermission(permissions.BasePermission):
-    """
-    разрешает пользователю удалять, редактировать, добавлять и просматривать участников только в своей собственной группе
-    """
+    """ Разрешает пользователю удалять, редактировать, добавлять и просматривать участников только в своей
+        собственной группе """
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
             return True
@@ -34,10 +31,8 @@ class GroupPermission(permissions.BasePermission):
 
 
 class EventPermission(permissions.BasePermission):
-    """
-    разрешает пользователю удалять и редактировать только созданные им события и просматривать только те события, в
-    которых он является автором или участником
-    """
+    """ Разрешает пользователю удалять и редактировать только созданные им события и просматривать только те события, в
+        которых он является автором или участником """
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
             return True
@@ -53,26 +48,13 @@ class EventPermission(permissions.BasePermission):
         return True
 
 
-class NotePermission(permissions.BasePermission):
-    """
-    разрешает пользователю работать только со своими собственными заметками
-    """
+class AuthorPermission(permissions.BasePermission):
+    """ Дает доступ пользователю только к созданным им объектам (заметкам и задачам) """
     def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser:
-            return True
-
-        return obj.author == request.user
+        return request.user.is_superuser or obj.author == request.user
 
 
-class TaskPermission(permissions.BasePermission):
-    """
-    разрешает пользователю работать только со своими собственными задачами
-    """
-    def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser:
-            return True
 
-        return obj.author == request.user
 
 
 
