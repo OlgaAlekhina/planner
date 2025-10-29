@@ -35,6 +35,7 @@ class NoteViewSet(mixins.CreateModelMixin,
     serializer_class = NoteSerializer
     permission_classes = [IsAuthenticated, NotePermission]
     pagination_class = TaskPagination
+    queryset = Note.objects.all()
 
     # def get_queryset(self):
     #     """ Получаем только заметки авторизованного пользователя """
@@ -113,6 +114,7 @@ class TaskViewSet(mixins.CreateModelMixin,
     filter_backends = [filters.DjangoFilterBackend]
     filterset_fields = ['done']
     pagination_class = TaskPagination
+    queryset = Task.objects.all()
 
     # def get_queryset(self):
     #     """ Получаем только задачи авторизованного пользователя """
@@ -210,6 +212,7 @@ class ListViewSet(mixins.CreateModelMixin,
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     permission_classes = [IsAuthenticated, TaskPermission]
     pagination_class = TaskPagination
+    queryset = List.objects.all()
 
     def get_serializer_class(self):
         if self.action in ('list_items_actions', 'create_item'):
