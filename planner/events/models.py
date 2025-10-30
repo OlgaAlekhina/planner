@@ -37,7 +37,7 @@ class Event(models.Model):
 	end_time = models.TimeField(blank=True, null=True)
 	repeats = models.BooleanField(default=False)
 	end_repeat = models.DateField(blank=True, null=True)
-	users = models.ManyToManyField(GroupUser, related_name='events')
+	users = models.ManyToManyField(GroupUser, through='EventUser', related_name='events_new')
 	reminder_1 = models.IntegerField(blank=True, null=True)
 	reminder_2 = models.IntegerField(blank=True, null=True)
 
@@ -67,6 +67,20 @@ class CanceledEvent(models.Model):
 
 	def __str__(self):
 		return f"event{self.event.id}, {self.event.title}-{self.cancel_date}"
+
+
+class EventUser(models.Model):
+	""" Промежуточная модель для связи Event и GroupUser """
+	event = models.ForeignKey(Event, on_delete=models.CASCADE)
+	groupuser = models.ForeignKey(GroupUser, on_delete=models.CASCADE)
+	left = models.BooleanField(default=False)
+
+	class Meta:
+		db_table = 'events_event_users'
+		unique_together = ['event', 'groupuser']
+
+	def __str__(self):
+		return f"{self.group_user} - {self.event}"
 
 
 
