@@ -37,7 +37,7 @@ class Event(models.Model):
 	end_time = models.TimeField(blank=True, null=True)
 	repeats = models.BooleanField(default=False)
 	end_repeat = models.DateField(blank=True, null=True)
-	users = models.ManyToManyField(GroupUser, through='EventUser', related_name='events_new')
+	users = models.ManyToManyField(GroupUser, through='EventUser', related_name='events')
 	reminder_1 = models.IntegerField(blank=True, null=True)
 	reminder_2 = models.IntegerField(blank=True, null=True)
 
@@ -80,7 +80,7 @@ class EventUser(models.Model):
 		unique_together = ['event', 'groupuser']
 
 	def __str__(self):
-		return f"{self.group_user} - {self.event}"
+		return f"{self.groupuser} - {self.event}"
 
 
 

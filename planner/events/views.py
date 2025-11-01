@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from .models import Event, EventMeta, CanceledEvent
 from .serializers import (
 	EventSerializer, EventMetaSerializer, EventCreateSerializer, EventResponseSerializer, EventMetaResponseSerializer,
-	EventListResponseSerializer
+	EventListResponseSerializer, EventCreateResponseSerializer, EventDataSerializer
 )
 from users.users_serializers import ErrorResponseSerializer
 from django.db.models import Q
@@ -40,7 +40,7 @@ class EventViewSet(viewsets.ModelViewSet):
 
 	@swagger_auto_schema(
 		responses={
-			201: openapi.Response(description="Успешное создание события", schema=EventResponseSerializer()),
+			201: openapi.Response(description="Успешное создание события", schema=EventCreateResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
@@ -82,7 +82,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			else:
 				event.users.add(user.userprofile.default_groupuser_id)
 			response = {
-				'event_data': EventSerializer(event, context={'request': request}).data
+				'event_data': EventDataSerializer(event, context={'request': request}).data
 			}
 			# если были получены метаданные, делаем запись в таблице
 			if event_meta:
@@ -341,7 +341,7 @@ class EventViewSet(viewsets.ModelViewSet):
 			)
 		],
 		responses={
-			200: openapi.Response(description="Успешный ответ", schema=EventResponseSerializer()),
+			200: openapi.Response(description="Успешный ответ", schema=EventCreateResponseSerializer()),
 			401: openapi.Response(description="Требуется авторизация",
 								  examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
@@ -435,7 +435,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				EventMeta.objects.update_or_create(event=event, defaults=event_meta)
 
 			# сериализуем событие с метаданными
-			event_data = {"event_data": EventSerializer(event, context={'request': request}).data}
+			event_data = {"event_data": EventDataSerializer(event, context={'request': request}).data}
 			if event.repeats:
 				event_meta = event.eventmeta
 				if event_meta:

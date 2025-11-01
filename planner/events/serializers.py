@@ -1,7 +1,8 @@
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
-from .models import Event, EventMeta
+from .models import Event, EventMeta, EventUser
 from users.users_serializers import DetailSerializer
+from users.models import GroupUser
 
 
 class EventAuthorBoolField(serializers.BooleanField):
@@ -14,25 +15,42 @@ class EventAuthorBoolField(serializers.BooleanField):
 		return {self.field_name: data}
 
 
+class EventUserSerializer(serializers.ModelSerializer):
+	""" Сериализатор для участника события """
+	user_id = serializers.SerializerMethodField()
+
+	class Meta:
+		model = EventUser
+		fields = ['user_id', 'left']
+
+	def get_user_id(self, obj):
+		# для авторизованного пользователя выводится его дефолтный id, для остальных - id группы
+		user_id = obj.groupuser_id
+		current_user = self.context.get('request').user
+		current_groupuser_ids = [user.id for user in current_user.group_users.all()]
+		current_default_groupuser_id = current_user.group_users.filter(group__default=True).first().id
+		return current_default_groupuser_id if user_id in current_groupuser_ids else user_id
+
+
 class EventSerializer(serializers.ModelSerializer):
 	"""
 	Общий сериализатор для вывода основных данных события. Используется только для Response, так как в списке участников
 	события ID текущего пользователя заменяется на его default groupuser ID.
 	"""
 	is_creator = EventAuthorBoolField(source='*', read_only=True)
-	users = serializers.SerializerMethodField()
+	users = EventUserSerializer(many=True, source='eventuser_set')
 
 	class Meta:
 		model = Event
 		exclude = ['author']
 
-	@swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.IntegerField()))
-	def get_users(self, obj):
-		current_user = self.context.get('request').user
-		current_groupuser_ids = [user.id for user in current_user.group_users.all()]
-		current_default_groupuser_id = current_user.group_users.filter(group__default=True).first().id
-		users_ids = [groupuser.id for groupuser in obj.users.all()]
-		return [current_default_groupuser_id if id in current_groupuser_ids else id for id in users_ids]
+	# @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.IntegerField()))
+	# def get_users(self, obj):
+	# 	current_user = self.context.get('request').user
+	# 	current_groupuser_ids = [user.id for user in current_user.group_users.all()]
+	# 	current_default_groupuser_id = current_user.group_users.filter(group__default=True).first().id
+	# 	users_ids = [groupuser.id for groupuser in obj.users.all()]
+	# 	return [current_default_groupuser_id if id in current_groupuser_ids else id for id in users_ids]
 
 	def get_fields(self, *args, **kwargs):
 		fields = super(EventSerializer, self).get_fields(*args, **kwargs)
@@ -80,6 +98,12 @@ class EventMetaResponseSerializer(serializers.ModelSerializer):
 class EventDataSerializer(serializers.ModelSerializer):
 	""" Сериализатор для записи основных данных события """
 	is_creator = EventAuthorBoolField(source='*', read_only=True)
+	users = serializers.PrimaryKeyRelatedField(
+		queryset=GroupUser.objects.all(),
+		many=True,
+		required=False,
+		help_text='Список id пользователей-участников события'
+	)
 
 	class Meta:
 		model = Event
@@ -90,11 +114,6 @@ class EventDataSerializer(serializers.ModelSerializer):
 			},
 			'end_time': {
 				'help_text': 'Время завершения события в формате 07:30:00'
-			}
-			,
-			'users': {
-				'help_text': 'Список id пользователей-участников события',
-				'required': False
 			}
 		}
 
@@ -115,6 +134,12 @@ class EventResponseSerializer(serializers.Serializer):
 	""" Сериализатор ответа сервера для получения события """
 	detail = DetailSerializer()
 	data = EventMetaDataSerializer()
+
+
+class EventCreateResponseSerializer(serializers.Serializer):
+	""" Сериализатор ответа сервера при создании и редактировании события """
+	detail = DetailSerializer()
+	data = EventCreateSerializer()
 
 
 class EventListResponseSerializer(serializers.Serializer):
