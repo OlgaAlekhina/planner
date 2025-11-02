@@ -4,15 +4,16 @@ from django.core.exceptions import ValidationError
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import Event, EventMeta, CanceledEvent
+from .models import Event, EventMeta, CanceledEvent, EventUser
 from .serializers import (
 	EventSerializer, EventMetaSerializer, EventCreateSerializer, EventResponseSerializer, EventMetaResponseSerializer,
 	EventListResponseSerializer, EventCreateResponseSerializer, EventDataSerializer
 )
-from users.users_serializers import ErrorResponseSerializer
+from users.users_serializers import ErrorResponseSerializer, DetailSerializer
 from django.db.models import Q
 from .services import get_dates
 from django.core.cache import cache
@@ -20,7 +21,6 @@ from planner.permissions import EventPermission
 import logging
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
-
 
 logger = logging.getLogger('events')
 
@@ -341,8 +341,7 @@ class EventViewSet(viewsets.ModelViewSet):
 		],
 		responses={
 			200: openapi.Response(description="Успешный ответ", schema=EventCreateResponseSerializer()),
-			401: openapi.Response(description="Требуется авторизация",
-								  examples={"application/json": {"detail": "string"}}),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
 			403: openapi.Response(description="Доступ запрещен", examples={"application/json": {"detail": "string"}}),
 			404: openapi.Response(description="Событие не найдено", examples={"application/json": {"detail": "string"}}),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
@@ -461,6 +460,32 @@ class EventViewSet(viewsets.ModelViewSet):
 			"message": serializer.errors
 		}}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=True, methods=['delete'])
+	@swagger_auto_schema(
+		responses={
+			204: openapi.Response(description="Успешный ответ"),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Объект не найден", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
+		},
+		operation_summary="Отказ от участия в событии",
+		operation_description="Удаляет авторизованного пользователя из списка активных участников данного события и "
+							  "удаляет событие из его календаря.\n"
+							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+	)
+	def quit_event(self, request, pk=None):
+		event = self.get_object()
+		user = request.user
+		try:
+			event_user = EventUser.objects.get(event=event, groupuser__user=user)
+			event_user.left = True
+			event_user.save()
+			return Response(status=204)
+
+		except EventUser.DoesNotExist:
+			return Response({"detail": "Участник события не найден"}, status=404)
 
 
 # функция для удаления участников события, чтобы без ошибок провести изменение структуры БД на проде
