@@ -152,13 +152,12 @@ class EventViewSet(viewsets.ModelViewSet):
 			group_users_ids = [group_user.id for group_user in group_users]
 			# получаем все события без повторений в переданном временном интервале
 			# выводятся те события, в которых пользователь является автором или участником
-			events = Event.objects.filter(Q(users__pk__in=group_users_ids) | Q(author=user), title__icontains=search,
-									repeats=False, start_date__lte=filter_end, end_date__gte=filter_start).distinct()
+			events = Event.objects.filter(Q(users__pk__in=group_users_ids, eventuser__left=False) | Q(author=user),
+			title__icontains=search, repeats=False, start_date__lte=filter_end, end_date__gte=filter_start).distinct()
 			# получаем все события с повторениями в интервале start_date - end_repeat
-			repeated_events = Event.objects.filter(Q(users__pk__in=group_users_ids) | Q(author=user),
-												   Q(end_repeat__gte=filter_start)  | Q(end_repeat__isnull=True),
-												   title__icontains=search, repeats=True,
-												   start_date__lte=filter_end).distinct()
+			repeated_events = Event.objects.filter(Q(users__pk__in=group_users_ids, eventuser__left=False) | Q(author=user),
+										   Q(end_repeat__gte=filter_start)  | Q(end_repeat__isnull=True),
+										   title__icontains=search, repeats=True, start_date__lte=filter_end).distinct()
 		except ValidationError:
 			return Response(
 				{"detail": {"code": "BAD_REQUEST", "message": "Некорректная дата"}},

@@ -43,13 +43,16 @@ class EventPermission(permissions.BasePermission):
         # проверяем, что текущий пользователь является автором или участником события, для выдачи доступа к просмотру
         # этого события
         if view.action in ['retrieve']:
-            return request.user.is_authenticated and (obj.author == request.user or request.user in [groupuser.user for
-                                                                                         groupuser in obj.users.all()])
+            if not request.user.is_authenticated:
+                return False
+
+            return obj.author == request.user or obj.users.filter(eventuser__left=False, user=request.user).exists()
+
         return True
 
 
 class AuthorPermission(permissions.BasePermission):
-    """ Дает доступ пользователю только к созданным им объектам (заметкам и задачам) """
+    """ Дает доступ пользователю только к созданным им объектам (заметкам, задачам и спискам) """
     def has_object_permission(self, request, view, obj):
         return request.user.is_superuser or obj.author == request.user
 
