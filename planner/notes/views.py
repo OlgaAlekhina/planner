@@ -58,10 +58,13 @@ class NoteViewSet(mixins.CreateModelMixin,
                               "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
         responses={
             201: openapi.Response(description="Создана новая заметка", schema=NoteSerializer()),
+            429: openapi.Response(description="Достигнут лимит заметок", examples={"application/json": {"detail": "string"}}),
             **COMMON_RESPONSES
         }
     )
     def create(self, request, *args, **kwargs):
+        if Note.objects.filter(author=self.request.user).count() >= 100:
+            return Response({"detail": "Достигнут лимит заметок для данного аккаунта"}, 429)
         return super().create(request, *args, **kwargs)
 
     @swagger_auto_schema(
@@ -159,10 +162,13 @@ class TaskViewSet(mixins.CreateModelMixin,
             "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
         responses={
             201: openapi.Response(description="Создана новая задача", schema=TaskSerializer()),
+            429: openapi.Response(description="Достигнут лимит задач", examples={"application/json": {"detail": "string"}}),
             **COMMON_RESPONSES
         }
     )
     def create(self, request, *args, **kwargs):
+        if Task.objects.filter(author=self.request.user).count() >= 100:
+            return Response({"detail": "Достигнут лимит задач для данного аккаунта"}, 429)
         return super().create(request, *args, **kwargs)
 
     @swagger_auto_schema(
@@ -241,10 +247,13 @@ class ListViewSet(mixins.CreateModelMixin,
             "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
         responses={
             201: openapi.Response(description="Создан новый список", schema=ListSerializer()),
+            429: openapi.Response(description="Достигнут лимит списков", examples={"application/json": {"detail": "string"}}),
             **COMMON_RESPONSES
         }
     )
     def create(self, request, *args, **kwargs):
+        if List.objects.filter(author=self.request.user).count() >= 100:
+            return Response({"detail": "Достигнут лимит списков для данного аккаунта"}, 429)
         return super().create(request, *args, **kwargs)
 
     @swagger_auto_schema(
