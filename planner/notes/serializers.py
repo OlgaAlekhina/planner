@@ -80,6 +80,8 @@ class PlannerResponseSerializer(serializers.Serializer):
     type = serializers.CharField(help_text="Возможные значения: 'task', 'note', 'list'")
     id = serializers.IntegerField()
     title = serializers.CharField()
+    date = serializers.DateField()
+    time = serializers.TimeField()
     important = serializers.BooleanField()
     done = serializers.BooleanField()
     update_at = serializers.DateTimeField()

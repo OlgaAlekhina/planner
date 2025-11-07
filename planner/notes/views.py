@@ -261,7 +261,7 @@ class ListViewSet(mixins.CreateModelMixin,
         operation_description="Выводит один список пользователя по переданному id.\n"
             "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
         responses={
-            200: openapi.Response(description="Получен список", schema=TaskSerializer()),
+            200: openapi.Response(description="Получен список", schema=ListSerializer()),
             **COMMON_RESPONSES,
             **OBJECT_RESPONSES
         }
@@ -275,7 +275,7 @@ class ListViewSet(mixins.CreateModelMixin,
                               "Если поле items не пустое, то его элементы полностью заменяют старые элементы списка.\n"
             "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
         responses={
-            200: openapi.Response(description="Список обновлен", schema=TaskSerializer()),
+            200: openapi.Response(description="Список обновлен", schema=ListSerializer()),
             **COMMON_RESPONSES,
             **OBJECT_RESPONSES
         }
@@ -398,10 +398,9 @@ class PlannerView(APIView):
         },
         operation_summary="Получение всех задач, заметок, списков пользователя",
         operation_description="Выводит все задачи, заметки и списки авторизованного пользователя с возможностью "
-                              "фильтрации по типу.\n"
-                              "Условия доступа к эндпоинту: токен авторизации в формате "
-                              "'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n"
-                              "Возможные значения поля 'type': 'task', 'note', 'list'.\n",
+              "фильтрации по типу: 'task', 'note', 'list'.\n"
+              "Поле 'title' содержит заголовок для заметок и списков и текст для задач.\n"
+              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.\n",
         tags=['planner'],
     )
     def get(self, request):
@@ -416,6 +415,8 @@ class PlannerView(APIView):
                     'type': 'task',
                     'id': task.id,
                     'title': task.text,
+                    'date': task.date,
+                    'time': task.time,
                     'important': task.important,
                     'done': task.done,
                     'update_at': task.update_at,
@@ -428,6 +429,8 @@ class PlannerView(APIView):
                     'type': 'note',
                     'id': note.id,
                     'title': note.title,
+                    'date': None,
+                    'time': None,
                     'important': False,
                     'done': False,
                     'update_at': note.update_at,
@@ -440,6 +443,8 @@ class PlannerView(APIView):
                     'type': 'list',
                     'id': list.id,
                     'title': list.title,
+                    'date': None,
+                    'time': None,
                     'important': False,
                     'done': False,
                     'update_at': list.update_at,

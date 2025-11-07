@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from .models import Event, EventMeta, CanceledEvent, EventUser
 from .serializers import (
 	EventSerializer, EventMetaSerializer, EventCreateSerializer, EventResponseSerializer, EventMetaResponseSerializer,
-	EventListResponseSerializer, EventCreateResponseSerializer, EventDataSerializer
+	EventListResponseSerializer, EventCreateResponseSerializer
 )
 from users.users_serializers import ErrorResponseSerializer, DetailSerializer
 from django.db.models import Q
@@ -71,18 +71,19 @@ class EventViewSet(viewsets.ModelViewSet):
 			event_data = serializer.validated_data.get('event_data')
 			event_meta = serializer.validated_data.get('repeat_pattern')
 			users = event_data.pop('users', None)
+			print('users', users)
 			# создаем новое событие в БД
 			event = Event.objects.create(author=user, **event_data)
 			logger.info(f"Created event: id = {event.id}, title = {event.title}")
 			# добавляем участников события вручную
 			if users:
-				for user in users:
-					event.users.add(user)
+				for user_data in users:
+					EventUser.objects.create(event=event, **user_data)
 			# если нет списка участников, добавляем только текущего пользователя, как участника своей дефолтной группы
 			else:
 				event.users.add(user.userprofile.default_groupuser_id)
 			response = {
-				'event_data': EventDataSerializer(event, context={'request': request}).data
+				'event_data': EventSerializer(event, context={'request': request}).data
 			}
 			# если были получены метаданные, делаем запись в таблице
 			if event_meta:
@@ -349,12 +350,13 @@ class EventViewSet(viewsets.ModelViewSet):
 		},
 		operation_summary="Редактирование события по id",
 		operation_description="Эндпоинт для редактирования события.\n"
-							  "При изменении участников события надо передавать id для участников группы и default_groupuser_id для создателя события.\n"
-							  "При редактировании повторяющихся событий надо передавать параметр change_date, соответствующий "
-							  "дате того повтора, который редактируется.\n"
-							  "Если редактируются все повторы события, то надо передать параметр all=true.\n"
-							  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
-							  "Пользователь может редактировать только созданное им событие."
+			  "При изменении участников события надо передавать id для участников группы и default_groupuser_id для создателя события.\n"
+			  "Чтобы удалить всех участников события, в поле 'users' надо передать пустой список.\n"
+			  "При редактировании повторяющихся событий надо передавать параметр change_date, соответствующий "
+			  "дате того повтора, который редактируется.\n"
+			  "Если редактируются все повторы события, то надо передать параметр all=true.\n"
+			  "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'\n"
+			  "Пользователь может редактировать только созданное им событие."
 	)
 	def partial_update(self, request, pk):
 		event = self.get_object()
@@ -409,18 +411,22 @@ class EventViewSet(viewsets.ModelViewSet):
 
 			# если переданы данные события, то обновляем их
 			if event_data:
-				new_users = event_data.pop('users', None)
+				new_users = event_data.pop('users') if 'users' in event_data else None
+				print('new_users', new_users)
 				Event.objects.filter(id=event.id).update(**event_data)
 				event = Event.objects.get(id=event.id)
 				# если передан список участников события, обновляем его в БД
-				if new_users:
-					old_users = event.users.all()
-					for user in old_users:
-						if user not in new_users:
-							event.users.remove(user)
-					for user in new_users:
-						if user not in old_users:
-							event.users.add(user)
+				if new_users is not None:
+					new_users_ids = [item['groupuser_id'] for item in new_users]
+					print('new_users_ids', new_users_ids)
+					old_users_ids = [groupuser.id for groupuser in event.users.all()]
+					print('old_users_ids', old_users_ids)
+					for user_id in old_users_ids:
+						if user_id not in new_users_ids:
+							EventUser.objects.get(event=event, groupuser_id=user_id).delete()
+					for user_id in new_users_ids:
+						if user_id not in old_users_ids:
+							EventUser.objects.create(event=event, groupuser_id=user_id)
 
 			# если редактируем только одно повторяющееся событие, то убираем у него повторы
 			if change_date and not all_param:
@@ -433,7 +439,7 @@ class EventViewSet(viewsets.ModelViewSet):
 				EventMeta.objects.update_or_create(event=event, defaults=event_meta)
 
 			# сериализуем событие с метаданными
-			event_data = {"event_data": EventDataSerializer(event, context={'request': request}).data}
+			event_data = {"event_data": EventSerializer(event, context={'request': request}).data}
 			if event.repeats:
 				event_meta = event.eventmeta
 				if event_meta:

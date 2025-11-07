@@ -15,8 +15,17 @@ class EventAuthorBoolField(serializers.BooleanField):
 		return {self.field_name: data}
 
 
+class EventUserCreateSerializer(serializers.ModelSerializer):
+	""" Сериализатор для добавления/изменения участника события """
+	user_id = serializers.IntegerField(source='groupuser_id')
+
+	class Meta:
+		model = EventUser
+		fields = ['user_id', 'left']
+
+
 class EventUserSerializer(serializers.ModelSerializer):
-	""" Сериализатор для участника события """
+	""" Сериализатор для получения участника события """
 	user_id = serializers.SerializerMethodField()
 
 	class Meta:
@@ -43,14 +52,6 @@ class EventSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Event
 		exclude = ['author']
-
-	# @swagger_serializer_method(serializer_or_field=serializers.ListField(child=serializers.IntegerField()))
-	# def get_users(self, obj):
-	# 	current_user = self.context.get('request').user
-	# 	current_groupuser_ids = [user.id for user in current_user.group_users.all()]
-	# 	current_default_groupuser_id = current_user.group_users.filter(group__default=True).first().id
-	# 	users_ids = [groupuser.id for groupuser in obj.users.all()]
-	# 	return [current_default_groupuser_id if id in current_groupuser_ids else id for id in users_ids]
 
 	def get_fields(self, *args, **kwargs):
 		fields = super(EventSerializer, self).get_fields(*args, **kwargs)
@@ -98,12 +99,7 @@ class EventMetaResponseSerializer(serializers.ModelSerializer):
 class EventDataSerializer(serializers.ModelSerializer):
 	""" Сериализатор для записи основных данных события """
 	is_creator = EventAuthorBoolField(source='*', read_only=True)
-	users = serializers.PrimaryKeyRelatedField(
-		queryset=GroupUser.objects.all(),
-		many=True,
-		required=False,
-		help_text='Список id пользователей-участников события'
-	)
+	users = EventUserCreateSerializer(many=True)
 
 	class Meta:
 		model = Event
