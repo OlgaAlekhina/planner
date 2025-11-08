@@ -295,6 +295,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 	)
 	@action(detail=True, methods=['patch', 'delete'], url_path=r'users/(?P<user_id>\d+)')
 	def groups_actions(self, request, *args, **kwargs):
+		self.get_object()
 		if request.method == 'DELETE':
 			return self.delete_group_user(request, *args, **kwargs)
 		else:

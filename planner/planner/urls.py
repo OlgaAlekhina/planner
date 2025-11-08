@@ -58,5 +58,5 @@ urlpatterns = [
     path('planner/add_missing_profiles/', add_missing_profiles, name='add_missing_profiles'),
     path('planner/add_default_group/', add_default_group, name='add_default_group'),
     path('planner/remove_users_from_event/', remove_users_from_event, name='remove_users_from_event'),
-    path('planner/api/get_planner_items', PlannerView.as_view(), name='get_planner_items'),
+    path('planner/api/get_planner_items/', PlannerView.as_view(), name='get_planner_items'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

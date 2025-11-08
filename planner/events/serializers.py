@@ -99,7 +99,7 @@ class EventMetaResponseSerializer(serializers.ModelSerializer):
 class EventDataSerializer(serializers.ModelSerializer):
 	""" Сериализатор для записи основных данных события """
 	is_creator = EventAuthorBoolField(source='*', read_only=True)
-	users = EventUserCreateSerializer(many=True)
+	users = EventUserCreateSerializer(many=True, required=False)
 
 	class Meta:
 		model = Event

@@ -17,6 +17,7 @@ group_id = None
 group_user_id = None
 note_id = None
 note_id_2 = None
+task_id = None
 
 
 @pytest.fixture
@@ -161,7 +162,6 @@ def test_delete_group(base_url):
     r = requests.delete(f'{base_url}/groups/{group_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
     assert r.status_code == 204
 
-
 def test_create_event(base_url):
     """ Создание тестового события """
     global event_id
@@ -178,7 +178,6 @@ def test_create_event(base_url):
     r = requests.post(f'{base_url}/events/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
     event_id = r.json().get('data').get('event_data').get('id')
     assert r.status_code == 201
-
 
 def test_get_event(base_url):
     """ Получение данных тестового события """
@@ -267,14 +266,27 @@ def test_patch_note(base_url):
     assert r.status_code == 200
     assert r.json().get('title') == 'New title'
 
-
-def test_get_notes(base_url):
-    """ Получение всех заметок тестового пользователя """
+def test_create_task(base_url):
+    """ Создание тестовой задачи """
+    global task_id
     global test_user_token
-    r = requests.get(f'{base_url}/notes/', headers={"Authorization": f"Bearer {test_user_token}"})
-    assert r.status_code == 200
-    assert len(r.json()) == 2
+    today = str(date.today())
+    payload = {
+        "text": "Do something",
+        "date": today,
+        "important": True
+    }
+    r = requests.post(f'{base_url}/tasks/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    task_id = r.json().get('id')
+    assert r.status_code == 201
+    assert r.json().get('text') == "Do something"
 
+def test_get_planner_items(base_url):
+    """ Получение всех задач, заметок и списков тестового пользователя """
+    global test_user_token
+    r = requests.get(f'{base_url}/get_planner_items/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 200
+    assert len(r.json()) == 3
 
 def test_delete_note(base_url):
     """ Удаление заметки """
@@ -283,14 +295,12 @@ def test_delete_note(base_url):
     r = requests.delete(f'{base_url}/notes/{note_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
     assert r.status_code == 204
 
-
 def test_delete_note_2(base_url):
     """ Удаление второй заметки """
     global note_id_2
     global test_user_token
     r = requests.delete(f'{base_url}/notes/{note_id_2}/', headers={"Authorization": f"Bearer {test_user_token}"})
     assert r.status_code == 204
-
 
 def test_delete_user(base_url):
     """ Удаление тестового пользователя """
