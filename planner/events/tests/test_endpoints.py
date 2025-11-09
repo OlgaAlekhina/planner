@@ -302,6 +302,13 @@ def test_delete_note_2(base_url):
     r = requests.delete(f'{base_url}/notes/{note_id_2}/', headers={"Authorization": f"Bearer {test_user_token}"})
     assert r.status_code == 204
 
+def test_delete_task(base_url):
+    """ Удаление задачи """
+    global task_id
+    global test_user_token
+    r = requests.delete(f'{base_url}/tasks/{task_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 204
+
 def test_delete_user(base_url):
     """ Удаление тестового пользователя """
     global test_user_id
