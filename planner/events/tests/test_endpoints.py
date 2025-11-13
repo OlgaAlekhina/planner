@@ -281,6 +281,14 @@ def test_create_task(base_url):
     assert r.status_code == 201
     assert r.json().get('text') == "Do something"
 
+def test_get_task(base_url):
+    """ Получение конкретной задачи """
+    global task_id
+    global test_user_token
+    r = requests.get(f'{base_url}/tasks/{task_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 200
+    assert r.json().get('text') == 'Do something'
+
 def test_patch_task(base_url):
     """ Изменение задачи """
     global task_id
