@@ -1,4 +1,4 @@
-# тестовые запросы к апи для работы с пользователями, группами и событиями
+# тестовые запросы к апи для работы с пользователями, группами, событиями, заметками, задачами и списками
 
 
 import requests
@@ -18,6 +18,7 @@ group_user_id = None
 note_id = None
 note_id_2 = None
 task_id = None
+list_id = None
 
 
 @pytest.fixture
@@ -300,12 +301,27 @@ def test_patch_task(base_url):
     assert r.json().get('important') == False
     assert r.json().get('done') == True
 
+def test_create_list(base_url):
+    """ Создание тестового списка """
+    global list_id
+    global test_user_token
+    payload = {
+        "title": "Shopping list",
+        "items": [{"text": "eggs", "checked": False},
+                  {"text": "milk", "checked": False}]
+    }
+    r = requests.post(f'{base_url}/lists/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    list_id = r.json().get('id')
+    assert r.status_code == 201
+    assert r.json().get('title') == "Shopping list"
+    assert len(r.json().get('items')) == 2
+
 def test_get_planner_items(base_url):
     """ Получение всех задач, заметок и списков тестового пользователя """
     global test_user_token
     r = requests.get(f'{base_url}/get_planner_items/', headers={"Authorization": f"Bearer {test_user_token}"})
     assert r.status_code == 200
-    assert len(r.json()) == 3
+    assert len(r.json()) == 4
 
 def test_delete_note(base_url):
     """ Удаление заметки """
