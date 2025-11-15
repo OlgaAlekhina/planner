@@ -316,6 +316,14 @@ def test_create_list(base_url):
     assert r.json().get('title') == "Shopping list"
     assert len(r.json().get('items')) == 2
 
+def test_get_list(base_url):
+    """ Получение конкретного списка """
+    global list_id
+    global test_user_token
+    r = requests.get(f'{base_url}/lists/{list_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    assert r.status_code == 200
+    assert r.json().get('items')[1].get('text') == 'milk'
+
 def test_get_planner_items(base_url):
     """ Получение всех задач, заметок и списков тестового пользователя """
     global test_user_token
