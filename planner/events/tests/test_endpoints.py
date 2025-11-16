@@ -324,6 +324,17 @@ def test_get_list(base_url):
     assert r.status_code == 200
     assert r.json().get('items')[1].get('text') == 'milk'
 
+def test_patch_list(base_url):
+    """ Изменение списка """
+    global list_id
+    global test_user_token
+    payload = {"title": "Grocery Shopping list", "items": [{"text": "soda", "checked": False}]}
+    r = requests.patch(f'{base_url}/lists/{list_id}/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    assert r.status_code == 200
+    assert r.json().get('title') == 'Grocery Shopping list'
+    assert len(r.json().get('items')) == 1
+    assert r.json().get('items')[0].get('text') == 'soda'
+
 def test_get_planner_items(base_url):
     """ Получение всех задач, заметок и списков тестового пользователя """
     global test_user_token
