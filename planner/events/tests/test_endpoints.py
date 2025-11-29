@@ -335,6 +335,18 @@ def test_patch_list(base_url):
     assert len(r.json().get('items')) == 1
     assert r.json().get('items')[0].get('text') == 'soda'
 
+def test_create_list_item(base_url):
+    """ Добавление элемента в список """
+    global list_id
+    global test_user_token
+    payload = {
+        "text": "chips",
+        "checked": False
+    }
+    r = requests.post(f'{base_url}/lists/{list_id}/items/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    assert r.status_code == 201
+    assert r.json().get('text') == "chips"
+
 def test_get_planner_items(base_url):
     """ Получение всех задач, заметок и списков тестового пользователя """
     global test_user_token
