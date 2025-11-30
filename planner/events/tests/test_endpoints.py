@@ -19,6 +19,7 @@ note_id = None
 note_id_2 = None
 task_id = None
 list_id = None
+list_item_id = None
 
 
 @pytest.fixture
@@ -46,7 +47,8 @@ def test_get_user(base_url):
     """ Получение данных тестового пользователя """
     global test_user_id
     global test_user_token
-    r = requests.get(f'{base_url}/users/{test_user_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.get(f'{base_url}/users/{test_user_id}/', headers=headers)
     assert r.status_code == 200
 
 
@@ -55,7 +57,8 @@ def test_patch_user(base_url):
     global event_id
     global test_user_token
     payload = {"first_name": "Olga"}
-    r = requests.patch(f'{base_url}/users/{test_user_id}/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.patch(f'{base_url}/users/{test_user_id}/', headers=headers, json=payload)
     assert r.status_code == 200
     assert r.json().get('data').get('first_name') == 'Olga'
 
@@ -68,7 +71,8 @@ def test_create_group(base_url):
         "name": "Test group",
         "color": "some color"
     }
-    r = requests.post(f'{base_url}/groups/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.post(f'{base_url}/groups/', headers=headers, json=payload)
     group_id = r.json().get('data').get('id')
     assert r.status_code == 201
 
@@ -80,7 +84,8 @@ def test_create_second_group(base_url):
         "name": "Test group 2",
         "color": "some color"
     }
-    r = requests.post(f'{base_url}/groups/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.post(f'{base_url}/groups/', headers=headers, json=payload)
     assert r.status_code == 403
 
 
@@ -89,7 +94,8 @@ def test_patch_group(base_url):
     global group_id
     global test_user_token
     payload = {"name": "My family"}
-    r = requests.patch(f'{base_url}/groups/{group_id}/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.patch(f'{base_url}/groups/{group_id}/', headers=headers, json=payload)
     assert r.status_code == 200
     assert r.json().get('data').get('name') == 'My family'
 
@@ -103,8 +109,8 @@ def test_add_group_user(base_url):
         "user_name": "Kisa",
         "user_role": "my sweetheart"
     }
-    r = requests.post(f'{base_url}/groups/{group_id}/add_user/', headers={"Authorization": f"Bearer {test_user_token}"},
-                      json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.post(f'{base_url}/groups/{group_id}/add_user/', headers=headers, json=payload)
     group_user_id = r.json().get('data').get('id')
     assert r.status_code == 201
 
@@ -115,8 +121,8 @@ def test_patch_group_user(base_url):
     global test_user_token
     global group_user_id
     payload = {"user_name": "Osya"}
-    r = requests.patch(f'{base_url}/groups/{group_id}/users/{group_user_id}/',
-                       headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.patch(f'{base_url}/groups/{group_id}/users/{group_user_id}/', headers=headers, json=payload)
     assert r.status_code == 200
     assert r.json().get('data').get('user_name') == 'Osya'
 
@@ -124,7 +130,8 @@ def test_patch_group_user(base_url):
 def test_get_groups(base_url):
     """ Получение всех групп тестового пользователя """
     global test_user_token
-    r = requests.get(f'{base_url}/groups/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.get(f'{base_url}/groups/', headers=headers)
     assert r.status_code == 200
     assert len(r.json().get('data')) == 1
 
@@ -132,7 +139,8 @@ def test_get_groups(base_url):
 def test_get_groups_with_users(base_url):
     """ Получение всех групп тестового пользователя со списком участников """
     global test_user_token
-    r = requests.get(f'{base_url}/groups/users/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.get(f'{base_url}/groups/users/', headers=headers)
     assert r.status_code == 200
     assert r.json().get('data')[0].get('group').get('name') == "My family"
     assert len(r.json().get('data')[0].get('users')) == 1
@@ -142,7 +150,8 @@ def test_get_groupusers(base_url):
     """ Получение всех участников тестовой группы """
     global group_id
     global test_user_token
-    r = requests.get(f'{base_url}/groups/{group_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.get(f'{base_url}/groups/{group_id}/', headers=headers)
     assert r.status_code == 200
     assert len(r.json().get('data')) == 1
 
@@ -152,7 +161,8 @@ def test_delete_group_user(base_url):
     global group_id
     global test_user_token
     global group_user_id
-    r = requests.delete(f'{base_url}/groups/{group_id}/users/{group_user_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.delete(f'{base_url}/groups/{group_id}/users/{group_user_id}/', headers=headers)
     assert r.status_code == 204
 
 
@@ -160,7 +170,8 @@ def test_delete_group(base_url):
     """ Удаление тестовой группы """
     global group_id
     global test_user_token
-    r = requests.delete(f'{base_url}/groups/{group_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.delete(f'{base_url}/groups/{group_id}/', headers=headers)
     assert r.status_code == 204
 
 def test_create_event(base_url):
@@ -168,15 +179,18 @@ def test_create_event(base_url):
     global event_id
     global test_user_token
     today = str(date.today())
-    payload = {"event_data": {
-        "title": "New test",
-        "location": "Moscow",
-        "start_date": today,
-        "end_date": today,
-        "start_time": "14:00:00",
-        "end_time": "16:00:00"
-    }}
-    r = requests.post(f'{base_url}/events/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    payload = {
+        "event_data": {
+            "title": "New test",
+            "location": "Moscow",
+            "start_date": today,
+            "end_date": today,
+            "start_time": "14:00:00",
+            "end_time": "16:00:00"
+        }
+    }
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.post(f'{base_url}/events/', headers=headers, json=payload)
     event_id = r.json().get('data').get('event_data').get('id')
     assert r.status_code == 201
 
@@ -184,7 +198,8 @@ def test_get_event(base_url):
     """ Получение данных тестового события """
     global event_id
     global test_user_token
-    r = requests.get(f'{base_url}/events/{event_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.get(f'{base_url}/events/{event_id}/', headers=headers)
     assert r.status_code == 200
 
 
@@ -193,14 +208,16 @@ def test_patch_event(base_url):
     global event_id
     global test_user_token
     tomorrow = str(date.today() + timedelta(days=1))
-    payload = {"event_data": {
-        "title": "Updated test",
-        "location": "New_Vasyuki",
-        "end_date": tomorrow
-    }}
-    r = requests.patch(f'{base_url}/events/{event_id}/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    payload = {
+        "event_data": {
+            "title": "Updated test",
+            "location": "New_Vasyuki",
+            "end_date": tomorrow
+        }
+    }
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.patch(f'{base_url}/events/{event_id}/', headers=headers, json=payload)
     assert r.status_code == 200
-
 
 def test_get_events(base_url):
     """ Получение всех событий тестового пользователя на сегодня-завтра """
@@ -208,18 +225,18 @@ def test_get_events(base_url):
     global test_user_token
     start_date = str(date.today())
     end_date = str(date.today() + timedelta(days=1))
-    r = requests.get(f'{base_url}/events/?start_date={start_date}&end_date={end_date}', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.get(f'{base_url}/events/?start_date={start_date}&end_date={end_date}', headers=headers)
     assert r.status_code == 200
     assert len(r.json().get('data')) == 1
-
 
 def test_delete_event(base_url):
     """ Удаление тестового события """
     global event_id
     global test_user_token
-    r = requests.delete(f'{base_url}/events/{event_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.delete(f'{base_url}/events/{event_id}/', headers=headers)
     assert r.status_code == 204
-
 
 def test_create_note(base_url):
     """ Создание тестовой заметки """
@@ -229,12 +246,12 @@ def test_create_note(base_url):
         "title": "Note with title",
         "text": "some text"
     }
-    r = requests.post(f'{base_url}/notes/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.post(f'{base_url}/notes/', headers=headers, json=payload)
     note_id = r.json().get('id')
     assert r.status_code == 201
     assert r.json().get('title') == "Note with title"
     assert r.json().get('text') == "some text"
-
 
 def test_create_note_2(base_url):
     """ Создание тестовой заметки без заголовка """
@@ -243,7 +260,8 @@ def test_create_note_2(base_url):
     payload = {
         "text": "Note without title\nAnd some another text."
     }
-    r = requests.post(f'{base_url}/notes/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.post(f'{base_url}/notes/', headers=headers, json=payload)
     note_id_2 = r.json().get('id')
     assert r.status_code == 201
     assert r.json().get('title') == "Note without title"
@@ -254,7 +272,8 @@ def test_get_note(base_url):
     """ Получение конкретной заметки """
     global note_id
     global test_user_token
-    r = requests.get(f'{base_url}/notes/{note_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.get(f'{base_url}/notes/{note_id}/', headers=headers)
     assert r.status_code == 200
 
 
@@ -263,7 +282,8 @@ def test_patch_note(base_url):
     global note_id
     global test_user_token
     payload = {"title": "New title"}
-    r = requests.patch(f'{base_url}/notes/{note_id}/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.patch(f'{base_url}/notes/{note_id}/', headers=headers, json=payload)
     assert r.status_code == 200
     assert r.json().get('title') == 'New title'
 
@@ -277,7 +297,8 @@ def test_create_task(base_url):
         "date": today,
         "important": True
     }
-    r = requests.post(f'{base_url}/tasks/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.post(f'{base_url}/tasks/', headers=headers, json=payload)
     task_id = r.json().get('id')
     assert r.status_code == 201
     assert r.json().get('text') == "Do something"
@@ -286,7 +307,8 @@ def test_get_task(base_url):
     """ Получение конкретной задачи """
     global task_id
     global test_user_token
-    r = requests.get(f'{base_url}/tasks/{task_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.get(f'{base_url}/tasks/{task_id}/', headers=headers)
     assert r.status_code == 200
     assert r.json().get('text') == 'Do something'
 
@@ -295,7 +317,8 @@ def test_patch_task(base_url):
     global task_id
     global test_user_token
     payload = {"text": "Done task", "important": False, "done": True}
-    r = requests.patch(f'{base_url}/tasks/{task_id}/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.patch(f'{base_url}/tasks/{task_id}/', headers=headers, json=payload)
     assert r.status_code == 200
     assert r.json().get('text') == 'Done task'
     assert r.json().get('important') == False
@@ -307,10 +330,13 @@ def test_create_list(base_url):
     global test_user_token
     payload = {
         "title": "Shopping list",
-        "items": [{"text": "eggs", "checked": False},
-                  {"text": "milk", "checked": False}]
+        "items": [
+            {"text": "eggs", "checked": False},
+            {"text": "milk", "checked": False}
+        ]
     }
-    r = requests.post(f'{base_url}/lists/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.post(f'{base_url}/lists/', headers=headers, json=payload)
     list_id = r.json().get('id')
     assert r.status_code == 201
     assert r.json().get('title') == "Shopping list"
@@ -320,7 +346,8 @@ def test_get_list(base_url):
     """ Получение конкретного списка """
     global list_id
     global test_user_token
-    r = requests.get(f'{base_url}/lists/{list_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.get(f'{base_url}/lists/{list_id}/', headers=headers)
     assert r.status_code == 200
     assert r.json().get('items')[1].get('text') == 'milk'
 
@@ -329,7 +356,8 @@ def test_patch_list(base_url):
     global list_id
     global test_user_token
     payload = {"title": "Grocery Shopping list", "items": [{"text": "soda", "checked": False}]}
-    r = requests.patch(f'{base_url}/lists/{list_id}/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.patch(f'{base_url}/lists/{list_id}/', headers=headers, json=payload)
     assert r.status_code == 200
     assert r.json().get('title') == 'Grocery Shopping list'
     assert len(r.json().get('items')) == 1
@@ -338,19 +366,36 @@ def test_patch_list(base_url):
 def test_create_list_item(base_url):
     """ Добавление элемента в список """
     global list_id
+    global list_item_id
     global test_user_token
     payload = {
         "text": "chips",
         "checked": False
     }
-    r = requests.post(f'{base_url}/lists/{list_id}/items/', headers={"Authorization": f"Bearer {test_user_token}"}, json=payload)
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.post(f'{base_url}/lists/{list_id}/items/', headers=headers, json=payload)
+    list_item_id = r.json().get('id')
     assert r.status_code == 201
     assert r.json().get('text') == "chips"
+
+def test_patch_list_item(base_url):
+    """ Изменение элемента списка """
+    global list_id
+    global list_item_id
+    global test_user_token
+    payload = {"checked": True}
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.patch(f'{base_url}/lists/{list_id}/items/{list_item_id}/', headers=headers, json=payload)
+    assert r.status_code == 200
+    assert r.json().get('id') == list_item_id
+    assert r.json().get('text') == "chips"
+    assert r.json().get('checked') == True
 
 def test_get_planner_items(base_url):
     """ Получение всех задач, заметок и списков тестового пользователя """
     global test_user_token
-    r = requests.get(f'{base_url}/get_planner_items/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.get(f'{base_url}/get_planner_items/', headers=headers)
     assert r.status_code == 200
     assert len(r.json()) == 4
 
@@ -358,33 +403,38 @@ def test_delete_note(base_url):
     """ Удаление заметки """
     global note_id
     global test_user_token
-    r = requests.delete(f'{base_url}/notes/{note_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.delete(f'{base_url}/notes/{note_id}/', headers=headers)
     assert r.status_code == 204
 
 def test_delete_note_2(base_url):
     """ Удаление второй заметки """
     global note_id_2
     global test_user_token
-    r = requests.delete(f'{base_url}/notes/{note_id_2}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.delete(f'{base_url}/notes/{note_id_2}/', headers=headers)
     assert r.status_code == 204
 
 def test_delete_task(base_url):
     """ Удаление задачи """
     global task_id
     global test_user_token
-    r = requests.delete(f'{base_url}/tasks/{task_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.delete(f'{base_url}/tasks/{task_id}/', headers=headers)
     assert r.status_code == 204
 
 def test_delete_list(base_url):
     """ Удаление списка """
     global list_id
     global test_user_token
-    r = requests.delete(f'{base_url}/lists/{list_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.delete(f'{base_url}/lists/{list_id}/', headers=headers)
     assert r.status_code == 204
 
 def test_delete_user(base_url):
     """ Удаление тестового пользователя """
     global test_user_id
     global test_user_token
-    r = requests.delete(f'{base_url}/users/{test_user_id}/', headers={"Authorization": f"Bearer {test_user_token}"})
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.delete(f'{base_url}/users/{test_user_id}/', headers=headers)
     assert r.status_code == 204
