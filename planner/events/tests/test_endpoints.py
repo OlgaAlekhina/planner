@@ -391,6 +391,15 @@ def test_patch_list_item(base_url):
     assert r.json().get('text') == "chips"
     assert r.json().get('checked') == True
 
+def test_delete_list_item(base_url):
+    """ Удаление элемента списка """
+    global list_id
+    global list_item_id
+    global test_user_token
+    headers = {"Authorization": f"Bearer {test_user_token}"}
+    r = requests.delete(f'{base_url}/lists/{list_id}/items/{list_item_id}/', headers=headers)
+    assert r.status_code == 204
+
 def test_get_planner_items(base_url):
     """ Получение всех задач, заметок и списков тестового пользователя """
     global test_user_token
