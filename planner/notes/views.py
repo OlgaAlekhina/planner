@@ -412,11 +412,12 @@ class PlannerSharingView(APIView):
         responses={
             200: openapi.Response(
                 description="Успешный ответ",
-                schema=PlannerResponseSerializer(many=True)
+                schema=ErrorResponseSerializer()
             ),
             **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
         },
-        operation_summary="Шаринг задач, заметок и списков с другими пользователями",
+        operation_summary="Поделиться задачей, заметкой или списком с другими пользователями",
         operation_description="Выдает указанным пользователям все права на заметку, задачу или список.\n\n"
               "Возможные значения поля 'item_type': 'task', 'note', 'list'.\n\n"
               "Поле 'users_list' содержит список групповых ID пользователей, которым надо выдать права.\n\n"
@@ -442,11 +443,12 @@ class PlannerSharingView(APIView):
         try:
             item = types_dict[item_type].objects.get(id=item_id)
         except:
-            return Response({'error': 'Item not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Item not found'}, status=status.HTTP_404_NOT_FOUND)
 
         for group_user in users_list:
             item.users.add(group_user)
 
-        return Response({"message": "Successfully done"}, status=status.HTTP_200_OK)
+        return Response({"detail": {"code": "HTTP_200_OK", "message": "Successfully updated item"}},
+                                                                                    status=status.HTTP_200_OK)
 
 
