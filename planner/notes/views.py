@@ -13,7 +13,7 @@ from .models import Note, Task, List, ListItem
 from .paginators import TaskPagination
 from .serializers import (NoteSerializer, TaskSerializer, ListSerializer, ListItemSerializer, PlannerResponseSerializer,
     PlannerSharingSerializer)
-from planner.permissions import AuthorPermission, NotesPermission
+from planner.permissions import NotesPermission
 from users.users_serializers import ErrorResponseSerializer
 
 
@@ -29,10 +29,7 @@ OBJECT_RESPONSES = {
 }
 
 
-class NoteViewSet(mixins.CreateModelMixin,
-                  mixins.RetrieveModelMixin,
-                  mixins.UpdateModelMixin,
-                  mixins.DestroyModelMixin,
+class NoteViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
                   viewsets.GenericViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     serializer_class = NoteSerializer
@@ -99,54 +96,19 @@ class NoteViewSet(mixins.CreateModelMixin,
         return super().destroy(request, *args, **kwargs)
 
 
-class TaskViewSet(mixins.CreateModelMixin,
-                  mixins.RetrieveModelMixin,
-                  mixins.UpdateModelMixin,
-                  mixins.DestroyModelMixin,
+class TaskViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
                   viewsets.GenericViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated, AuthorPermission]
+    permission_classes = [IsAuthenticated, NotesPermission]
     filter_backends = [filters.DjangoFilterBackend]
     filterset_fields = ['done']
     pagination_class = TaskPagination
     queryset = Task.objects.all()
 
-    # def get_queryset(self):
-    #     """ Получаем только задачи авторизованного пользователя """
-    #     # Проверяем, не генерируется ли схема Swagger
-    #     if getattr(self, 'swagger_fake_view', False):
-    #         # Возвращаем пустой queryset для генерации схемы
-    #         return Task.objects.none()
-    #
-    #     # Для реальных запросов возвращаем отфильтрованный queryset
-    #     return Task.objects.filter(author=self.request.user)
-
     def perform_create(self, serializer):
         """ При создании задачи делаем ее автором текущего пользователя """
         serializer.save(author=self.request.user)
-
-    # @swagger_auto_schema(
-    #     manual_parameters=[
-    #         openapi.Parameter(
-    #             'done',
-    #             openapi.IN_QUERY,
-    #             description="Фильтрация по статусу задач (сделаны или нет)",
-    #             type=openapi.TYPE_BOOLEAN
-    #         )
-    #     ],
-    #     operation_summary="Получение списка задач",
-    #     operation_description="Выводит список всех задач пользователя с сортировкой сперва по дате, затем по важности, затем по времени.\n"
-    #             "Можно фильтровать задачи по статусу (сделанные, не сделанные, все задачи).\n"
-    #             "Есть возможность использовать постраничный вывод результатов.\n"
-    #             "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
-    #     responses={
-    #         200: openapi.Response(description="Получен список задач пользователя", schema=TaskSerializer(many=True)),
-    #         ** COMMON_RESPONSES
-    #     }
-    # )
-    # def list(self, request, *args, **kwargs):
-    #     return super().list(request, *args, **kwargs)
 
     @swagger_auto_schema(
         operation_summary="Создание новой задачи",
@@ -203,13 +165,10 @@ class TaskViewSet(mixins.CreateModelMixin,
         return super().destroy(request, *args, **kwargs)
 
 
-class ListViewSet(mixins.CreateModelMixin,
-                  mixins.RetrieveModelMixin,
-                  mixins.UpdateModelMixin,
-                  mixins.DestroyModelMixin,
+class ListViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
                   viewsets.GenericViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
-    permission_classes = [IsAuthenticated, AuthorPermission]
+    permission_classes = [IsAuthenticated, NotesPermission]
     pagination_class = TaskPagination
     queryset = List.objects.all()
 
@@ -218,16 +177,6 @@ class ListViewSet(mixins.CreateModelMixin,
             return ListItemSerializer
         else:
             return ListSerializer
-
-    # def get_queryset(self):
-    #     """ Получаем только списки авторизованного пользователя """
-    #     # Проверяем, не генерируется ли схема Swagger
-    #     if getattr(self, 'swagger_fake_view', False):
-    #         # Возвращаем пустой queryset для генерации схемы
-    #         return List.objects.none()
-    #
-    #     # Для реальных запросов возвращаем отфильтрованный queryset
-    #     return List.objects.filter(author=self.request.user)
 
     def perform_create(self, serializer):
         """ При создании списка делаем его автором текущего пользователя """
@@ -401,7 +350,10 @@ class PlannerView(APIView):
         all_items = []
 
         if not item_type or item_type == 'task':
-            user_tasks = Task.objects.filter(author=user)
+            # Получаем список group_users для данного пользователя
+            group_users = user.group_users.all()
+            # Получаем все задачи, если пользователь их автор или с ним поделились
+            user_tasks = Task.objects.filter(Q(author=user) | Q(users__in=group_users)).distinct()
             for task in user_tasks:
                 all_items.append({
                     'type': 'task',
@@ -432,7 +384,10 @@ class PlannerView(APIView):
                 })
 
         if not item_type or item_type == 'list':
-            user_lists = List.objects.filter(author=user)
+            # Получаем список group_users для данного пользователя
+            group_users = user.group_users.all()
+            # Получаем все заметки, если пользователь их автор или с ним поделились
+            user_lists = List.objects.filter(Q(author=user) | Q(users__in=group_users)).distinct()
             for list in user_lists:
                 all_items.append({
                     'type': 'list',

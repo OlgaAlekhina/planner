@@ -38,6 +38,7 @@ class Task(models.Model):
     create_at = models.DateTimeField('Когда создана', default=timezone.now)
     update_at = models.DateTimeField('Когда изменена', auto_now=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    users = models.ManyToManyField(GroupUser, blank=True, verbose_name='С кем поделились', related_name='shared_tasks')
 
     def __str__(self):
         return self.text
@@ -52,6 +53,7 @@ class List(models.Model):
     create_at = models.DateTimeField('Когда создан', default=timezone.now)
     update_at = models.DateTimeField('Когда изменен', auto_now=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    users = models.ManyToManyField(GroupUser, blank=True, verbose_name='С кем поделились', related_name='shared_lists')
 
     def __str__(self):
         return self.title

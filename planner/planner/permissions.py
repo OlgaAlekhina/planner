@@ -51,12 +51,6 @@ class EventPermission(permissions.BasePermission):
         return True
 
 
-class AuthorPermission(permissions.BasePermission):
-    """ Дает доступ пользователю только к созданным им объектам (заметкам, задачам и спискам) """
-    def has_object_permission(self, request, view, obj):
-        return request.user.is_superuser or obj.author == request.user
-
-
 class NotesPermission(permissions.BasePermission):
     """ Дает доступ пользователю к заметкам, задачам и спискам, если он является их автором или находится в разрешенном списке """
     def has_object_permission(self, request, view, obj):
