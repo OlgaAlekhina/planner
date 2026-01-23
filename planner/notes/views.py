@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -10,8 +11,9 @@ from rest_framework.views import APIView
 
 from .models import Note, Task, List, ListItem
 from .paginators import TaskPagination
-from .serializers import NoteSerializer, TaskSerializer, ListSerializer, ListItemSerializer, PlannerResponseSerializer
-from planner.permissions import AuthorPermission
+from .serializers import (NoteSerializer, TaskSerializer, ListSerializer, ListItemSerializer, PlannerResponseSerializer,
+    PlannerSharingSerializer)
+from planner.permissions import AuthorPermission, NotesPermission
 from users.users_serializers import ErrorResponseSerializer
 
 
@@ -34,19 +36,9 @@ class NoteViewSet(mixins.CreateModelMixin,
                   viewsets.GenericViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated, AuthorPermission]
+    permission_classes = [IsAuthenticated, NotesPermission]
     pagination_class = TaskPagination
     queryset = Note.objects.all()
-
-    # def get_queryset(self):
-    #     """ Получаем только заметки авторизованного пользователя """
-    #     # Проверяем, не генерируется ли схема Swagger
-    #     if getattr(self, 'swagger_fake_view', False):
-    #         # Возвращаем пустой queryset для генерации схемы
-    #         return Note.objects.none()
-    #
-    #     # Для реальных запросов возвращаем отфильтрованный queryset
-    #     return Note.objects.filter(author=self.request.user)
 
     def perform_create(self, serializer):
         """ При создании заметки делаем ее автором текущего пользователя """
@@ -423,7 +415,10 @@ class PlannerView(APIView):
                 })
 
         if not item_type or item_type == 'note':
-            user_notes = Note.objects.filter(author=user)
+            # Получаем список group_users для данного пользователя
+            group_users = user.group_users.all()
+            # Получаем все заметки, если пользователь их автор или с ним поделились
+            user_notes = Note.objects.filter(Q(author=user) | Q(users__in=group_users)).distinct()
             for note in user_notes:
                 all_items.append({
                     'type': 'note',
@@ -452,5 +447,51 @@ class PlannerView(APIView):
 
         return Response(sorted(all_items, key=lambda item: item['update_at'], reverse=True), status=200)
 
+
+class PlannerSharingView(APIView):
+    """ Эндпоинт для шаринга задач, заметок и списков с другими пользователями """
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=PlannerSharingSerializer(),
+        responses={
+            200: openapi.Response(
+                description="Успешный ответ",
+                schema=PlannerResponseSerializer(many=True)
+            ),
+            **COMMON_RESPONSES,
+        },
+        operation_summary="Шаринг задач, заметок и списков с другими пользователями",
+        operation_description="Выдает указанным пользователям все права на заметку, задачу или список.\n\n"
+              "Возможные значения поля 'item_type': 'task', 'note', 'list'.\n\n"
+              "Поле 'users_list' содержит список групповых ID пользователей, которым надо выдать права.\n\n"
+              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        tags=['planner'],
+    )
+    def patch(self, request, item_id):
+        data = request.data
+        serializer = PlannerSharingSerializer(data=data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        item_type = serializer.validated_data['item_type']
+        users_list = serializer.validated_data['users_list']
+
+        types_dict = {
+            'task': Task,
+            'note': Note,
+            'list': List,
+        }
+
+        try:
+            item = types_dict[item_type].objects.get(id=item_id)
+        except:
+            return Response({'error': 'Item not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        for group_user in users_list:
+            item.users.add(group_user)
+
+        return Response({"message": "Successfully done"}, status=status.HTTP_200_OK)
 
 

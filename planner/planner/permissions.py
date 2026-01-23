@@ -57,6 +57,15 @@ class AuthorPermission(permissions.BasePermission):
         return request.user.is_superuser or obj.author == request.user
 
 
+class NotesPermission(permissions.BasePermission):
+    """ Дает доступ пользователю к заметкам, задачам и спискам, если он является их автором или находится в разрешенном списке """
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        # Получаем список group_users для данного пользователя
+        group_users = user.group_users.all()
+        return user.is_superuser or obj.author == user or any(group_user in obj.users.all() for group_user in group_users)
+
+
 
 
 

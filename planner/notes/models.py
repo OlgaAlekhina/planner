@@ -1,8 +1,8 @@
-import re
-
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+
+from users.models import GroupUser
 
 
 class Note(models.Model):
@@ -12,6 +12,7 @@ class Note(models.Model):
     create_at = models.DateTimeField('Когда создана', default=timezone.now)
     update_at = models.DateTimeField('Когда изменена', auto_now=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    users = models.ManyToManyField(GroupUser, blank=True, verbose_name='С кем поделились', related_name='shared_notes')
 
     def save(self, *args, **kwargs):
         # если у заметки нет названия, то берем для него первую строку из текста или первые 200 символов

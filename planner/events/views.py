@@ -71,7 +71,6 @@ class EventViewSet(viewsets.ModelViewSet):
 			event_data = serializer.validated_data.get('event_data')
 			event_meta = serializer.validated_data.get('repeat_pattern')
 			users = event_data.pop('users', None)
-			print('users', users)
 			# создаем новое событие в БД
 			event = Event.objects.create(author=user, **event_data)
 			logger.info(f"Created event: id = {event.id}, title = {event.title}")

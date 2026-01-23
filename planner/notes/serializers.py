@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 from .models import Note, Task, ListItem, List
+from users.models import GroupUser
 
 
 class NoteSerializer(serializers.ModelSerializer):
@@ -85,5 +86,25 @@ class PlannerResponseSerializer(serializers.Serializer):
     important = serializers.BooleanField()
     done = serializers.BooleanField()
     update_at = serializers.DateTimeField()
+
+
+class PlannerSharingSerializer(serializers.Serializer):
+    """ Сериализатор для расшаривания заметок, задач и списков """
+    item_type = serializers.ChoiceField(choices=['task', 'note', 'list'], help_text="Возможные значения: 'task', 'note', 'list'")
+    users_list = serializers.ListField(child=serializers.IntegerField(), help_text="Список групповых id пользователей")
+
+    def validate_users_list(self, users_list):
+        """ Проверяем, что все пользователи существуют, и возвращаем список объектов GroupUser """
+        group_users = []
+        for user_id in users_list:
+            try:
+                group_user = GroupUser.objects.get(id=user_id)
+                group_users.append(group_user)
+            except GroupUser.DoesNotExist:
+                raise serializers.ValidationError(f'Group user with id = {user_id} does not exist')
+
+        return group_users
+
+
 
 
