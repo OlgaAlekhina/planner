@@ -17,6 +17,7 @@ class UserProfile(models.Model):
 	birthday = models.DateField(blank=True, null=True)
 	nickname = models.CharField(max_length=50, blank=True)
 	premium_end = models.DateField(blank=True, null=True)
+	telegram_id = models.BigIntegerField('Telegram ID', unique=True, null=True, blank=True)
 
 	def __str__(self):
 		return f"{self.user.username}-{self.user.id}"

@@ -123,3 +123,8 @@ class SignupResponseSerializer(serializers.Serializer):
 	detail = DetailSerializer()
 	data = UserIDSerializer()
 
+
+class TelegramCheckSerializer(serializers.Serializer):
+	""" Сериализатор для идентификации пользователя по telegram_id """
+	telegram_id = serializers.CharField(max_length=100)
+

@@ -3,10 +3,9 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.decorators import action
-from .users_serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer,
-								ErrorResponseSerializer, VKAuthSerializer, MailAuthSerializer, SignupSerializer,
-								ResetPasswordSerializer, UserResponseSerializer, UserUpdateSerializer, CodeSerializer,
-								SignupResponseSerializer)
+from .users_serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, ErrorResponseSerializer,
+	VKAuthSerializer, MailAuthSerializer, SignupSerializer,	ResetPasswordSerializer, UserResponseSerializer,
+	UserUpdateSerializer, CodeSerializer, SignupResponseSerializer, TelegramCheckSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -386,6 +385,43 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			"message": serializer.errors
 		}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=False, methods=['post'])
+	@swagger_auto_schema(
+		responses={
+			200: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			401: openapi.Response(description="Ошибка авторизации в сервисе Яндекса", schema=ErrorResponseSerializer()),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", schema=ErrorResponseSerializer())
+		},
+		operation_summary="Авторизация пользователей через Яндекс")
+	def check_telegram_user(self, request):
+		""" Проверка пользователя по Telegram ID """
+		serializer = TelegramCheckSerializer(data=request.data)
+
+		if not serializer.is_valid():
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		telegram_id = serializer.validated_data['telegram_id']
+
+		try:
+			user_profile = UserProfile.objects.get(telegram_id=telegram_id)
+			user = user_profile.user
+			response_data = {
+				'exists': True,
+				'user': {
+					'id': user.id,
+					'email': user.email,
+					'first_name': user.first_name,
+					'last_name': user.last_name
+				}
+			}
+
+			return Response(response_data, status=status.HTTP_200_OK)
+
+		except UserProfile.DoesNotExist:
+			response_data = {'exists': False, 'message': 'Пользователь не найден'}
+			return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 
 # функция для добавления отсутствующих профилей пользователей на проде
