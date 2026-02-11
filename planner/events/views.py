@@ -38,6 +38,18 @@ class EventViewSet(viewsets.ModelViewSet):
 		else:
 			return EventSerializer
 
+	def get_queryset(self):
+		# Здесь добавляем оптимизацию
+		queryset = super().get_queryset()
+
+		queryset = queryset.select_related(
+			'author', 'eventmeta'
+		).prefetch_related(
+			'users', 'eventuser_set', 'canceledevent_set'
+		)
+
+		return queryset
+
 	@swagger_auto_schema(
 		responses={
 			201: openapi.Response(description="Успешное создание события", schema=EventCreateResponseSerializer()),
@@ -71,30 +83,31 @@ class EventViewSet(viewsets.ModelViewSet):
 			event_data = serializer.validated_data.get('event_data')
 			event_meta = serializer.validated_data.get('repeat_pattern')
 			users = event_data.pop('users', None)
+
 			# создаем новое событие в БД
 			event = Event.objects.create(author=user, **event_data)
 			logger.info(f"Created event: id = {event.id}, title = {event.title}")
+
 			# добавляем участников события вручную
 			if users:
 				for user_data in users:
 					EventUser.objects.create(event=event, **user_data)
+
 			# если нет списка участников, добавляем только текущего пользователя, как участника своей дефолтной группы
 			else:
 				event.users.add(user.userprofile.default_groupuser_id)
-			response = {
-				'event_data': EventSerializer(event, context={'request': request}).data
-			}
+
+			response = {'event_data': EventSerializer(event, context={'request': request}).data}
+
 			# если были получены метаданные, делаем запись в таблице
 			if event_meta:
 				meta = EventMeta.objects.create(event=event, **event_meta)
 				response['repeat_pattern'] = EventMetaResponseSerializer(meta).data
+
 			return Response({"detail": {"code": "HTTP_201_OK", "message": "Событие создано"}, "data": response},
 							status=201)
 
-		response = {'detail': {
-			"code": "BAD_REQUEST",
-			"message": serializer.errors
-		}}
+		response = {'detail': {"code": "BAD_REQUEST", "message": serializer.errors}}
 		return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 	@swagger_auto_schema(
@@ -147,21 +160,23 @@ class EventViewSet(viewsets.ModelViewSet):
 				{"detail": {"code": "BAD_REQUEST", "message": "Некорректный временной диапазон"}},
 				status=400)
 
+		queryset = self.get_queryset()
+
 		try:
 			group_users = user.group_users.all()
 			group_users_ids = [group_user.id for group_user in group_users]
+
 			# получаем все события без повторений в переданном временном интервале
 			# выводятся те события, в которых пользователь является автором или участником
-			events = Event.objects.filter(Q(users__pk__in=group_users_ids, eventuser__left=False) | Q(author=user),
+			events = queryset.filter(Q(users__pk__in=group_users_ids, eventuser__left=False) | Q(author=user),
 			title__icontains=search, repeats=False, start_date__lte=filter_end, end_date__gte=filter_start).distinct()
+
 			# получаем все события с повторениями в интервале start_date - end_repeat
-			repeated_events = Event.objects.filter(Q(users__pk__in=group_users_ids, eventuser__left=False) | Q(author=user),
+			repeated_events = queryset.filter(Q(users__pk__in=group_users_ids, eventuser__left=False) | Q(author=user),
 										   Q(end_repeat__gte=filter_start)  | Q(end_repeat__isnull=True),
 										   title__icontains=search, repeats=True, start_date__lte=filter_end).distinct()
 		except ValidationError:
-			return Response(
-				{"detail": {"code": "BAD_REQUEST", "message": "Некорректная дата"}},
-				status=400)
+			return Response({"detail": {"code": "BAD_REQUEST", "message": "Некорректная дата"}}, status=400)
 
 		for repeated_event in repeated_events:
 			duration = repeated_event.end_date - repeated_event.start_date
@@ -207,8 +222,11 @@ class EventViewSet(viewsets.ModelViewSet):
 		for event in events:
 			event_data = {"event_data": EventSerializer(event, context={'request': request}).data}
 			response.append(event_data)
+
 		# сортируем итоговый список событий сперва по дате, а затем по времени
-		response.sort(key=lambda x: (x['event_data']['start_date'], x['event_data']['start_time'] if x['event_data']['start_time'] is not None else ''))
+		response.sort(key=lambda x: (x['event_data']['start_date'], x['event_data']['start_time']
+											if x['event_data']['start_time'] is not None else ''))
+
 		return Response({"detail": {"code": "HTTP_200_OK", "message": "Получен список событий пользователя"},
 						 "data": response}, status=200)
 
