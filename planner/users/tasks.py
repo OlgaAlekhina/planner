@@ -20,11 +20,14 @@ def clean_codes():
 
 @shared_task
 def send_letter(email: str, data: int | str, subject: str, template: str) -> None:
-	""" Посылает письмо при регистрации или восстановлении пароля пользователя """
+	""" Посылает письмо при регистрации или восстановлении пароля пользователя или при авторизации в телеграм боте """
 	if subject == 'signup':
 		subject = 'Подтверждение авторизации/регистрации в приложении Family Planner'
 	elif subject == 'reset':
 		subject = 'Восстановление пароля в приложении Family Planner'
+	elif subject == 'telegram_auth':
+		subject = 'Авторизация в телеграм боте приложения Family Planner'
+
 	msg = EmailMultiAlternatives(
 		subject=subject,
 		from_email='olga-olechka-5@yandex.ru',

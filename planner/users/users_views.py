@@ -1,12 +1,18 @@
+from random import randint
+
 from django.contrib.auth.models import User
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.decorators import action
-from .users_serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, ErrorResponseSerializer,
-	VKAuthSerializer, MailAuthSerializer, SignupSerializer,	ResetPasswordSerializer, UserResponseSerializer,
-	UserUpdateSerializer, CodeSerializer, SignupResponseSerializer, TelegramCheckSerializer)
-from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password
+from .users_serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer,
+								ErrorResponseSerializer,
+								VKAuthSerializer, MailAuthSerializer, SignupSerializer, ResetPasswordSerializer,
+								UserResponseSerializer,
+								UserUpdateSerializer, CodeSerializer, SignupResponseSerializer, TelegramCheckSerializer,
+								TelegramAuthSerializer)
+from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password, get_user_by_email, \
+	auth_telegram_user
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .models import UserProfile, Group, SignupCode, GroupUser
@@ -41,10 +47,14 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 			return CodeSerializer
 		elif self.action == 'create':
 			return SignupSerializer
-		elif self.action == 'reset_password':
+		elif self.action in ('reset_password', 'check_mail'):
 			return ResetPasswordSerializer
 		elif self.action == 'partial_update':
 			return UserUpdateSerializer
+		elif self.action == 'check_telegram_user':
+			return TelegramCheckSerializer
+		elif self.action == 'telegram_auth':
+			return TelegramAuthSerializer
 		else:
 			return UserLoginSerializer
 
@@ -389,14 +399,14 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 	@action(detail=False, methods=['post'])
 	@swagger_auto_schema(
 		responses={
-			200: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
+			#200: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
 			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
-			401: openapi.Response(description="Ошибка авторизации в сервисе Яндекса", schema=ErrorResponseSerializer()),
+			#401: openapi.Response(description="Ошибка авторизации в сервисе Яндекса", schema=ErrorResponseSerializer()),
 			500: openapi.Response(description="Ошибка сервера при обработке запроса", schema=ErrorResponseSerializer())
 		},
-		operation_summary="Авторизация пользователей через Яндекс")
+		operation_summary="Проверка пользователя по Telegram ID")
 	def check_telegram_user(self, request):
-		""" Проверка пользователя по Telegram ID """
+		""" Ищет пользователя в БД по Telegram ID """
 		serializer = TelegramCheckSerializer(data=request.data)
 
 		if not serializer.is_valid():
@@ -413,7 +423,7 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 					'id': user.id,
 					'email': user.email,
 					'first_name': user.first_name,
-					'last_name': user.last_name
+					'nickname': user.userprofile.nickname,
 				}
 			}
 
@@ -422,6 +432,53 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		except UserProfile.DoesNotExist:
 			response_data = {'exists': False, 'message': 'Пользователь не найден'}
 			return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=False, methods=['post'])
+	@swagger_auto_schema(
+		responses={
+			#200: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			#401: openapi.Response(description="Ошибка авторизации в сервисе Яндекса", schema=ErrorResponseSerializer()),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", schema=ErrorResponseSerializer())
+		},
+		operation_summary="Проверка email пользователя для авторизации в телеграм боте")
+	def check_mail(self, request):
+		serializer = ResetPasswordSerializer(data=request.data)
+
+		if not serializer.is_valid():
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		email = serializer.validated_data['email']
+		result = get_user_by_email(email)
+
+		if result:
+			return Response({"success": True}, status=status.HTTP_200_OK)
+
+		return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=False, methods=['post'])
+	@swagger_auto_schema(
+		responses={
+			# 200: openapi.Response(description="Успешный ответ", schema=LoginResponseSerializer()),
+			400: openapi.Response(description="Ошибка при валидации входных данных", schema=ErrorResponseSerializer()),
+			# 401: openapi.Response(description="Ошибка авторизации в сервисе Яндекса", schema=ErrorResponseSerializer()),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", schema=ErrorResponseSerializer())
+		},
+		operation_summary="Авторизация пользователя в телеграм боте")
+	def telegram_auth(self, request):
+		serializer = TelegramAuthSerializer(data=request.data)
+
+		if not serializer.is_valid():
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		email = serializer.validated_data['email']
+		code = serializer.validated_data['code']
+		telegram_id = serializer.validated_data['telegram_id']
+
+		result = auth_telegram_user(email, code, telegram_id)
+		print('result', result)
+
+		return Response(result[0], status=result[1])
 
 
 # функция для добавления отсутствующих профилей пользователей на проде

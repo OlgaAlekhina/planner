@@ -126,5 +126,12 @@ class SignupResponseSerializer(serializers.Serializer):
 
 class TelegramCheckSerializer(serializers.Serializer):
 	""" Сериализатор для идентификации пользователя по telegram_id """
-	telegram_id = serializers.CharField(max_length=100)
+	telegram_id = serializers.IntegerField()
+
+
+class TelegramAuthSerializer(serializers.Serializer):
+	""" Сериализатор для привязки Тelegram ID к профилю пользователя """
+	email = serializers.EmailField()
+	code = serializers.IntegerField()
+	telegram_id = serializers.IntegerField()
 

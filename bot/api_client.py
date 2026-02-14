@@ -13,7 +13,7 @@ class PlannerAPIClient:
         """ Проверяет, есть ли пользователь с таким Telegram ID """
         try:
             response = requests.post(
-                f"{self.base_url}/check-telegram-user/",
+                f"{self.base_url}/users/check-telegram-user/",
                 headers=self.headers,
                 json={'telegram_id': telegram_id}
             )
@@ -21,18 +21,23 @@ class PlannerAPIClient:
         except requests.exceptions.RequestException as e:
             return {'error': str(e)}
 
-    def authenticate_user(self, email, password, telegram_id, telegram_username=None):
-        """ Авторизует пользователя и привязывает Telegram ID к его аккаунту """
+    def check_email(self, email):
+        """ Проверяем, что пользователь с таким email существует в БД и отправляем ему код в письме """
         try:
             response = requests.post(
-                f"{self.base_url}/authenticate-user/",
+                f"{self.base_url}/users/check_mail/", headers=self.headers, json={'email': email}
+            )
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {'error': str(e)}
+
+    def authenticate_user(self, email, code, telegram_id):
+        """ Проверяет код и привязывает Telegram ID пользователя к его аккаунту """
+        try:
+            response = requests.post(
+                f"{self.base_url}/users/telegram_auth/",
                 headers=self.headers,
-                json={
-                    'email': email,
-                    'password': password,
-                    'telegram_id': telegram_id,
-                    'telegram_username': telegram_username,
-                }
+                json={'email': email, 'code': code, 'telegram_id': telegram_id}
             )
             return response.json()
         except requests.exceptions.RequestException as e:

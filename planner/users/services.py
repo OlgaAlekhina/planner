@@ -2,8 +2,9 @@ import logging
 import random
 import string
 from random import randint
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import requests
+from django.utils import timezone
 from requests.exceptions import RequestException, HTTPError
 from django.contrib.auth.models import User
 from .models import UserProfile, SignupCode, Group, GroupUser
@@ -22,6 +23,75 @@ def convert_date(birthday: str, date_format='%d.%m.%Y') -> date | str:
 		return datetime.strptime(birthday, date_format).date()
 	return birthday
 
+def auth_telegram_user(email: str, code: int, telegram_id: str) ->tuple[dict, int]:
+	"""
+	Ищет пользователя в БД по email и проверяет код
+	При успешном подтверждении добавляет Telegram ID в профиль пользователя
+	"""
+	try:
+		# Находим пользователя
+		user = User.objects.get(email__iexact=email, is_active=True)
+
+		# Проверяем принадлежность кода пользователю
+		signup_code = SignupCode.objects.get(code=code, user=user)
+		# Проверяем, что код действителен
+		if timezone.now() - signup_code.code_time < timedelta(minutes=60):
+			profile = user.userprofile
+			profile.telegram_id = telegram_id
+			profile.save()
+
+			response = {
+				"success": True,
+				"user": {
+					"id": user.id,
+					"email": user.email,
+					"first_name": user.first_name,
+					"nickname": user.userprofile.nickname,
+				}
+			}
+			status = 200
+		else:
+			response = {
+				"success": False,
+				"message": "Действие кода истекло. Попробуйте авторизоваться еще раз.",
+			}
+			status = 401
+
+	except User.DoesNotExist:
+		response = {
+			"success": False,
+			"message": "Пользователь не найден.",
+		}
+		status = 400
+	except SignupCode.DoesNotExist:
+		response = {
+			"success": False,
+			"message": "Код неверный. Попробуйте еще раз.",
+		}
+		status = 401
+
+	return response, status
+
+def get_user_by_email(email: str) -> bool:
+	"""
+	ищет пользователя в БД по email
+	если пользователь найден, высылает код подтверждения на почту для входа в телеграм бота
+	"""
+	try:
+		user = User.objects.get(email__iexact=email, is_active=True)
+
+		# Генерируем код подтверждения и высылаем на почту (через асинхронные задачи Celery)
+		code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
+		try:
+			send_letter.delay(email, code.code, 'telegram_auth', 'telegram_auth.html')
+		except:
+			send_letter(email, code.code, 'telegram_auth', 'telegram_auth.html')
+			logger.info("Celery and Redis was unavailable while sending mail.")
+
+		return True
+
+	except User.DoesNotExist:
+		return False
 
 def get_user(email: str, password: str) -> tuple[dict, int]:
 	"""
