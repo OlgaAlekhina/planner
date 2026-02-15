@@ -5,6 +5,7 @@ from telegram import Update
 from telegram.error import TimedOut, NetworkError
 from telegram.ext import CommandHandler, ApplicationBuilder, ContextTypes, MessageHandler, filters
 from api_client import api_client
+from handlers.events import get_add_event_handler
 from handlers.auth import get_auth_handler
 from config import BOT_TOKEN
 
@@ -55,10 +56,10 @@ def main_with_restart():
             app = (
                 ApplicationBuilder()
                 .token(token)
-                .read_timeout(30)
-                .write_timeout(30)
-                .connect_timeout(30)
-                .pool_timeout(30)
+                .read_timeout(60)
+                .write_timeout(60)
+                .connect_timeout(60)
+                .pool_timeout(60)
                 .build()
             )
 
@@ -66,6 +67,7 @@ def main_with_restart():
             app.add_handler(MessageHandler(filters.ALL, debug_update), group=1)
 
             # Добавляем обработчики
+            app.add_handler(get_add_event_handler())
             app.add_handler(get_auth_handler())
             app.add_handler(CommandHandler("start", start))
 
@@ -73,7 +75,7 @@ def main_with_restart():
 
             app.run_polling(
                 poll_interval=1.0,
-                timeout=30,
+                timeout=60,
                 drop_pending_updates=True
             )
 

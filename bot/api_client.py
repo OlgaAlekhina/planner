@@ -13,7 +13,7 @@ class PlannerAPIClient:
         """ Проверяет, есть ли пользователь с таким Telegram ID """
         try:
             response = requests.post(
-                f"{self.base_url}/users/check-telegram-user/",
+                f"{self.base_url}/users/check_telegram_user/",
                 headers=self.headers,
                 json={'telegram_id': telegram_id}
             )
@@ -38,6 +38,18 @@ class PlannerAPIClient:
                 f"{self.base_url}/users/telegram_auth/",
                 headers=self.headers,
                 json={'email': email, 'code': code, 'telegram_id': telegram_id}
+            )
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {'error': str(e)}
+
+    def create_event(self, user_id, title, date, time):
+        """ Создание нового события """
+        try:
+            response = requests.post(
+                f"{self.base_url}/events/create_from_telegram/",
+                headers=self.headers,
+                json={'author': user_id, 'title': title, 'start_date': date, 'start_time': time}
             )
             return response.json()
         except requests.exceptions.RequestException as e:

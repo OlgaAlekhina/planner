@@ -1,3 +1,5 @@
+from django.contrib.auth.models import User
+from django.db import transaction
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from .models import Event, EventMeta, EventUser
@@ -58,6 +60,27 @@ class EventSerializer(serializers.ModelSerializer):
 		# добавляем объект Request в поле 'is_creator'
 		fields['is_creator'].contex = self.context
 		return fields
+
+
+class EventTelegramSerializer(serializers.ModelSerializer):
+	""" Сериализатор для создания события через телеграм бота """
+
+	class Meta:
+		model = Event
+		fields = ['author', 'title', 'start_date', 'start_time']
+
+	@transaction.atomic
+	def create(self, validated_data):
+		# Добавляем конечную дату события, равную стартовой
+		end_date = validated_data['start_date']
+
+		# Создаем событие
+		event = Event.objects.create(end_date=end_date, **validated_data)
+
+		# Добавляем пользователя участником события
+		event.users.add(validated_data['author'].userprofile.default_groupuser_id)
+
+		return event
 
 
 class EventMetaSerializer(serializers.ModelSerializer):

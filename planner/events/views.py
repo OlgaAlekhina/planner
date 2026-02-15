@@ -6,13 +6,11 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, JSONParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .models import Event, EventMeta, CanceledEvent, EventUser
-from .serializers import (
-	EventSerializer, EventMetaSerializer, EventCreateSerializer, EventResponseSerializer, EventMetaResponseSerializer,
-	EventListResponseSerializer, EventCreateResponseSerializer
-)
+from .serializers import (EventSerializer, EventMetaSerializer, EventCreateSerializer, EventResponseSerializer, EventMetaResponseSerializer,
+	EventListResponseSerializer, EventCreateResponseSerializer, EventTelegramSerializer)
 from users.users_serializers import ErrorResponseSerializer, DetailSerializer
 from django.db.models import Q
 from .services import get_dates
@@ -35,6 +33,8 @@ class EventViewSet(viewsets.ModelViewSet):
 	def get_serializer_class(self):
 		if self.action in ('create', 'partial_update'):
 			return EventCreateSerializer
+		if self.action == 'create_from_telegram':
+			return EventTelegramSerializer
 		else:
 			return EventSerializer
 
@@ -429,15 +429,13 @@ class EventViewSet(viewsets.ModelViewSet):
 			# если переданы данные события, то обновляем их
 			if event_data:
 				new_users = event_data.pop('users') if 'users' in event_data else None
-				print('new_users', new_users)
 				Event.objects.filter(id=event.id).update(**event_data)
 				event = Event.objects.get(id=event.id)
 				# если передан список участников события, обновляем его в БД
 				if new_users is not None:
 					new_users_ids = [item['groupuser_id'] for item in new_users]
-					print('new_users_ids', new_users_ids)
 					old_users_ids = [groupuser.id for groupuser in event.users.all()]
-					print('old_users_ids', old_users_ids)
+
 					for user_id in old_users_ids:
 						if user_id not in new_users_ids:
 							EventUser.objects.get(event=event, groupuser_id=user_id).delete()
@@ -509,6 +507,27 @@ class EventViewSet(viewsets.ModelViewSet):
 
 		except EventUser.DoesNotExist:
 			return Response({"detail": "Участник события не найден"}, status=404)
+
+	@action(detail=False, methods=['post'], permission_classes=[AllowAny])
+	@swagger_auto_schema(
+		responses={
+			201: openapi.Response(description="Успешный ответ"),
+			401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+			404: openapi.Response(description="Объект не найден", examples={"application/json": {"detail": "string"}}),
+			500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+																									{"error": "string"}})
+		},
+		operation_summary="Добавление события из телеграм бота",
+	)
+	def create_from_telegram(self, request):
+		data = request.data
+		serializer = EventTelegramSerializer(data=data)
+
+		if not serializer.is_valid():
+			return Response({"success": False, "errors": serializer.errors}, status=400)
+
+		serializer.save()
+		return Response({"success": True, "data": serializer.data}, status=201)
 
 
 # функция для удаления участников события, чтобы без ошибок провести изменение структуры БД на проде
