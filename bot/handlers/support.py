@@ -3,7 +3,7 @@ from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, Comm
     filters
 from utils.keyboards import get_back_button, get_yes_no_keyboard
 import logging
-from config import ADMIN_CHAT_ID
+#from config import ADMIN_CHAT_ID
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +166,7 @@ def get_support_handler():
 
 
 def get_support_handlers():
-    """Возвращает все обработчики поддержки"""
+    """ Возвращает все обработчики поддержки """
     return [
         CallbackQueryHandler(support_start, pattern="^section_support$"),
         CallbackQueryHandler(support_history, pattern="^support_history$"),

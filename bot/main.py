@@ -4,6 +4,8 @@ import time
 from telegram import Update
 from telegram.error import TimedOut, NetworkError
 from telegram.ext import CommandHandler, ApplicationBuilder, ContextTypes, MessageHandler, filters
+
+from handlers.support import get_support_handlers
 from handlers.menu import get_menu_handlers
 from handlers.events import get_add_event_handler
 from handlers.auth import get_auth_handler
@@ -42,6 +44,10 @@ def main_with_restart():
             # Добавляем обработчики
             app.add_handler(get_add_event_handler())
             app.add_handler(get_auth_handler())
+
+            # Регистрируем обработчики раздела поддержки
+            for handler in get_support_handlers():
+                app.add_handler(handler)
 
             # Регистрируем обработчики меню
             for handler in get_menu_handlers():

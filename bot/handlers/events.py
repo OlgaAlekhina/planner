@@ -260,18 +260,10 @@ def get_add_event_handler():
             CallbackQueryHandler(add_event_start, pattern="^section_quick_event$")
         ],
         states={
-            TITLE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_title)
-            ],
-            DATE: [
-                CallbackQueryHandler(calendar_callback)
-            ],
-            TIME: [
-                CallbackQueryHandler(time_callback)
-            ],
-            CONFIRM: [
-                CallbackQueryHandler(confirm_callback, pattern="^event_confirm_")
-            ],
+            TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_title)],
+            DATE: [CallbackQueryHandler(calendar_callback)],
+            TIME: [CallbackQueryHandler(time_callback)],
+            CONFIRM: [CallbackQueryHandler(confirm_callback, pattern="^event_confirm_")],
         },
         fallbacks=[
             CommandHandler('cancel', cancel),
