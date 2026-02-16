@@ -4,7 +4,7 @@ import time
 from telegram import Update
 from telegram.error import TimedOut, NetworkError
 from telegram.ext import CommandHandler, ApplicationBuilder, ContextTypes, MessageHandler, filters
-from api_client import api_client
+from handlers.menu import get_menu_handlers
 from handlers.events import get_add_event_handler
 from handlers.auth import get_auth_handler
 from config import BOT_TOKEN
@@ -16,33 +16,6 @@ async def debug_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"DEBUG CONTEXT: {context}")
     print(f"DEBUG USER_DATA: {context.user_data}")
 
-async def start(update, context):
-    """ Команда /start - проверяем авторизацию """
-
-    # ОЧИСТКА: сбрасываем все предыдущие состояния
-    context.user_data.clear()
-
-    telegram_id = update.effective_user.id
-
-    result = api_client.check_telegram_user(telegram_id)
-
-    if result.get('exists'):
-        user = result['user']
-        await update.message.reply_text(
-            f"✅ Добро пожаловать,  {user['first_name'] or user['nickname']}!\n\n"
-            # f"You are logged in as {user['email']}\n\n"
-            # f"Available commands:\n"
-            # f"/batch - work with batches\n"
-            # f"/test - take tests\n"
-            # f"/maintenance - equipment maintenance\n"
-            # f"/coa - get COA\n"
-            #f"/menu - меню"
-        )
-    else:
-        await update.message.reply_text(
-            "👋 Добро пожаловать в бота приложения Family Planner!\n\n"
-            "Используйте команду /auth, чтобы авторизоваться и получить полный доступ к функционалу бота."
-        )
 
 def main_with_restart():
     """ Запуск бота с автоматическим перезапуском при ошибках """
@@ -69,7 +42,10 @@ def main_with_restart():
             # Добавляем обработчики
             app.add_handler(get_add_event_handler())
             app.add_handler(get_auth_handler())
-            app.add_handler(CommandHandler("start", start))
+
+            # Регистрируем обработчики меню
+            for handler in get_menu_handlers():
+                app.add_handler(handler)
 
             print(f"🚀 Запуск бота (попытка {attempt + 1})...")
 

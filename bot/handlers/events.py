@@ -44,7 +44,21 @@ def create_time_keyboard():
 
 async def add_event_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ Начало процесса добавления события """
-    telegram_id = update.effective_user.id
+    # Проверяем, откуда пришел вызов (из callback или из команды)
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        message = query.message
+        user = query.from_user
+        reply_method = lambda text, **kwargs: query.edit_message_text(text, **kwargs)
+    else:
+        message = update.message
+        user = update.effective_user
+        reply_method = lambda text, **kwargs: update.message.reply_text(text, **kwargs)
+
+    query = update.callback_query
+
+    telegram_id = user.id
     logger.info(f"🟡 Начало добавления события, telegram_id: {telegram_id}")
 
     # Проверяем, авторизован ли пользователь
@@ -53,7 +67,7 @@ async def add_event_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not result.get('exists'):
         logger.info("🔴 Пользователь не авторизован")
-        await update.message.reply_text(
+        await reply_method(
             "❌ Для добавления событий необходимо авторизоваться.\n\n"
             "Используйте /auth для входа."
         )
@@ -62,15 +76,19 @@ async def add_event_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Сохраняем данные пользователя в контекст
     context.user_data['user'] = result['user']
 
-    await update.message.reply_text(
+    await reply_method(
         "📝 Добавление нового события\n\n"
         "Введите название события:"
     )
+    logger.info("🟢 Переходим в состояние TITLE")
     return TITLE
 
 
 async def receive_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ Получение названия события """
+    logger.info("🟡 Вход в функцию receive_title")
+    logger.info(f"🟡 Текущее состояние: {context.user_data.get('_state')}")
+    logger.info(f"🟡 Текст сообщения: {update.message.text}")
     title = update.message.text.strip()
     context.user_data['event_title'] = title
 
@@ -157,8 +175,8 @@ async def time_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Создаем клавиатуру подтверждения
     keyboard = [
         [
-            InlineKeyboardButton("✅ Подтвердить", callback_data="confirm_yes"),
-            InlineKeyboardButton("❌ Отмена", callback_data="confirm_no")
+            InlineKeyboardButton("✅ Подтвердить", callback_data="event_confirm_yes"),
+            InlineKeyboardButton("❌ Отмена", callback_data="event_confirm_no")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -179,7 +197,7 @@ async def confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    if query.data == "confirm_yes":
+    if query.data == "event_confirm_yes":
         # Отправляем данные в API
         event_datetime = context.user_data['event_datetime']
 
@@ -225,7 +243,7 @@ async def confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
-async def cancel_add_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ Отмена добавления события """
     await update.message.reply_text(
         "❌ Добавление события отменено.\n\n"
@@ -237,12 +255,29 @@ async def cancel_add_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def get_add_event_handler():
     """ Возвращает обработчик добавления события """
     return ConversationHandler(
-        entry_points=[CommandHandler('add_event', add_event_start)],
+        entry_points=[
+            CommandHandler('addevent', add_event_start),
+            CallbackQueryHandler(add_event_start, pattern="^section_quick_event$")
+        ],
         states={
-            TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_title)],
-            DATE: [CallbackQueryHandler(calendar_callback)],
-            TIME: [CallbackQueryHandler(time_callback, pattern='^time_')],
-            CONFIRM: [CallbackQueryHandler(confirm_callback, pattern='^(confirm_yes|confirm_no)$')],
+            TITLE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_title)
+            ],
+            DATE: [
+                CallbackQueryHandler(calendar_callback)
+            ],
+            TIME: [
+                CallbackQueryHandler(time_callback)
+            ],
+            CONFIRM: [
+                CallbackQueryHandler(confirm_callback, pattern="^event_confirm_")
+            ],
         },
-        fallbacks=[CommandHandler('cancel', cancel_add_event)]
+        fallbacks=[
+            CommandHandler('cancel', cancel),
+            CallbackQueryHandler(add_event_start, pattern="^section_quick_event$")
+        ],
+        name="add_event_conversation",
+        persistent=False,
+        allow_reentry=True
     )
