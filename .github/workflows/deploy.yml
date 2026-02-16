@@ -30,7 +30,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ secrets.REGISTRY_USER }}/planner:app-1.0
+          tags: ${{ secrets.REGISTRY_USER }}/planner_back:lts
 
   build-bot:
     name: Build Bot
@@ -54,7 +54,7 @@ jobs:
           context: ./bot
           file: ./bot/Dockerfile
           push: true
-          tags: ${{ secrets.REGISTRY_USER }}/planner:bot-1.0
+          tags: ${{ secrets.REGISTRY_USER }}/planner_bot:lts
 
   deploy:
     name: Deploy
