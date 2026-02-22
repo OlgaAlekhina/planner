@@ -74,3 +74,37 @@ class ListItem(models.Model):
 
     class Meta:
         ordering = ['create_at']
+
+
+class RecipeCategory(models.Model):
+    """ Модель для хранения категорий рецептов """
+    name = models.CharField('Название', max_length=200)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    default = models.BooleanField('Общая', default=False)
+    users = models.ManyToManyField(GroupUser, blank=True, verbose_name='С кем поделились', related_name='shared_categories')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['default']
+
+
+class Recipe(models.Model):
+    """ Модель для хранения рецептов """
+    title = models.CharField('Название', max_length=500)
+    text = models.TextField('Описание', blank=True, null=True)
+    image = models.ImageField('Фото', upload_to='recipes/', blank=True, null=True)
+    default = models.BooleanField('Общий', default=False)
+    category = models.ManyToManyField(RecipeCategory, blank=True, verbose_name='Категория')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    users = models.ManyToManyField(GroupUser, blank=True, verbose_name='С кем поделились', related_name='shared_recipes')
+    create_at = models.DateTimeField('Когда создан', default=timezone.now)
+    update_at = models.DateTimeField('Когда изменен', auto_now=True)
+    favorites = models.ManyToManyField(User, blank=True, verbose_name='В избранном', related_name='favorites')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['-update_at']
