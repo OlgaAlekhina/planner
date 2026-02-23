@@ -1,6 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
-from .models import Note, Task, ListItem, List
+from .models import Note, Task, ListItem, List, RecipeCategory, Recipe
 from users.models import GroupUser
 
 
@@ -76,18 +76,6 @@ class ListSerializer(serializers.ModelSerializer):
         return instance
 
 
-class PlannerResponseSerializer(serializers.Serializer):
-    """ Сериализатор ответа для получения всех задач, заметок и списков пользователя """
-    type = serializers.CharField(help_text="Возможные значения: 'task', 'note', 'list'")
-    id = serializers.IntegerField()
-    title = serializers.CharField()
-    date = serializers.DateField()
-    time = serializers.TimeField()
-    important = serializers.BooleanField()
-    done = serializers.BooleanField()
-    update_at = serializers.DateTimeField()
-
-
 class PlannerSharingSerializer(serializers.Serializer):
     """ Сериализатор для расшаривания заметок, задач и списков """
     item_type = serializers.ChoiceField(choices=['task', 'note', 'list'], help_text="Возможные значения: 'task', 'note', 'list'")
@@ -104,6 +92,43 @@ class PlannerSharingSerializer(serializers.Serializer):
                 raise serializers.ValidationError(f'Group user with id = {user_id} does not exist')
 
         return group_users
+
+
+class RecipeCategorySerializer(serializers.ModelSerializer):
+    """ Сериализатор для категорий рецептов """
+
+    class Meta:
+        model = RecipeCategory
+        fields = ['id', 'name']
+
+
+class RecipeSerializer(serializers.ModelSerializer):
+    """ Сериализатор для рецептов """
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    in_favorites = serializers.SerializerMethodField(help_text='В избранном')
+
+    class Meta:
+        model = Recipe
+        fields = ['id', 'title', 'text', 'image', 'category', 'category_name', 'in_favorites']
+
+    def get_in_favorites(self, obj):
+        request = self.context.get('request')
+        return obj in request.user.favorites.all()
+
+
+### СЕРИАЛИЗАТОРЫ ДЛЯ RESPONSE
+
+class PlannerResponseSerializer(serializers.Serializer):
+    """ Сериализатор ответа для получения всех задач, заметок и списков пользователя """
+    type = serializers.CharField(help_text="Возможные значения: 'task', 'note', 'list'")
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    date = serializers.DateField()
+    time = serializers.TimeField()
+    important = serializers.BooleanField()
+    done = serializers.BooleanField()
+    update_at = serializers.DateTimeField()
+
 
 
 
