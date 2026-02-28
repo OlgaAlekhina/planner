@@ -12,7 +12,7 @@ WAITING_FOR_MESSAGE = 0
 
 
 async def support_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Начало раздела поддержки"""
+    """ Начало раздела поддержки """
     query = update.callback_query
 
     text = (
@@ -40,7 +40,7 @@ async def support_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def support_new(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Начало нового обращения"""
+    """ Начало нового обращения """
     query = update.callback_query
     await query.answer()
 
@@ -67,7 +67,7 @@ async def support_new(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def receive_support_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Получение сообщения от пользователя"""
+    """ Получение сообщения от пользователя """
     user = update.effective_user
     message_text = update.message.text
 
@@ -106,7 +106,7 @@ async def notify_admin(context, user, message, ticket_id):
         )
 
         await context.bot.send_message(
-            chat_id=ADMIN_CHAT_ID,
+            #chat_id=ADMIN_CHAT_ID,
             text=admin_text,
             parse_mode='Markdown'
         )

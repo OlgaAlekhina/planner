@@ -9,11 +9,11 @@ from django_filters import rest_framework as filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Note, Task, List, ListItem
+from .models import Note, Task, List, ListItem, RecipeCategory
 from .paginators import TaskPagination
 from .serializers import (NoteSerializer, TaskSerializer, ListSerializer, ListItemSerializer, PlannerResponseSerializer,
-    PlannerSharingSerializer)
-from planner.permissions import NotesPermission
+    PlannerSharingSerializer, RecipeCategorySerializer)
+from planner.permissions import NotesPermission, RecipeCategoryPermission
 from users.users_serializers import ErrorResponseSerializer
 
 
@@ -315,6 +315,76 @@ class ListViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
             "message": serializer.errors
         }}
         return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RecipeCategoryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin,
+                            mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
+    permission_classes = [IsAuthenticated, RecipeCategoryPermission]
+    queryset = RecipeCategory.objects.all()
+    serializer_class = RecipeCategorySerializer
+
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response(description="Успешный ответ", schema=RecipeCategorySerializer(many=True)),
+            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                                    {"error": "string"}})
+        },
+        operation_summary="Получение всех категорий рецептов пользователя",
+        operation_description="Выводит список всех категорий рецептов пользователя (общих и личных).\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате '"
+                              "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+    )
+    def list(self, request):
+        user = request.user
+        # Получаем список group_users для данного пользователя
+        group_users = user.group_users.all()
+        # Получаем все категории, если пользователь их автор или с ним поделились или это общие категории
+        recipe_categories = RecipeCategory.objects.filter(Q(author=user) | Q(users__in=group_users) | Q(default=True)).distinct()
+        return Response(RecipeCategorySerializer(recipe_categories, many=True).data, status=200)
+
+    def perform_create(self, serializer):
+        """ При создании категории делаем ее автором текущего пользователя """
+        serializer.save(author=self.request.user)
+
+    @swagger_auto_schema(
+        operation_summary="Создание новой категории рецептов",
+        operation_description="Создает новую категорию рецептов для пользователя.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            201: openapi.Response(description="Создана новая категория рецептов", schema=RecipeCategorySerializer()),
+            **COMMON_RESPONSES
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Редактирование категории рецептов по id",
+        operation_description="Изменение названия категории рецептов.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Категория изменена", schema=RecipeCategorySerializer()),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Удаление категории рецептов по id",
+        operation_description="Удаляет категорию рецептов из базы данных.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            204: openapi.Response(description="Категория удалена"),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
 
 
 class PlannerView(APIView):

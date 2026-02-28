@@ -81,13 +81,15 @@ class RecipeCategory(models.Model):
     name = models.CharField('Название', max_length=200)
     author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     default = models.BooleanField('Общая', default=False)
-    users = models.ManyToManyField(GroupUser, blank=True, verbose_name='С кем поделились', related_name='shared_categories')
+    #users = models.ManyToManyField(GroupUser, blank=True, verbose_name='С кем поделились', related_name='shared_categories')
 
     def __str__(self):
         return self.name
 
     class Meta:
         ordering = ['default']
+        verbose_name = 'Категория рецептов'
+        verbose_name_plural = 'Категории рецептов'
 
 
 class Recipe(models.Model):

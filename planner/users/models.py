@@ -74,5 +74,23 @@ class SignupCode(models.Model):
 	code_time = models.DateTimeField(auto_now_add=True)
 
 
+class Ticket(models.Model):
+	""" Модель для обращения в поддержку """
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
+	description = models.TextField('Обращение пользователя')
+	file = models.FileField('Приложенный файл', upload_to='tickets', blank=True, null=True)
+	feedback = models.TextField('Ответ поддержки', blank=True, null=True)
+	created_at = models.DateTimeField('Создано', auto_now_add=True)
+	updated_at = models.DateTimeField('Обновлено', auto_now=True)
+
+	class Meta:
+		ordering = ['-created_at']
+		verbose_name = 'Обращение пользователя'
+		verbose_name_plural = 'Обращения пользователей'
+
+	def __str__(self):
+		return f"#{self.id} - {self.description[:20]}"
+
+
 
 

@@ -476,7 +476,6 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		telegram_id = serializer.validated_data['telegram_id']
 
 		result = auth_telegram_user(email, code, telegram_id)
-		print('result', result)
 
 		return Response(result[0], status=result[1])
 
