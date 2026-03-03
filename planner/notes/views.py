@@ -1,5 +1,5 @@
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status, mixins
@@ -520,5 +520,9 @@ class PlannerSharingView(APIView):
 
         return Response({"detail": {"code": "HTTP_200_OK", "message": "Successfully updated item"}},
                                                                                     status=status.HTTP_200_OK)
+
+def main_page(request):
+    """Главная страница - статичный лендинг"""
+    return render(request, 'index.html')
 
 

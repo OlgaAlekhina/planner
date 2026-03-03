@@ -134,6 +134,8 @@ USE_TZ = True
 
 STATIC_URL = 'planner/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# STATICFILES_DIRS - для статики во время разработки
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 MEDIA_URL = 'planner/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

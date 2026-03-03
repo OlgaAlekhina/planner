@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@400;500&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Jost', sans-serif;
+}
+
+
+/* ===== HEADER ===== */
+.header {
+   background-image: url('../images/main.png');
+    background-size: cover, cover;
+    background-position: center;
+    background-blend-mode: normal;
+
+    width: 100%;
+    min-height: 780px;  /* вся высота хедера */
+
+    display: flex;
+    flex-direction: column;  /* элементы друг под другом */
+    position: relative;
+}
+
+/* Верхняя часть с меню (фиксированная высота 68px) */
+.header-top {
+    height: 68px;
+
+    /* Полупрозрачный фон */
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(3px);
+
+    /* Позиционирование */
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #666;
+    font-weight: 400;
+    font-size: 17px;
+    line-height: 24px;
+}
+
+.header-gap {
+
+}
+
+.email {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 110%;
+    color: #161616;
+}
+
+.download-btn {
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    background: #156FE2;
+    border-radius: 50px;
+    cursor: pointer;
+}
+

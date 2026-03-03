@@ -21,13 +21,13 @@ from drf_yasg import openapi
 from rest_framework import permissions
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic.base import RedirectView
 from rest_framework import routers
 from users.groups_views import GroupViewSet, add_default_group
 from users.users_views import UserViewSet, add_missing_profiles
 from events.views import EventViewSet, remove_users_from_event
 from notes.views import NoteViewSet, TaskViewSet, ListViewSet, PlannerView, PlannerSharingView, RecipeCategoryViewSet
 
+from notes.views import main_page
 
 # чтобы выводить 500 ошибку в формате JSON, а не HTML
 handler500 = 'rest_framework.exceptions.server_error'
@@ -51,7 +51,7 @@ router.register(r'recipe_categories', RecipeCategoryViewSet, basename='recipe_ca
 
 urlpatterns = [
     path('planner/admin/', admin.site.urls),
-    path('planner/', RedirectView.as_view(pattern_name='schema-swagger-ui', permanent=True)),
+    path('planner/', main_page, name='home'),
     path('planner/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('planner/api-auth/', include('rest_framework.urls')),
     path('planner/api/', include(router.urls)),

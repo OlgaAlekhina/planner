@@ -1,0 +1,68 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Planner</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="header">
+        <!-- ВЕРХНЯЯ ЧАСТЬ: Меню 68px -->
+        <div class="header-top py-3">
+            <div class="container d-flex align-items-center" style="padding-left: 40px !important; padding-right: 40px !important; max-width: 100% !important;">
+                <!-- Группируем лого и меню вместе (слева) -->
+                <div class="d-flex align-items-center gap-5">
+                    <div class="logo">
+                        <img src="{% static 'images/Logo.png' %}" alt="Планер"
+                             class="img-fluid" style="max-height: 40px;">
+                    </div>
+
+                    <nav class="nav">
+                        <ul class="nav">
+                            <li class="nav-item">
+                                <a href="#" class="nav-link active" aria-current="page">Основное</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">О приложении</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">Как пользоваться</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+
+                <div class="header-gap">
+
+                </div>
+
+                <!-- Блок с действиями -->
+                <div class="header-actions d-flex align-items-center gap-5 ms-auto">
+                    <a href="mailto:info@familyplanner.ru" class="email text-decoration-none d-flex align-items-center gap-2">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 20C3.45 20 2.97917 19.8042 2.5875 19.4125C2.19583 19.0208 2 18.55 2 18V6C2 5.45 2.19583 4.97917 2.5875 4.5875C2.97917 4.19583 3.45 4 4 4H20C20.55 4 21.0208 4.19583 21.4125 4.5875C21.8042 4.97917 22 5.45 22 6V18C22 18.55 21.8042 19.0208 21.4125 19.4125C21.0208 19.8042 20.55 20 20 20H4ZM12 13L4 8V18H20V8L12 13ZM12 11L20 6H4L12 11ZM4 8V6V18V8Z" fill="#1D1B20"/>
+                        </svg>
+                        info@familyplanner.ru
+                    </a>
+                    <button class="btn btn-primary download-btn">Скачать приложение</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Здесь главный экран -->
+    </main>
+
+    <footer>
+        <!-- Подвал -->
+    </footer>
+<!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
