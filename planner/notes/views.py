@@ -9,10 +9,10 @@ from django_filters import rest_framework as filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Note, Task, List, ListItem, RecipeCategory
+from .models import Note, Task, List, ListItem, RecipeCategory, Recipe
 from .paginators import TaskPagination
 from .serializers import (NoteSerializer, TaskSerializer, ListSerializer, ListItemSerializer, PlannerResponseSerializer,
-    PlannerSharingSerializer, RecipeCategorySerializer)
+    PlannerSharingSerializer, RecipeCategorySerializer, RecipeSerializer)
 from planner.permissions import NotesPermission, RecipeCategoryPermission
 from users.users_serializers import ErrorResponseSerializer
 
@@ -338,10 +338,8 @@ class RecipeCategoryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixi
     )
     def list(self, request):
         user = request.user
-        # Получаем список group_users для данного пользователя
-        group_users = user.group_users.all()
-        # Получаем все категории, если пользователь их автор или с ним поделились или это общие категории
-        recipe_categories = RecipeCategory.objects.filter(Q(author=user) | Q(users__in=group_users) | Q(default=True)).distinct()
+        # Получаем все категории, если пользователь их автор или это общие категории
+        recipe_categories = RecipeCategory.objects.filter(Q(author=user) | Q(default=True)).distinct()
         return Response(RecipeCategorySerializer(recipe_categories, many=True).data, status=200)
 
     def perform_create(self, serializer):
@@ -379,6 +377,77 @@ class RecipeCategoryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixi
                               "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
         responses={
             204: openapi.Response(description="Категория удалена"),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+
+class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
+                    viewsets.GenericViewSet):
+    http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
+    permission_classes = [IsAuthenticated, NotesPermission]
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response(description="Успешный ответ", schema=RecipeSerializer(many=True)),
+            401: openapi.Response(description="Требуется авторизация",
+                                  examples={"application/json": {"detail": "string"}}),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                                    {"error": "string"}})
+        },
+        operation_summary="Получение всех рецептов пользователя",
+        operation_description="Выводит список всех рецептов пользователя (общих, личных и расшаренных).\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате '"
+                              "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+    )
+    def list(self, request):
+        user = request.user
+        # Получаем список group_users для данного пользователя
+        group_users = user.group_users.all()
+        # Получаем все рецепты, если пользователь их автор или с ним поделились или это общие рецепты
+        recipes = Recipe.objects.filter(Q(author=user) | Q(users__in=group_users) | Q(default=True)).distinct()
+        return Response(RecipeSerializer(recipes, many=True, context={"request": request}).data, status=200)
+
+    def perform_create(self, serializer):
+        """ При создании рецепта делаем его автором текущего пользователя """
+        serializer.save(author=self.request.user)
+
+    @swagger_auto_schema(
+        operation_summary="Создание нового рецепта",
+        operation_description="Создает новый рецепт пользователя.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            201: openapi.Response(description="Создан новый рецепт", schema=RecipeSerializer()),
+            **COMMON_RESPONSES
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Редактирование рецепта по id",
+        operation_description="Изменение рецепта.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            200: openapi.Response(description="Рецепт изменен", schema=RecipeSerializer()),
+            **COMMON_RESPONSES,
+            **OBJECT_RESPONSES
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Удаление рецепта по id",
+        operation_description="Удаляет рецепт из базы данных.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
+        responses={
+            204: openapi.Response(description="Рецепт удален"),
             **COMMON_RESPONSES,
             **OBJECT_RESPONSES
         }

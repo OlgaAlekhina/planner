@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
 
-from .models import Note, Task, List, ListItem, RecipeCategory
+from .models import Note, Task, List, ListItem, RecipeCategory, Recipe
 
 
 class ListItemInline(admin.TabularInline):
@@ -18,8 +18,14 @@ class NoteAdmin(admin.ModelAdmin):
 
 @admin.register(RecipeCategory)
 class RecipeCategoryAdmin(admin.ModelAdmin):
-    """ Админка для заметок """
-    list_display = ['name', 'default']
+    """ Админка для категорий рецептов """
+    list_display = ['name', 'author', 'default']
+
+
+@admin.register(Recipe)
+class RecipeAdmin(admin.ModelAdmin):
+    """ Админка для рецептов """
+    list_display = ['title', 'default', 'author']
 
 
 @admin.register(Task)

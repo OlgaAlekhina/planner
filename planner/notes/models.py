@@ -60,6 +60,8 @@ class List(models.Model):
 
     class Meta:
         ordering = ['-update_at']
+        verbose_name = 'Список'
+        verbose_name_plural = 'Списки'
 
 
 class ListItem(models.Model):
@@ -98,7 +100,8 @@ class Recipe(models.Model):
     text = models.TextField('Описание', blank=True, null=True)
     image = models.ImageField('Фото', upload_to='recipes/', blank=True, null=True)
     default = models.BooleanField('Общий', default=False)
-    category = models.ManyToManyField(RecipeCategory, blank=True, verbose_name='Категория')
+    category = models.ForeignKey(RecipeCategory, on_delete=models.CASCADE, blank=True, null=True, related_name='recipes',
+                                 verbose_name='Категория рецептов')
     author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     users = models.ManyToManyField(GroupUser, blank=True, verbose_name='С кем поделились', related_name='shared_recipes')
     create_at = models.DateTimeField('Когда создан', default=timezone.now)
@@ -110,3 +113,5 @@ class Recipe(models.Model):
 
     class Meta:
         ordering = ['-update_at']
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'

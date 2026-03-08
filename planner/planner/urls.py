@@ -25,7 +25,8 @@ from rest_framework import routers
 from users.groups_views import GroupViewSet, add_default_group
 from users.users_views import UserViewSet, add_missing_profiles
 from events.views import EventViewSet, remove_users_from_event
-from notes.views import NoteViewSet, TaskViewSet, ListViewSet, PlannerView, PlannerSharingView, RecipeCategoryViewSet
+from notes.views import (NoteViewSet, TaskViewSet, ListViewSet, PlannerView, PlannerSharingView, RecipeCategoryViewSet,
+    RecipeViewSet)
 
 from notes.views import main_page
 
@@ -47,6 +48,7 @@ router.register(r'events', EventViewSet)
 router.register(r'notes', NoteViewSet, basename='notes')
 router.register(r'tasks', TaskViewSet, basename='tasks')
 router.register(r'lists', ListViewSet, basename='lists')
+router.register(r'recipes', RecipeViewSet, basename='recipes')
 router.register(r'recipe_categories', RecipeCategoryViewSet, basename='recipe_categories')
 
 urlpatterns = [
