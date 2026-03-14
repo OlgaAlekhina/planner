@@ -283,3 +283,152 @@ body {
     height: 600px;
 }
 
+.card {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: inset 36.6px -36.6px 36.6px rgba(170, 170, 170, 0.1), inset -36.6px 36.6px 36.6px rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(23.55px);
+    border-radius: 16px;
+    max-width: 600px;
+    padding: 0;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: scale(1.01);
+}
+
+.title {
+    font-family: 'Rubik';
+    font-weight: 500;
+    line-height: 28px;
+    color: #ffffff;
+    margin-bottom: 30px;
+    letter-spacing: -0.02em;
+    background: #0751B8;
+    border-radius: 16px 16px 0 0;
+    border: #0751B8;
+    padding: 25px;
+}
+
+.subtitle {
+    font-family: 'Jost';
+    font-size: 16px;
+    line-height: 22px;
+    color: #ffffff;
+}
+
+.form-group {
+    margin: 0 0 22px 0;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 14px 18px;
+    font-family: 'Jost';
+    font-size: 18px;
+    line-height: 24px;
+    color: black;
+    transition: all 0.2s;
+    outline: none;
+    border: 1px solid #8D8D8D;
+    border-radius: 8px;
+}
+
+input:focus, textarea:focus {
+    border-color: #4f6af5;
+    box-shadow: 0 0 0 4px rgba(79, 106, 245, 0.15);
+}
+
+input::placeholder, textarea::placeholder {
+    font-family: 'Jost';
+    font-size: 18px;
+    line-height: 24px;
+    color: #8D8D8D;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.5;
+}
+
+.submit-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #156FE2;
+    border-radius: 50px;
+    color: white;
+    border: none;
+    padding: 16px 28px;
+    font-family: 'Roboto';
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.3px;
+    margin-top: 8px 22px;
+    max-height: 48px;
+}
+
+.submit-btn:hover {
+    background-color: #0751B8;
+    box-shadow: 0 15px 30px -8px rgba(26, 30, 43, 0.3);
+}
+
+.submit-btn:active {
+    transform: scale(0.98);
+}
+
+.agreement {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    margin-left: 15px;
+    font-family: 'Jost';
+    font-size: 12px;
+    color: #181818;
+    text-align: center;
+    line-height: 14px;
+    padding-bottom: 22px;
+}
+
+.agreement input {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 15px;
+    height: 15px;
+}
+
+.agreement a {
+    color: #156FE2;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.agreement a:hover {
+    color: #0751B8;
+}
+
+/* ===== FOOTER ===== */
+
+.copyright a {
+    font-family: 'Jost';
+    font-size: 12px;
+    line-height: 14px;
+    color: #161616;
+    text-decoration: none;
+}
+
+.copyright a:hover {
+    color: #0751B8;
+}
+

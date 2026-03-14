@@ -193,16 +193,125 @@
     <div class="block-7">
         <div class="container h-100">
             <div class="row h-100 align-items-center justify-content-end">
-                <div class="col-12 col-md-8 col-lg-6 col-xl-7">
+                <div class="col-12 col-md-8 col-lg-6 col-xl-6 card" style="margin-right:30px;">
+                    <div class="title">
+                        Есть вопросы и предложения?<br>
+                        <span class="subtitle">Напишите нам</span>
+                    </div>
+                        <form style="margin-right:25px; margin-left:25px;">
+                            <div class="form-group">
+                                <input type="text" id="name" name="name" placeholder="Ваше имя" autocomplete="off">
+                            </div>
 
+                            <div class="form-group">
+                                <textarea id="message" name="message" placeholder="Текст"></textarea>
+                            </div>
+
+                            <button type="submit" class="submit-btn">Отправить</button>
+
+                            <div class="agreement">
+                                <input type="checkbox" name="agreement" id="agreement-checkbox" required style="margin-top: 2px;">
+                                    <label for="agreement-checkbox" style="padding-top:3px;">
+                                        Нажимая кнопку, вы даете согласие на <a href="#">обработку персональных данных</a>
+                                    </label>
+                            </div>
+                        </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <footer>
-        <!-- Подвал -->
+    <footer class="bg-light py-4" style="padding-bottom:0 !important;">
+      <div class="container-fluid px-5">
+        <div class="row align-items-center ml-2 mr-2">
+          <div class="col-md-2 mb-3 mb-md-0">
+            <img src="{% static 'images/Logo.png' %}" alt="Планер" class="img-fluid" style="max-height: 40px;">
+          </div>
+
+          <!-- Колонка с заголовками (меню) -->
+          <div class="col-md-6 mb-3 mb-md-0">
+            <ul class="list-unstyled d-flex flex-wrap justify-content-start gap-4 m-0">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" aria-current="page">Основное</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">О приложении</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">Как пользоваться</a>
+                </li>
+                <li>
+                    <a href="mailto:info@familyplanner.ru" class="email text-decoration-none d-flex align-items-center gap-2">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 20C3.45 20 2.97917 19.8042 2.5875 19.4125C2.19583 19.0208 2 18.55 2 18V6C2 5.45 2.19583 4.97917 2.5875 4.5875C2.97917 4.19583 3.45 4 4 4H20C20.55 4 21.0208 4.19583 21.4125 4.5875C21.8042 4.97917 22 5.45 22 6V18C22 18.55 21.8042 19.0208 21.4125 19.4125C21.0208 19.8042 20.55 20 20 20H4ZM12 13L4 8V18H20V8L12 13ZM12 11L20 6H4L12 11ZM4 8V6V18V8Z" fill="#1D1B20"/>
+                        </svg>
+                        info@familyplanner.ru
+                    </a>
+                </li>
+            </ul>
+          </div>
+          <!-- Колонка с иконками соцсетей -->
+          <div class="col-md-1 mb-3 mb-md-0" style="margin-left:60px;">
+            <div class="d-flex justify-content-start justify-content-md-end gap-3">
+              <a href="#" class="text-dark fs-5">
+                  <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16.0061 2.73437C14.2422 0.976562 11.8902 0 9.40766 0C4.24651 0 0.06533 4.16667 0.06533 9.3099C0.06533 10.9375 0.522648 12.5651 1.30662 13.9323L0 18.75L4.96516 17.4479C6.33711 18.1641 7.83972 18.5547 9.40766 18.5547C14.5688 18.5547 18.75 14.388 18.75 9.24479C18.6847 6.83594 17.77 4.49219 16.0061 2.73437ZM13.9155 12.6302C13.7195 13.151 12.8049 13.6719 12.3476 13.737C11.9556 13.8021 11.4329 13.8021 10.9103 13.6719C10.5836 13.5417 10.1263 13.4115 9.60366 13.151C7.25174 12.1745 5.74913 9.83073 5.61847 9.63542C5.48781 9.50521 4.6385 8.39844 4.6385 7.22656C4.6385 6.05469 5.22648 5.53385 5.42247 5.27344C5.61847 5.01302 5.87979 5.01302 6.07578 5.01302C6.20645 5.01302 6.40244 5.01302 6.5331 5.01302C6.66376 5.01302 6.85976 4.94792 7.05575 5.40365C7.25174 5.85937 7.70906 7.03125 7.77439 7.09635C7.83972 7.22656 7.83972 7.35677 7.77439 7.48698C7.70906 7.61719 7.64373 7.7474 7.51306 7.8776C7.3824 8.00781 7.25174 8.20312 7.18641 8.26823C7.05575 8.39844 6.92509 8.52864 7.05575 8.72396C7.18641 8.98437 7.64373 9.70052 8.36237 10.3516C9.277 11.1328 9.99564 11.3932 10.257 11.5234C10.5183 11.6536 10.649 11.5885 10.7796 11.4583C10.9103 11.3281 11.3676 10.8073 11.4983 10.5469C11.6289 10.2865 11.8249 10.3516 12.0209 10.4167C12.2169 10.4818 13.3929 11.0677 13.5888 11.1979C13.8502 11.3281 13.9808 11.3932 14.0462 11.4583C14.1115 11.6536 14.1115 12.1094 13.9155 12.6302Z" fill="#18468D"/>
+                  </svg>
+              </a>
+              <a href="#" class="text-dark fs-5">
+                  <svg width="21" height="18" viewBox="0 0 21 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M0.140106 7.92215C6.68525 5.18175 20.4731 -0.10677 20.5934 0.00164143C21.0241 0.389774 16.912 17.7861 16.912 17.7861C16.9117 18.1971 11.5941 13.6755 10.776 13.6755C9.95782 13.6755 8.73032 16.4553 7.5031 16.4553C6.27589 16.4553 5.45803 9.97593 5.04896 9.97593C4.63989 9.97593 0.54887 8.74275 0.140106 8.33169C-0.0912123 8.09907 0.00374913 8.05866 0.140106 7.92215ZM7.09401 10.387L7.50308 14.0865L7.91215 10.7981L16.9117 3.39897L6.27587 9.56487L7.09401 10.387Z" fill="#18468D"/>
+                  </svg>
+              </a>
+              <a href="#" class="text-dark fs-5">
+                  <svg width="24" height="17" viewBox="0 0 24 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.7877 16.8C4.76604 16.8 0.190642 10.4937 0 0H4.01814C4.15012 7.7021 7.1124 10.9646 9.45876 11.6372V0H13.2423V6.64264C15.5593 6.35676 17.9936 3.32973 18.8149 0H22.5984C22.2889 1.72689 21.6721 3.36198 20.7864 4.803C19.9007 6.24402 18.7652 7.45996 17.451 8.37477C18.918 9.21067 20.2137 10.3938 21.2526 11.8461C22.2916 13.2984 23.0501 14.9868 23.4783 16.8H19.3135C18.9292 15.2251 18.148 13.8154 17.068 12.7474C15.988 11.6794 14.6572 11.0007 13.2423 10.7964V16.8H12.7877Z" fill="#18468D"/>
+                  </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Колонка с кнопкой -->
+          <div class="col-md-3 text-md-end" style="width:20%;">
+            <button class="btn btn-primary download-btn">Скачать приложение</button>
+          </div>
+
+        </div>
+
+        <!-- Горизонтальная линия -->
+        <hr class="my-4" style="width: 100%; opacity: 0.25; margin-bottom:0 !important;">
+
+        <!-- Самый нижний блок -->
+        <div class="row">
+          <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center copyright" style="margin-bottom:10px;">
+
+              <!-- Левая группа (два элемента) -->
+              <div class="d-flex gap-4">
+                <!-- Элемент 1 -->
+                <div>
+                  <a href="#">© 2026 | Familyplanner.ru</a>
+                </div>
+
+                <!-- Элемент 2 -->
+              <div>
+                  <a href="#">Сайт разработан nexora-design.ru</a>
+                </div>
+              </div>
+
+              <!-- Правый элемент -->
+              <div>
+                <a href="#">Политика конфиденциальности</a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+
+      </div>
     </footer>
+
 <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
