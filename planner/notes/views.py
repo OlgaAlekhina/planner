@@ -395,8 +395,7 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
     @swagger_auto_schema(
         responses={
             200: openapi.Response(description="Успешный ответ", schema=RecipeSerializer(many=True)),
-            401: openapi.Response(description="Требуется авторизация",
-                                  examples={"application/json": {"detail": "string"}}),
+            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
             500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
                                                                                                     {"error": "string"}})
         },
@@ -454,6 +453,28 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'], serializer_class=None)
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response(description="Успешный ответ", schema=ErrorResponseSerializer()),
+            403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
+            404: openapi.Response(description="Рецепт не найден", examples={"application/json": {"detail": "string"}}),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                                    {"error": "string"}})
+        },
+        operation_summary="Добавление рецепта в избранное",
+        operation_description="Добавляет рецепт в избранное авторизованного пользователя.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате '"
+                              "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+    )
+    def add_to_favorites(self, request, pk=None):
+        recipe = self.get_object()
+        user = self.request.user
+        recipe.favorites.add(user)
+
+        return Response({"detail": {"code": "HTTP_200_OK", "message": "Successfully add recipe to favorites"}},
+                        status=status.HTTP_200_OK)
 
 
 class PlannerView(APIView):
@@ -549,10 +570,7 @@ class PlannerSharingView(APIView):
     @swagger_auto_schema(
         request_body=PlannerSharingSerializer(),
         responses={
-            200: openapi.Response(
-                description="Успешный ответ",
-                schema=ErrorResponseSerializer()
-            ),
+            200: openapi.Response(description="Успешный ответ", schema=ErrorResponseSerializer()),
             **COMMON_RESPONSES,
             **OBJECT_RESPONSES
         },
