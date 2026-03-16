@@ -391,8 +391,25 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
     permission_classes = [IsAuthenticated, NotesPermission]
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_fields = ['category']
+
+    def get_queryset(self):
+        user = self.request.user
+        # Получаем список group_users для данного пользователя
+        group_users = user.group_users.all()
+        # Получаем все рецепты, если пользователь их автор или с ним поделились или это общие рецепты
+        return Recipe.objects.filter(Q(author=user) | Q(users__in=group_users) | Q(default=True)).distinct()
 
     @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'category',
+                openapi.IN_QUERY,
+                description="Filter by category ID",
+                type=openapi.TYPE_STRING
+            )
+        ],
         responses={
             200: openapi.Response(description="Успешный ответ", schema=RecipeSerializer(many=True)),
             401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
@@ -400,17 +417,13 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
                                                                                                     {"error": "string"}})
         },
         operation_summary="Получение всех рецептов пользователя",
-        operation_description="Выводит список всех рецептов пользователя (общих, личных и расшаренных).\n"
+        operation_description="Выводит список всех рецептов пользователя (общих, личных и расшаренных) с возможностью "
+                              "фильтрации по категории.\n"
                               "Условия доступа к эндпоинту: токен авторизации в формате '"
                               "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
     )
-    def list(self, request):
-        user = request.user
-        # Получаем список group_users для данного пользователя
-        group_users = user.group_users.all()
-        # Получаем все рецепты, если пользователь их автор или с ним поделились или это общие рецепты
-        recipes = Recipe.objects.filter(Q(author=user) | Q(users__in=group_users) | Q(default=True)).distinct()
-        return Response(RecipeSerializer(recipes, many=True, context={"request": request}).data, status=200)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         """ При создании рецепта делаем его автором текущего пользователя """
