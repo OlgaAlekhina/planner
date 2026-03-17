@@ -102,6 +102,19 @@ class RecipeCategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 
+class RecipeListSerializer(serializers.ModelSerializer):
+    """ Сериализатор для списка рецептов """
+    in_favorites = serializers.SerializerMethodField(help_text='В избранном')
+
+    class Meta:
+        model = Recipe
+        fields = ['id', 'title', 'image', 'category', 'in_favorites', 'default']
+
+    def get_in_favorites(self, obj):
+        request = self.context.get('request')
+        return obj in request.user.favorites.all()
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     """ Сериализатор для рецептов """
     category_name = serializers.CharField(source='category.name', read_only=True)

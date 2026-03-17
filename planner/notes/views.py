@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from .models import Note, Task, List, ListItem, RecipeCategory, Recipe
 from .paginators import TaskPagination
 from .serializers import (NoteSerializer, TaskSerializer, ListSerializer, ListItemSerializer, PlannerResponseSerializer,
-    PlannerSharingSerializer, RecipeCategorySerializer, RecipeSerializer)
+    PlannerSharingSerializer, RecipeCategorySerializer, RecipeListSerializer, RecipeSerializer)
 from planner.permissions import NotesPermission, RecipeCategoryPermission
 from users.users_serializers import ErrorResponseSerializer
 
@@ -390,7 +390,7 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     permission_classes = [IsAuthenticated, NotesPermission]
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
+    serializer_class = RecipeListSerializer
     filter_backends = [filters.DjangoFilterBackend]
     filterset_fields = ['category']
 
