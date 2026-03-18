@@ -58,8 +58,8 @@ class NotesPermission(permissions.BasePermission):
         # Получаем список group_users для данного пользователя
         group_users = user.group_users.all()
 
-        # Разрешаем добавлять в избранное общие рецепты
-        if view.action == 'add_to_favorites':
+        # Разрешаем просматривать и добавлять в избранное общие рецепты
+        if view.action in ('add_to_favorites', 'retrieve'):
             return obj.default or obj.author == user or any(group_user in obj.users.all() for group_user in group_users)
 
         return obj.author == user or any(group_user in obj.users.all() for group_user in group_users)

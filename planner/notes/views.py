@@ -386,11 +386,9 @@ class RecipeCategoryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixi
 
 
 class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
-                    viewsets.GenericViewSet):
+                    mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     permission_classes = [IsAuthenticated, NotesPermission]
-    queryset = Recipe.objects.all()
-    serializer_class = RecipeListSerializer
     filter_backends = [filters.DjangoFilterBackend]
     filterset_fields = ['category']
 
@@ -400,6 +398,13 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
         group_users = user.group_users.all()
         # Получаем все рецепты, если пользователь их автор или с ним поделились или это общие рецепты
         return Recipe.objects.filter(Q(author=user) | Q(users__in=group_users) | Q(default=True)).distinct()
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            serializer_class = RecipeListSerializer
+        else:
+            serializer_class = RecipeSerializer
+        return serializer_class
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -424,6 +429,23 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response(description="Успешный ответ", schema=RecipeSerializer()),
+            403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
+            404: openapi.Response(description="Рецепт не найден", examples={"application/json": {"detail": "string"}}),
+            401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                                    {"error": "string"}})
+        },
+        operation_summary="Получение рецепта по ID",
+        operation_description="Выводит данные одного рецепта по ID.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате '"
+                              "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         """ При создании рецепта делаем его автором текущего пользователя """

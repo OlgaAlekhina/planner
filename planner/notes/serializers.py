@@ -115,18 +115,12 @@ class RecipeListSerializer(serializers.ModelSerializer):
         return obj in request.user.favorites.all()
 
 
-class RecipeSerializer(serializers.ModelSerializer):
-    """ Сериализатор для рецептов """
-    category_name = serializers.CharField(source='category.name', read_only=True)
-    in_favorites = serializers.SerializerMethodField(help_text='В избранном')
+class RecipeSerializer(RecipeListSerializer):
+    """ Сериализатор для полной информации по рецепту """
+    category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
 
-    class Meta:
-        model = Recipe
-        fields = ['id', 'title', 'text', 'image', 'category', 'category_name', 'in_favorites']
-
-    def get_in_favorites(self, obj):
-        request = self.context.get('request')
-        return obj in request.user.favorites.all()
+    class Meta(RecipeListSerializer.Meta):
+        fields = RecipeListSerializer.Meta.fields + ['text', 'category_name']
 
 
 ### СЕРИАЛИЗАТОРЫ ДЛЯ RESPONSE
