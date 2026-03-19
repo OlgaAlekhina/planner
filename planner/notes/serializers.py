@@ -120,7 +120,7 @@ class RecipeSerializer(RecipeListSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
 
     class Meta(RecipeListSerializer.Meta):
-        fields = RecipeListSerializer.Meta.fields + ['text', 'category_name']
+        fields = RecipeListSerializer.Meta.fields + ['text', 'link', 'category_name']
 
 
 ### СЕРИАЛИЗАТОРЫ ДЛЯ RESPONSE

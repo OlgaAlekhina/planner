@@ -106,6 +106,7 @@ class Recipe(models.Model):
     users = models.ManyToManyField(GroupUser, blank=True, verbose_name='С кем поделились', related_name='shared_recipes')
     create_at = models.DateTimeField('Когда создан', default=timezone.now)
     update_at = models.DateTimeField('Когда изменен', auto_now=True)
+    link = models.URLField('Ссылка на рецепт', blank=True, null=True)
     favorites = models.ManyToManyField(User, blank=True, verbose_name='В избранном', related_name='favorites')
 
     def __str__(self):
