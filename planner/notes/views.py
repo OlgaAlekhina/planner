@@ -599,7 +599,7 @@ class PlannerView(APIView):
 
 
 class PlannerSharingView(APIView):
-    """ Эндпоинт для шаринга задач, заметок и списков с другими пользователями """
+    """ Эндпоинт для шаринга задач, заметок, списков и рецептов с другими пользователями """
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
@@ -609,9 +609,9 @@ class PlannerSharingView(APIView):
             **COMMON_RESPONSES,
             **OBJECT_RESPONSES
         },
-        operation_summary="Поделиться задачей, заметкой или списком с другими пользователями",
-        operation_description="Выдает указанным пользователям все права на заметку, задачу или список.\n\n"
-              "Возможные значения поля 'item_type': 'task', 'note', 'list'.\n\n"
+        operation_summary="Поделиться задачей, заметкой, списком или рецептом с другими пользователями",
+        operation_description="Выдает указанным пользователям все права на заметку, задачу, список или рецепт.\n\n"
+              "Возможные значения поля 'item_type': 'task', 'note', 'list', 'recipe'.\n\n"
               "Поле 'users_list' содержит список групповых ID пользователей, которым надо выдать права.\n\n"
               "Условия доступа к эндпоинту: токен авторизации в формате 'Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'.",
         tags=['planner'],
@@ -630,6 +630,7 @@ class PlannerSharingView(APIView):
             'task': Task,
             'note': Note,
             'list': List,
+            'recipe': Recipe
         }
 
         try:
@@ -642,6 +643,7 @@ class PlannerSharingView(APIView):
 
         return Response({"detail": {"code": "HTTP_200_OK", "message": "Successfully updated item"}},
                                                                                     status=status.HTTP_200_OK)
+
 
 def main_page(request):
     """Главная страница - статичный лендинг"""

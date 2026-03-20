@@ -77,8 +77,9 @@ class ListSerializer(serializers.ModelSerializer):
 
 
 class PlannerSharingSerializer(serializers.Serializer):
-    """ Сериализатор для расшаривания заметок, задач и списков """
-    item_type = serializers.ChoiceField(choices=['task', 'note', 'list'], help_text="Возможные значения: 'task', 'note', 'list'")
+    """ Сериализатор для расшаривания заметок, задач, списков и рецептов """
+    item_type = serializers.ChoiceField(choices=['task', 'note', 'list', 'recipe'],
+                                        help_text="Возможные значения: 'task', 'note', 'list', 'recipe'")
     users_list = serializers.ListField(child=serializers.IntegerField(), help_text="Список групповых id пользователей")
 
     def validate_users_list(self, users_list):
