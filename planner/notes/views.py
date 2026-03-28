@@ -4,6 +4,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from django_filters import rest_framework as filters
 from rest_framework.response import Response
@@ -389,22 +390,45 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
                     mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     permission_classes = [IsAuthenticated, NotesPermission]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     filter_backends = [filters.DjangoFilterBackend]
-    filterset_fields = ['category']
+    filterset_fields = ['category', 'default']
 
     def get_queryset(self):
+        # Для Swagger
+        if getattr(self, 'swagger_fake_view', False):
+            return Recipe.objects.none()
+
         user = self.request.user
+        queryset = Recipe.objects.all()
+
+        # Получаем параметр in_favorites из запроса
+        in_favorites = self.request.query_params.get('in_favorites')
+
+        # Фильтруем по избранному
+        if in_favorites:
+            # Преобразуем строку в булево значение
+            in_favorites_bool = in_favorites.lower() == 'true'
+
+            if in_favorites_bool:
+                # Показываем только рецепты в избранном
+                queryset = queryset.filter(favorites=user)
+            else:
+                # Показываем все рецепты кроме избранных
+                queryset = queryset.exclude(favorites=user)
+
         # Получаем список group_users для данного пользователя
         group_users = user.group_users.all()
         # Получаем все рецепты, если пользователь их автор или с ним поделились или это общие рецепты
-        return Recipe.objects.filter(Q(author=user) | Q(users__in=group_users) | Q(default=True)).distinct()
+        return queryset.filter(Q(author=user) | Q(users__in=group_users) | Q(default=True)).distinct()
 
     def get_serializer_class(self):
         if self.action == 'list':
-            serializer_class = RecipeListSerializer
+            return RecipeListSerializer
+        elif self.action in ['add_to_favorites', 'remove_from_favorites']:
+            return None
         else:
-            serializer_class = RecipeSerializer
-        return serializer_class
+            return RecipeSerializer
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -413,17 +437,29 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
                 openapi.IN_QUERY,
                 description="Filter by category ID",
                 type=openapi.TYPE_STRING
+            ),
+            openapi.Parameter(
+                'default',
+                openapi.IN_QUERY,
+                description="Filter by default value",
+                type=openapi.TYPE_BOOLEAN
+            ),
+            openapi.Parameter(
+                'in_favorites',
+                openapi.IN_QUERY,
+                description="Filter by favorites value",
+                type=openapi.TYPE_BOOLEAN
             )
         ],
         responses={
-            200: openapi.Response(description="Успешный ответ", schema=RecipeSerializer(many=True)),
+            200: openapi.Response(description="Успешный ответ", schema=RecipeListSerializer(many=True)),
             401: openapi.Response(description="Требуется авторизация", examples={"application/json": {"detail": "string"}}),
             500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
                                                                                                     {"error": "string"}})
         },
         operation_summary="Получение всех рецептов пользователя",
         operation_description="Выводит список всех рецептов пользователя (общих, личных и расшаренных) с возможностью "
-                              "фильтрации по категории.\n"
+                              "фильтрации 1) по категории, 2) рецепт в избранном или нет, 3) общий или пользовательский рецепт.\n"
                               "Условия доступа к эндпоинту: токен авторизации в формате '"
                               "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
     )
@@ -510,6 +546,27 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
 
         return Response({"detail": {"code": "HTTP_200_OK", "message": "Successfully add recipe to favorites"}},
                         status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], serializer_class=None)
+    @swagger_auto_schema(
+        responses={
+            204: openapi.Response(description="Успешный ответ"),
+            403: openapi.Response(description="Доступ запрещен", schema=ErrorResponseSerializer()),
+            404: openapi.Response(description="Рецепт не найден", examples={"application/json": {"detail": "string"}}),
+            500: openapi.Response(description="Ошибка сервера при обработке запроса", examples={"application/json":
+                                                                                                    {"error": "string"}})
+        },
+        operation_summary="Удаление рецепта из избранного",
+        operation_description="Удаляет рецепт из избранного авторизованного пользователя.\n"
+                              "Условия доступа к эндпоинту: токен авторизации в формате '"
+                              "Bearer 3fa85f64-5717-4562-b3fc-2c963f66afa6'"
+    )
+    def remove_from_favorites(self, request, pk=None):
+        recipe = self.get_object()
+        user = self.request.user
+        recipe.favorites.remove(user)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class PlannerView(APIView):
