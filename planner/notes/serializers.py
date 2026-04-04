@@ -122,6 +122,7 @@ class RecipeSerializer(RecipeListSerializer):
 
     class Meta(RecipeListSerializer.Meta):
         fields = RecipeListSerializer.Meta.fields + ['text', 'link', 'category_name']
+        read_only_fields = ['link', 'default']
 
 
 ### СЕРИАЛИЗАТОРЫ ДЛЯ RESPONSE
