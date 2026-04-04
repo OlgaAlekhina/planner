@@ -390,7 +390,6 @@ class RecipeViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Updat
                     mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     http_method_names = [m for m in viewsets.ModelViewSet.http_method_names if m not in ['put']]
     permission_classes = [IsAuthenticated, NotesPermission]
-    parser_classes = [MultiPartParser, FormParser, JSONParser]
     filter_backends = [filters.DjangoFilterBackend]
     filterset_fields = ['category', 'default']
 

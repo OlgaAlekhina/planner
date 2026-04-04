@@ -45,6 +45,8 @@ class Task(models.Model):
 
     class Meta:
         ordering = ['date', '-important', 'time']
+        verbose_name = 'Задача'
+        verbose_name_plural = 'Задачи'
 
 
 class List(models.Model):
