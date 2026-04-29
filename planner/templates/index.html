@@ -26,13 +26,13 @@
                 <nav class="nav nav-desktop">
                     <ul class="nav">
                         <li class="nav-item">
-                            <a href="#" class="nav-link active" aria-current="page">Основное</a>
+                            <a href="#main" class="nav-link active" aria-current="page">Основное</a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">О приложении</a>
+                            <a href="#about" class="nav-link">О приложении</a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">Как пользоваться</a>
+                            <a href="#use" class="nav-link">Как пользоваться</a>
                         </li>
                     </ul>
                 </nav>
@@ -63,19 +63,21 @@
     <!-- Мобильное меню (выпадающее) -->
     <div class="mobile-menu" id="mobileMenu">
         <div class="mobile-menu-inner">
+            <!-- Крестик закрытия -->
+            <div class="close-menu" id="closeMenu"></div>
             <nav class="mobile-nav">
                 <ul class="mobile-nav-list">
                     <li class="mobile-nav-item">
-                        <a href="#" class="mobile-nav-link">Основное</a>
+                        <a href="#main" class="mobile-nav-link">Основное</a>
                     </li>
                     <li class="mobile-nav-item">
-                        <a href="#" class="mobile-nav-link">О приложении</a>
+                        <a href="#about" class="mobile-nav-link">О приложении</a>
                     </li>
                     <li class="mobile-nav-item">
-                        <a href="#" class="mobile-nav-link">Как пользоваться</a>
+                        <a href="#use" class="mobile-nav-link">Как пользоваться</a>
                     </li>
                 </ul>
-                <a href="mailto:info@familyplanner.ru" class="email text-decoration-none d-flex align-items-center gap-2">
+                <a href="mailto:info@familyplanner.ru" class="email text-decoration-none d-flex align-items-center gap-2" style="margin-top:30px;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M4 20C3.45 20 2.97917 19.8042 2.5875 19.4125C2.19583 19.0208 2 18.55 2 18V6C2 5.45 2.19583 4.97917 2.5875 4.5875C2.97917 4.19583 3.45 4 4 4H20C20.55 4 21.0208 4.19583 21.4125 4.5875C21.8042 4.97917 22 5.45 22 6V18C22 18.55 21.8042 19.0208 21.4125 19.4125C21.0208 19.8042 20.55 20 20 20H4ZM12 13L4 8V18H20V8L12 13ZM12 11L20 6H4L12 11ZM4 8V6V18V8Z" fill="#1D1B20"/>
                     </svg>
@@ -114,7 +116,7 @@
 </header>
 
 
-    <div class="block-1">
+    <div class="block-1" id="about">
         <div class="container h-100">
             <div class="row h-100 align-items-center justify-content-end">
                 <div class="col-12 col-md-8 col-lg-6 col-xl-7">
@@ -141,7 +143,7 @@
             Ваш браузер не поддерживает видео.
     </video>
 
-    <div class="block-2">
+    <div class="block-2" id="main">
         <div class="container h-100">
             <div class="row h-100 align-items-center justify-content-start">
                 <div class="col-12 col-md-8 col-lg-6 col-xl-6" style="margin-left: 30px;">
@@ -216,7 +218,7 @@
         </div>
     </div>
 
-    <div class="block-5">
+    <div class="block-5" id="use">
         <div class="block-5-div1">
             <p>Как пользоваться</p>
         </div>
@@ -381,6 +383,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const burgerBtn = document.getElementById('burgerBtn');
     const mobileMenu = document.getElementById('mobileMenu');
+    const closeMenu = document.getElementById('closeMenu');
 
     if (burgerBtn && mobileMenu) {
         // Открыть/закрыть меню
@@ -399,6 +402,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 mobileMenu.classList.remove('open');
                 document.body.style.overflow = '';
             });
+        });
+
+        // Закрытие через крестик
+        closeMenu.addEventListener('click', function() {
+            burgerBtn.classList.remove('active');
+            mobileMenu.classList.remove('open');
+            document.body.style.overflow = '';
         });
 
         // Закрыть меню при клике на фон

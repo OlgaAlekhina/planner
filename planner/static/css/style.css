@@ -25,19 +25,16 @@ body {
     padding-right: 40px;
 }
 
-
 /* ===== HEADER ===== */
 .header {
     background-image: url('../images/main.png');
-    background-size: 1280px 700px;
-    background-position: center;
-    background-blend-mode: normal;
-
+    background-size: 100% auto;  /* Растягивает по ширине, высота пропорциональна */
+    background-position: center center;  /* Выравнивание по центру сверху */
+    background-repeat: no-repeat;
     width: 100%;
-    min-height: 700px;  /* вся высота хедера */
-
+    padding-bottom: 45%;
     display: flex;
-    flex-direction: column;  /* элементы друг под другом */
+    flex-direction: column;
     position: relative;
 }
 
@@ -76,7 +73,7 @@ body {
     font-family: 'Jost', sans-serif;
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 8px 20px;
     background: #156FE2;
     border-radius: 50px;
     cursor: pointer;
@@ -86,7 +83,9 @@ body {
 
 .block-1 {
     background-image: url('../images/block_1.png');
-    background-size: 1280px 800px;
+    background-size: 100% auto;  /* Растягивает по ширине, высота пропорциональна */
+    background-position: center top;  /* Выравнивание по центру сверху */
+    background-repeat: no-repeat;
     width: 100%;
     min-height: 800px;
 }
@@ -511,20 +510,19 @@ textarea {
     transform: rotate(-45deg) translate(7px, -7px);
 }
 
-/* Мобильное меню */
+/* Мобильное меню - выдвигается справа налево на 90% ширины */
 .mobile-menu {
     position: fixed;
     top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
+    right: -90%;
+    width: 90%;
+    height: 80%;
     z-index: 1000;
-    transition: left 0.3s ease;
+    transition: right 0.3s ease;
 }
 
 .mobile-menu.open {
-    left: 0;
+    right: 0;
 }
 
 .burger-btn {
@@ -535,13 +533,43 @@ textarea {
 .mobile-menu-inner {
     position: absolute;
     top: 0;
-    left: 0;
-    width: 80%;
-    max-width: 320px;
+    right: 0;
+    width: 100%;
     height: 100%;
     background: white;
-    padding: 80px 15px 15px;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    padding: 60px 20px 20px;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+}
+
+/* Крестик закрытия */
+.close-menu {
+    position: absolute;
+    top: 15px;
+    right: 40px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    z-index: 1003;
+}
+
+.close-menu::before,
+.close-menu::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 2px;
+    background-color: #333;
+}
+
+.close-menu::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.close-menu::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .mobile-nav-list {
@@ -567,12 +595,16 @@ textarea {
     text-decoration: none;
 }
 
+.burger-list a:hover {
+    color: #0751B8;
+}
+
 .social-icons {
     margin-top: 20px;
 }
 
 .mobile-nav-item {
-    margin-bottom: 20px;
+    margin-right: 20px;
 }
 
 .mobile-nav-link {
@@ -582,11 +614,11 @@ textarea {
     text-decoration: none;
     transition: color 0.2s;
     display: block;
-    padding: 8px 0;
+    padding: 15px 15px;
 }
 
-.mobile-nav-link:hover,
-.mobile-nav-link.active {
-    color: #007bff;
+/* Эффект наведения - голубой прямоугольник */
+.mobile-nav-link:hover {
+    background-color: #DBECFF;
 }
 
