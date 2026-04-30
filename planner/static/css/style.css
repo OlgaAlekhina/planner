@@ -29,7 +29,7 @@ body {
 .header {
     background-image: url('../images/main.png');
     background-size: 100% auto;  /* Растягивает по ширине, высота пропорциональна */
-    background-position: center center;  /* Выравнивание по центру сверху */
+    background-position: center center;
     background-repeat: no-repeat;
     width: 100%;
     padding-bottom: 45%;
@@ -48,7 +48,7 @@ body {
     /* Позиционирование */
     display: flex;
     align-items: center;
-    position: relative;
+    position: absolute;
     z-index: 2;
     width: 100%;
 }
@@ -77,6 +77,10 @@ body {
     background: #156FE2;
     border-radius: 50px;
     cursor: pointer;
+}
+
+.mobile-image {
+    display: none;
 }
 
 /* ===== BLOCK-1 ===== */
@@ -440,12 +444,15 @@ textarea {
 
 @media (max-width: 768px) {
     .header {
-        background-image: url('../images/header_small.png');
+        padding-bottom: 0;
+        background: none;
+       /* background-image: url('../images/header_small.png');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
         width: 100%;
-        min-height: 1500px;
+        min-height: auto;
+        aspect-ratio: 10 / 30;*/
     }
 
     /* Скрываем десктопное меню */
@@ -455,8 +462,8 @@ textarea {
 
     /* Адаптируем контейнер */
     .container {
-        padding-left: 20px;
-        padding-right: 20px;
+        padding-left: 10px;
+        padding-right: 10px;
     }
 
     /* Скрываем кнопку загрузки */
@@ -472,6 +479,30 @@ textarea {
     /* Уменьшаем отступы */
     .header-actions {
         gap: 4rem !important;
+    }
+
+    .mobile-image {
+        display: block;
+    }
+
+    .block-1 {
+        background: none;
+    }
+
+    .block-1-main {
+        padding: 0 20px;
+    }
+
+    .block-1-title {
+        display: none;
+    }
+
+    .block-1-icons {
+        display: none;
+    }
+
+    .block-1-text {
+        margin-top: -2900px;
     }
 }
 
