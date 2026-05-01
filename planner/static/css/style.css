@@ -478,7 +478,13 @@ textarea {
 
     /* Уменьшаем отступы */
     .header-actions {
-        gap: 4rem !important;
+        gap: 13px !important;
+        margin-left: 15px !important;
+    }
+
+    /* Убираем лишний отступ у почты */
+    .header-actions .email {
+        gap: 4px !important; /* Уменьшаем отступ между иконкой и текстом */
     }
 
     .mobile-image {
@@ -487,10 +493,12 @@ textarea {
 
     .block-1 {
         background: none;
+        position: relative;
     }
 
     .block-1-main {
         padding: 0 20px;
+        min-height: auto;
     }
 
     .block-1-title {
@@ -502,7 +510,8 @@ textarea {
     }
 
     .block-1-text {
-        margin-top: -2900px;
+        position: absolute;
+        top: 28%;
     }
 }
 
