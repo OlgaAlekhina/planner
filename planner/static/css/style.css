@@ -148,6 +148,26 @@ body {
     margin-top: 40px;
 }
 
+.quote-row {
+    background: linear-gradient(90deg, #4B95E8 0%, #2A5382 100%);
+    padding: 60px 20px;
+    margin: 0;
+    height: 224px;
+}
+
+.quote-text {
+    color: white;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    text-align: center;
+    border: 2px solid white;
+    border-radius: 16px;
+    padding: 30px 40px;
+    max-width: 80%;
+    margin: 0 auto;
+    font-weight: 500;
+}
+
 /* ===== BLOCK-3 ===== */
 
 .block-3 {
