@@ -152,20 +152,19 @@ body {
     background: linear-gradient(90deg, #4B95E8 0%, #2A5382 100%);
     padding: 60px 20px;
     margin: 0;
-    height: 224px;
+    width: 100%;
 }
 
 .quote-text {
-    color: white;
-    font-size: 1.25rem;
-    line-height: 1.5;
-    text-align: center;
-    border: 2px solid white;
+    color: #DBECFF;
+    border: 1px solid #DBECFF;
     border-radius: 16px;
-    padding: 30px 40px;
-    max-width: 80%;
+    padding: 20px;
+    width: 55%;
     margin: 0 auto;
     font-weight: 500;
+    font-size: 22px;
+    line-height: 28px;
 }
 
 /* ===== BLOCK-3 ===== */
@@ -463,16 +462,23 @@ textarea {
 /* ===== MOBILE ===== */
 
 @media (max-width: 768px) {
+    .mobile-image {
+        display: block;
+    }
+
+    .quote-row {
+        padding: 50px 20px;
+    }
+
+    .quote-text {
+        width: 100%;
+    }
+
+    /* ===== HEADER ===== */
+
     .header {
         padding-bottom: 0;
         background: none;
-       /* background-image: url('../images/header_small.png');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        width: 100%;
-        min-height: auto;
-        aspect-ratio: 10 / 30;*/
     }
 
     /* Скрываем десктопное меню */
@@ -502,14 +508,12 @@ textarea {
         margin-left: 15px !important;
     }
 
-    /* Убираем лишний отступ у почты */
+    /* Уменьшаем отступ между иконкой почты и текстом */
     .header-actions .email {
-        gap: 4px !important; /* Уменьшаем отступ между иконкой и текстом */
+        gap: 4px !important;
     }
 
-    .mobile-image {
-        display: block;
-    }
+    /* ===== BLOCK-1 ===== */
 
     .block-1 {
         background: none;
@@ -533,6 +537,9 @@ textarea {
         position: absolute;
         top: 28%;
     }
+
+    /* ===== BLOCK-2 ===== */
+
 }
 
 /* Стили для бургер-меню */
