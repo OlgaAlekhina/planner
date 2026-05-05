@@ -157,6 +157,8 @@
             Ваш браузер не поддерживает видео.
     </video>
 
+    <div class="empty-block"></div>
+
     <div class="block-2" id="main">
         <div class="mobile-image">
             <picture>
@@ -240,10 +242,19 @@
         </div>
     </div>
 
+    <div class="empty-block"></div>
+
     <div class="block-4">
+        <div class="mobile-image">
+            <picture>
+                <source media="(max-width: 768px)" srcset="../planner/static/images/block_4_small.png">
+                <img src="../static/images/block_4_small.png" alt="Block-4"
+                     style="width: 100%; height: auto; display: block;">
+            </picture>
+        </div>
         <div class="container h-100">
             <div class="row h-100 align-items-center justify-content-start">
-                <div class="col-12 col-md-8 col-lg-6 col-xl-6" style="margin-left: 30px;">
+                <div class="col-12 col-md-8 col-lg-6 col-xl-6 block-4-main">
                     <p class="block-4-p1">
                         Рецепты
                     </p>
