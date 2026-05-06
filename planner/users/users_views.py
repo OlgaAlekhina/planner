@@ -381,14 +381,14 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 						"code": "HTTP_403_FORBIDDEN",
 						"message": "Код устарел",
 					}
-					return Response(response, status=status.HTTP_400_BAD_REQUEST)
+					return Response(response, status=status.HTTP_403_FORBIDDEN)
 
 			else:
 				response = {
 					"code": "HTTP_403_FORBIDDEN",
 					"message": "Код введен неверно",
 				}
-				return Response(response, status=status.HTTP_400_BAD_REQUEST)
+				return Response(response, status=status.HTTP_403_FORBIDDEN)
 
 		response = {
 			"code": "BAD_REQUEST",
