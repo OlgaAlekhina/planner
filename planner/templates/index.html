@@ -283,14 +283,12 @@
     </div>
 
     <div class="block-5" id="use">
-        <div class="block-5-div1">
-            <p>Как пользоваться</p>
-        </div>
-        <div class="block-5-div2">
-
-        </div>
-        <div class="block-5-div3">
-            <img src="{% static 'images/block_5_logo.png' %}" alt="icons" class="img-fluid">
+        <div class="mobile-image">
+            <picture>
+                <source media="(max-width: 768px)" srcset="../planner/static/images/block_5_small.png">
+                <img src="../static/images/block_5_small.png" alt="Block-5"
+                     style="width: 100%; height: auto; display: block;">
+            </picture>
         </div>
     </div>
 
