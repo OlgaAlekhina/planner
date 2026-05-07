@@ -55,7 +55,7 @@ router.register(r'recipe_categories', RecipeCategoryViewSet, basename='recipe_ca
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', main_page, name='home'),
-    path('invite', RedirectView.as_view(pattern_name='home', permanent=True)),
+    #path('invite', RedirectView.as_view(pattern_name='home', permanent=True)),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api-auth/', include('rest_framework.urls')),
     path('api/', include(router.urls)),
