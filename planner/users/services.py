@@ -262,6 +262,16 @@ def get_user_from_yandex(token: str) -> tuple[dict, int]:
 		}
 		return result_data, err.response.status_code if err.response else 500
 
+	except Exception as unexpected_err:
+		# Catch any other unexpected errors
+		logger.error(f"Unexpected error in get_user_from_yandex: {unexpected_err}", exc_info=True)
+		return {
+			'detail': {
+				'code': 'INTERNAL_SERVER_ERROR',
+				'message': f'Unexpected error: {str(unexpected_err)}'
+			}
+		}, 500
+
 
 def get_user_from_vk(code_verifier: str, code: str, device_id: str, state: str) -> tuple[dict, int]:
 	"""
@@ -281,6 +291,7 @@ def get_user_from_vk(code_verifier: str, code: str, device_id: str, state: str) 
 			"state": state,
 			"redirect_uri": f"vk{client_id}://vk.com/blank.html"
 	}
+	logger.info(f"VK data 1: {data}")
 
 	try:
 		response = requests.post(url_1, headers=headers, data=data)
@@ -291,8 +302,10 @@ def get_user_from_vk(code_verifier: str, code: str, device_id: str, state: str) 
 			return {'detail': {'code': '400_BAD_REQUEST', 'message': response.json()}}, 400
 
 		data = {"client_id": client_id, "access_token": access_token}
+		logger.info(f"VK data 2: {data}")
 		response = requests.post(url_2, headers=headers, data=data)
 		response.raise_for_status()
+		logger.info(f"Response JSON: {response.json()}")
 		response_data = response.json().get('user')
 		if not response_data:
 			return {'detail': {'code': '400_BAD_REQUEST', 'message': response.json()}}, 400
@@ -324,5 +337,15 @@ def get_user_from_vk(code_verifier: str, code: str, device_id: str, state: str) 
 			}
 		}
 		return result_data, err.response.status_code if err.response else 500
+
+	except Exception as unexpected_err:
+		# Catch any other unexpected errors
+		logger.error(f"Unexpected error in get_user_from_vk: {unexpected_err}", exc_info=True)
+		return {
+			'detail': {
+				'code': 'INTERNAL_SERVER_ERROR',
+				'message': f'Unexpected error: {str(unexpected_err)}'
+			}
+		}, 500
 
 
