@@ -1,1 +1,75 @@
 
+2025-08-01 10:10:52,260 INFO Created event: id = 1, title = Test
+2025-08-01 11:40:25,869 INFO Redis unavailable
+2025-08-01 11:42:03,640 INFO Created event: id = 2, title = New test
+2025-08-01 11:42:03,749 INFO Redis unavailable
+2025-08-01 11:42:03,837 INFO Redis unavailable
+2025-11-01 23:22:19,541 INFO Created event: id = 3, title = Идем в театр
+2025-11-01 23:28:04,508 INFO Redis unavailable
+2025-11-01 23:39:36,965 INFO Created event: id = 4, title = День рожденья бабушки
+2025-11-01 23:48:38,489 INFO Redis unavailable
+2025-11-05 22:55:00,155 INFO Created event: id = 5, title = string
+2025-11-05 23:47:37,495 INFO Created event: id = 6, title = string
+2025-11-05 23:48:11,429 INFO Created event: id = 7, title = string
+2025-11-06 22:32:19,581 INFO Redis unavailable
+2025-11-06 22:38:05,973 INFO Created event: id = 8, title = string
+2025-11-06 22:44:35,098 INFO Redis unavailable
+2025-11-06 22:44:55,123 INFO Redis unavailable
+2025-11-07 22:04:54,380 INFO Redis unavailable
+2025-11-07 22:05:21,367 INFO Redis unavailable
+2025-11-07 22:05:44,830 INFO Redis unavailable
+2025-11-07 22:06:02,879 INFO Redis unavailable
+2025-11-07 22:07:00,967 INFO Redis unavailable
+2025-11-07 22:12:09,565 INFO Redis unavailable
+2025-11-07 22:13:43,650 INFO Redis unavailable
+2025-11-07 22:33:37,901 INFO Redis unavailable
+2025-11-07 22:35:07,536 INFO Redis unavailable
+2025-11-08 17:31:35,338 INFO Created event: id = 9, title = New test
+2025-11-08 17:35:33,222 INFO Created event: id = 10, title = New test
+2025-11-08 17:35:37,694 INFO Redis unavailable
+2025-11-08 17:35:39,987 INFO Redis unavailable
+2025-11-08 17:39:57,656 INFO Created event: id = 11, title = New test
+2025-11-08 17:40:02,012 INFO Redis unavailable
+2025-11-08 17:40:04,218 INFO Redis unavailable
+2025-11-09 19:04:15,539 INFO Created event: id = 12, title = New test
+2025-11-09 19:04:19,761 INFO Redis unavailable
+2025-11-09 19:04:21,893 INFO Redis unavailable
+2025-11-13 00:09:46,530 INFO Created event: id = 13, title = New test
+2025-11-13 00:09:50,717 INFO Redis unavailable
+2025-11-13 00:09:52,978 INFO Redis unavailable
+2025-11-13 21:26:23,363 INFO Created event: id = 14, title = New test
+2025-11-13 21:26:27,678 INFO Redis unavailable
+2025-11-13 21:26:29,857 INFO Redis unavailable
+2025-11-14 21:14:34,442 INFO Created event: id = 15, title = New test
+2025-11-14 21:14:38,658 INFO Redis unavailable
+2025-11-14 21:14:40,834 INFO Redis unavailable
+2025-11-14 21:15:27,324 INFO Created event: id = 16, title = New test
+2025-11-14 21:15:31,551 INFO Redis unavailable
+2025-11-14 21:15:33,713 INFO Redis unavailable
+2025-11-15 12:53:54,224 INFO Created event: id = 17, title = New test
+2025-11-15 12:53:58,399 INFO Redis unavailable
+2025-11-15 12:54:00,550 INFO Redis unavailable
+2025-11-16 12:35:52,022 INFO Created event: id = 18, title = New test
+2025-11-16 12:35:56,257 INFO Redis unavailable
+2025-11-16 12:35:58,425 INFO Redis unavailable
+2025-11-23 13:44:04,639 INFO Created event: id = 19, title = New test
+2025-11-23 13:44:08,965 INFO Redis unavailable
+2025-11-23 13:44:11,171 INFO Redis unavailable
+2025-11-29 17:05:03,014 INFO Created event: id = 20, title = New test
+2025-11-29 17:05:07,309 INFO Redis unavailable
+2025-11-29 17:05:09,653 INFO Redis unavailable
+2025-11-30 18:35:30,267 INFO Created event: id = 21, title = New test
+2025-11-30 18:35:34,543 INFO Redis unavailable
+2025-11-30 18:35:36,728 INFO Redis unavailable
+2025-12-01 09:56:59,852 INFO Created event: id = 22, title = New test
+2025-12-01 09:57:04,122 INFO Redis unavailable
+2025-12-01 09:57:06,350 INFO Redis unavailable
+2026-03-09 00:40:33,510 INFO Created event: id = 28, title = New test
+2026-03-09 00:40:37,749 INFO Redis unavailable
+2026-03-09 00:40:39,900 INFO Redis unavailable
+2026-03-20 21:23:46,901 INFO Created event: id = 29, title = New test
+2026-03-20 21:23:51,137 INFO Redis unavailable
+2026-03-20 21:23:53,414 INFO Redis unavailable
+2026-03-20 21:33:13,697 INFO Created event: id = 30, title = New test
+2026-03-20 21:33:18,101 INFO Redis unavailable
+2026-03-20 21:33:20,311 INFO Redis unavailable
