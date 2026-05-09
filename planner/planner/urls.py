@@ -53,15 +53,15 @@ router.register(r'recipes', RecipeViewSet, basename='recipes')
 router.register(r'recipe_categories', RecipeCategoryViewSet, basename='recipe_categories')
 
 urlpatterns = [
-    path('planner/admin/', admin.site.urls),
-    path('planner/', main_page, name='home'),
-    path('planner/invite', RedirectView.as_view(pattern_name='home', permanent=True)),
-    path('planner/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('planner/api-auth/', include('rest_framework.urls')),
-    path('planner/api/', include(router.urls)),
-    path('planner/add_missing_profiles/', add_missing_profiles, name='add_missing_profiles'),
-    path('planner/add_default_group/', add_default_group, name='add_default_group'),
-    path('planner/remove_users_from_event/', remove_users_from_event, name='remove_users_from_event'),
-    path('planner/api/get_planner_items/', PlannerView.as_view(), name='get_planner_items'),
-    path('planner/api/planner_sharing/<int:item_id>', PlannerSharingView.as_view(), name='planner_sharing'),
+    path('admin/', admin.site.urls),
+    path('', main_page, name='home'),
+    path('invite', RedirectView.as_view(pattern_name='home', permanent=True)),
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('api-auth/', include('rest_framework.urls')),
+    path('api/', include(router.urls)),
+    path('add_missing_profiles/', add_missing_profiles, name='add_missing_profiles'),
+    path('add_default_group/', add_default_group, name='add_default_group'),
+    path('remove_users_from_event/', remove_users_from_event, name='remove_users_from_event'),
+    path('api/get_planner_items/', PlannerView.as_view(), name='get_planner_items'),
+    path('api/planner_sharing/<int:item_id>', PlannerSharingView.as_view(), name='planner_sharing'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
