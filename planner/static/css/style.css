@@ -452,6 +452,16 @@ textarea {
     color: #0751B8;
 }
 
+.nav-item a {
+    margin-right: 12px;
+}
+
+.footer-email {
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 25px;
+}
+
 /* ===== MOBILE ===== */
 
 @media (max-width: 768px) {
@@ -648,6 +658,7 @@ textarea {
 
     .footer-menu li {
         width: 100%;
+        margin-bottom: 10px;
     }
 
 }
