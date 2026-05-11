@@ -300,6 +300,7 @@ body {
     background-size: 1280px 600px;
     width: 100%;
     height: 600px;
+    border-bottom: 1px solid #828282;
 }
 
 .card {
@@ -310,6 +311,7 @@ body {
     max-width: 600px;
     padding: 0;
     transition: transform 0.2s ease;
+    margin-right:30px;
 }
 
 .card:hover {
@@ -598,7 +600,7 @@ textarea {
 
     .block-6 {
         background: none;
-        height: 1907px;
+        height: 1890px;
     }
 
     .block-6-p1 {
@@ -612,6 +614,40 @@ textarea {
 
     .block-6-img {
         width: 90%;
+    }
+
+    /* ===== BLOCK-7 ===== */
+
+    .block-7 {
+        background: none;
+        height: 1032px;
+        position: relative;
+    }
+
+    .card {
+        position: absolute;
+        top: 50%;
+        width: 85%;
+        height: 447px;
+    }
+
+    .agreement {
+        position: absolute;
+        bottom: -70px;
+    }
+
+    /* ===== FOOTER ===== */
+
+    .logo-footer {
+        width: 55%;
+    }
+
+    .footer-menu {
+        flex-direction: column !important;
+    }
+
+    .footer-menu li {
+        width: 100%;
     }
 
 }
