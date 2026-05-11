@@ -300,6 +300,7 @@ body {
     background-size: 1280px 600px;
     width: 100%;
     height: 600px;
+    border-bottom: 1px solid #828282;
 }
 
 .card {
@@ -633,6 +634,20 @@ textarea {
     .agreement {
         position: absolute;
         bottom: -70px;
+    }
+
+    /* ===== FOOTER ===== */
+
+    .logo-footer {
+        width: 55%;
+    }
+
+    .footer-menu {
+        flex-direction: column !important;
+    }
+
+    .footer-menu li {
+        width: 100%;
     }
 
 }
