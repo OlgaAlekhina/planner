@@ -363,7 +363,7 @@
         </div>
     </div>
 
-    <footer class="bg-light py-4" style="padding-bottom:0 !important;">
+    <footer class="bg-light py-4 footer-bottom" style="padding-bottom:0 !important;">
       <div class="container-fluid px-3 px-md-5">
         <div class="row align-items-center">
 
@@ -428,23 +428,26 @@
         <!-- Самый нижний блок -->
         <div class="row">
           <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center copyright" style="margin-bottom:10px;">
+            <!--
+              На мобильных (flex-column-reverse + column порядок)
+              На десктопах (flex-row justify-content-between)
+            -->
+            <div class="d-flex flex-column flex-md-row justify-content-between copyright" style="margin-bottom:10px;">
 
-              <!-- Левая группа (два элемента) -->
-              <div class="d-flex gap-4">
-                <!-- Элемент 1 -->
+              <!-- Левая группа на десктопе, но на мобильных будет снизу -->
+              <div class="d-flex flex-column flex-md-row gap-2 gap-md-4 order-2 order-md-1 text-md-start">
+                <!-- Элемент 1: Копирайт -->
                 <div>
                   <a href="#">© 2026 | Familyplanner.ru</a>
                 </div>
-
-                <!-- Элемент 2 -->
-              <div>
+                <!-- Элемент 2: Дизайн -->
+                <div>
                   <a>Дизайн разработан nexora-design.ru</a>
                 </div>
               </div>
 
-              <!-- Правый элемент -->
-              <div>
+              <!-- Правый элемент (Политика) - на мобильных будет первым сверху -->
+              <div class="order-1 order-md-2 mb-2 mb-md-0">
                 <a href="#">Политика конфиденциальности</a>
               </div>
 

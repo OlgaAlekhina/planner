@@ -661,6 +661,10 @@ textarea {
         margin-bottom: 10px;
     }
 
+    .footer-bottom {
+        height: 623px;
+    }
+
 }
 
 /* Стили для бургер-меню */
