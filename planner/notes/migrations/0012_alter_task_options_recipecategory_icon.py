@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('notes', '0011_alter_list_options_recipe_link'),
+        ('notes', '0001_initial'),
     ]
 
     operations = [
