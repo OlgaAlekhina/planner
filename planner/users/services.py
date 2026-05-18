@@ -164,15 +164,17 @@ def send_password(email: str) -> tuple[dict, int]:
 	new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 	user.set_password(new_password)
 	user.save()
-	# посылаем пароль на почту через асинхронные задачи Celery
+
+	# Посылаем пароль на почту через асинхронные задачи Celery
 	try:
-		result = send_letter.delay(email, new_password, 'reset', 'reset_password.html')
+		send_letter.delay(email, new_password, 'reset', 'reset_password.html')
+
+	# Если не удалось, пробуем послать синхронно
 	except:
-		result = send_letter(email, new_password, 'reset', 'reset_password.html')
+		send_letter(email, new_password, 'reset', 'reset_password.html')
 		logger.info("Celery and Redis was unavailable while sending mail.")
-	if result:
-		return {"detail": {"code": "HTTP_200_OK", "message": "Новый пароль успешно отправлен пользователю"}}, 200
-	return {"detail": {"code": "HTTP_500", "message": "Не удалось отправить пароль пользователю"}}, 500
+
+	return {"detail": {"code": "HTTP_200_OK", "message": "Новый пароль успешно отправлен пользователю"}}, 200
 
 
 def get_or_create_user(email: str, first_name: str, last_name: str, nickname: str, gender: str, birthday: str,
