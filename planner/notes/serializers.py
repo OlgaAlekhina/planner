@@ -100,7 +100,7 @@ class RecipeCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecipeCategory
-        fields = ['id', 'name', 'default']
+        fields = ['id', 'name', 'default', 'icon']
 
 
 class RecipeListSerializer(serializers.ModelSerializer):

@@ -85,6 +85,7 @@ class RecipeCategory(models.Model):
     name = models.CharField('Название', max_length=200)
     author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     default = models.BooleanField('Общая', default=False)
+    icon = models.CharField('Иконка', max_length=200, blank=True, null=True)
     #users = models.ManyToManyField(GroupUser, blank=True, verbose_name='С кем поделились', related_name='shared_categories')
 
     def __str__(self):
