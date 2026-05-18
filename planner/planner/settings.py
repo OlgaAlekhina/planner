@@ -182,13 +182,20 @@ REST_FRAMEWORK = {
 }
 
 # mail settings
-EMAIL_HOST = 'smtp.yandex.ru'
-EMAIL_PORT = 465
+# EMAIL_HOST = 'smtp.yandex.ru'
+# EMAIL_PORT = 465
+# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+# EMAIL_USE_SSL = True
+# SERVER_EMAIL = 'olga-olechka-5'
+# DEFAULT_FROM_EMAIL = 'olga-olechka-5@yandex.ru'
+EMAIL_HOST = 'smtp.go2.unisender.ru'
+EMAIL_PORT = 587
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-EMAIL_USE_SSL = True
-SERVER_EMAIL = 'olga-olechka-5'
-DEFAULT_FROM_EMAIL = 'olga-olechka-5@yandex.ru'
+EMAIL_USE_TLS = True
+#SERVER_EMAIL = 'olga-olechka-5'
+DEFAULT_FROM_EMAIL = 'info@family-planner.ru'
 
 LOGGING = {
     'version': 1,
