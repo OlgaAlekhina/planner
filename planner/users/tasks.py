@@ -19,7 +19,7 @@ def clean_codes():
 
 
 @shared_task
-def send_letter(email: str, data: int | str, subject: str, template: str) -> None:
+def send_letter(email: str, data: int | str, subject: str, template: str) -> bool:
 	""" Посылает письмо при регистрации или восстановлении пароля пользователя или при авторизации в телеграм боте """
 	if subject == 'signup':
 		subject = 'Подтверждение авторизации/регистрации в приложении Family Planner'
@@ -38,5 +38,10 @@ def send_letter(email: str, data: int | str, subject: str, template: str) -> Non
 		{'data': data}
 	)
 	msg.attach_alternative(html_content, "text/html")
-	msg.send()
-	logger.info('Letter was sent to user')
+	try:
+		msg.send()
+		logger.info('Letter was sent to user')
+		return True
+	except Exception as e:
+		logger.error(f"Ошибка при отправке письма: {e}")
+		return False
