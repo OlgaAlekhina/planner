@@ -30,7 +30,7 @@ def send_letter(email: str, data: int | str, subject: str, template: str) -> Non
 
 	msg = EmailMultiAlternatives(
 		subject=subject,
-		from_email='info@family-planner.ru',
+		from_email='olga-olechka-5@yandex.ru',
 		to=[email, ]
 	)
 	html_content = render_to_string(
