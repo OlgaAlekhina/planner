@@ -340,24 +340,32 @@
                         Есть вопросы и предложения?<br>
                         <span class="subtitle">Напишите нам</span>
                     </div>
-                        <form style="margin-right:25px; margin-left:25px;">
-                            <div class="form-group">
-                                <input type="text" id="name" name="name" placeholder="Ваше имя" autocomplete="off">
-                            </div>
+                    <form id="contact-form" style="margin-right:25px; margin-left:25px;">
+                        <div class="form-group">
+                            <input type="text" id="name" name="name" placeholder="Ваше имя" autocomplete="off" required>
+                        </div>
 
-                            <div class="form-group">
-                                <textarea id="message" name="message" placeholder="Текст"></textarea>
-                            </div>
+                        <div class="form-group">
+                            <textarea id="message" name="message" placeholder="Текст" required></textarea>
+                        </div>
 
-                            <button type="submit" class="submit-btn">Отправить</button>
+                        <button type="submit" class="submit-btn">Отправить</button>
 
-                            <div class="agreement">
-                                <input type="checkbox" name="agreement" id="agreement-checkbox" required style="margin-top: 2px;">
-                                    <label for="agreement-checkbox" style="padding-top:3px;">
-                                        Нажимая кнопку, вы даете согласие на обработку <a href="#">персональных данных</a>
-                                    </label>
-                            </div>
-                        </form>
+                        <div class="agreement">
+                            <input type="checkbox" name="agreement" id="agreement-checkbox" required style="margin-top: 2px;">
+                            <label for="agreement-checkbox" style="padding-top:3px;">
+                                Нажимая кнопку, вы даете согласие на обработку <a href="#">персональных данных</a>
+                            </label>
+                        </div>
+                    </form>
+
+                    <!-- Модальное окно -->
+                    <div id="successModal" class="modal" style="display:none;">
+                        <div class="modal-content">
+                            <span class="close">&times;</span>
+                            <p>✓ Сообщение успешно отправлено!</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -502,6 +510,84 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+document.getElementById('contact-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Проверка чекбокса
+    const checkbox = document.getElementById('agreement-checkbox');
+    if (!checkbox.checked) {
+        alert('Пожалуйста, подтвердите согласие на обработку персональных данных');
+        return;
+    }
+
+    // Получение данных
+    const formData = new FormData();
+    formData.append('name', document.getElementById('name').value);
+    formData.append('text', document.getElementById('message').value);
+
+    // Отправка запроса
+    fetch('api/send_message/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')  // Важно для Django!
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === 'Сообщение успешно отправлено') {
+            showModal();
+            document.getElementById('contact-form').reset();
+        } else {
+            alert('Ошибка: ' + (data.message || 'Не удалось отправить сообщение'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при отправке');
+    });
+});
+
+// Функция для получения CSRF токена
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Функция показа модального окна
+function showModal() {
+    const modal = document.getElementById('successModal');
+    modal.style.display = 'block';
+
+    // Закрытие через 3 секунды
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 3000);
+
+    // Закрытие по клику на крестик
+    const closeBtn = document.getElementsByClassName('close')[0];
+    closeBtn.onclick = function() {
+        modal.style.display = 'none';
+    }
+
+    // Закрытие по клику вне окна
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    }
+}
 </script>
 
 <!-- Bootstrap JS -->
