@@ -516,7 +516,7 @@ def contact_form_view(request):
 		logger.info("Celery and Redis was unavailable while sending mail.")
 
 
-	return Response({'message': 'Сообщение успешно отправлено!'}, status=status.HTTP_200_OK)
+	return Response({'message': 'Сообщение успешно отправлено'}, status=status.HTTP_200_OK)
 
 
 # функция для добавления отсутствующих профилей пользователей на проде
