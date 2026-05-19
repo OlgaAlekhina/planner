@@ -83,9 +83,11 @@ def get_user_by_email(email: str) -> bool:
 		# Генерируем код подтверждения и высылаем на почту (через асинхронные задачи Celery)
 		code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 		try:
-			send_letter.delay(email, code.code, 'telegram_auth', 'telegram_auth.html')
+			send_letter.delay([email], code.code, 'Авторизация в телеграм боте приложения Family Planner',
+						'telegram_auth.html')
 		except:
-			send_letter(email, code.code, 'telegram_auth', 'telegram_auth.html')
+			send_letter([email], code.code, 'Авторизация в телеграм боте приложения Family Planner',
+						'telegram_auth.html')
 			logger.info("Celery and Redis was unavailable while sending mail.")
 
 		return True
@@ -110,9 +112,11 @@ def get_user(email: str, password: str) -> tuple[dict, int]:
 	if not user.password:
 		code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 		try:
-			send_letter.delay(email, code.code, 'signup', 'signup_code.html')
+			send_letter.delay([email], code.code, 'Подтверждение авторизации/регистрации в приложении Family Planner',
+							  'signup_code.html')
 		except:
-			send_letter(email, code.code, 'signup', 'signup_code.html')
+			send_letter([email], code.code, 'Подтверждение авторизации/регистрации в приложении Family Planner',
+							  'signup_code.html')
 			logger.info("Celery and Redis was unavailable while sending mail.")
 		# сохраняем переданный пароль и делаем профиль неактивным до подтверждения кода
 		user.is_active = False
@@ -144,9 +148,11 @@ def create_user(email: str, password: str) -> tuple[dict, int]:
 
 	code = SignupCode.objects.create(code=randint(1000, 9999), user=user)
 	try:
-		send_letter.delay(email, code.code, 'signup', 'signup_code.html')
+		send_letter.delay([email], code.code, 'Подтверждение авторизации/регистрации в приложении Family Planner',
+							  'signup_code.html')
 	except:
-		send_letter(email, code.code, 'signup', 'signup_code.html')
+		send_letter([email], code.code, 'Подтверждение авторизации/регистрации в приложении Family Planner',
+							  'signup_code.html')
 		logger.info("Celery and Redis was unavailable while sending mail.")
 	return {"detail": {"code": "HTTP_201_CREATED", "message": "Пользователь зарегистрирован. На электронную почту выслан "
 															  "код подтверждения."}, "data": {"user_id": user.id}}, 201
@@ -167,11 +173,13 @@ def send_password(email: str) -> tuple[dict, int]:
 
 	# Посылаем пароль на почту через асинхронные задачи Celery
 	try:
-		send_letter.delay(email, new_password, 'reset', 'reset_password.html')
+		send_letter.delay([email], new_password, 'Восстановление пароля в приложении Family Planner',
+						  'reset_password.html')
 
 	# Если не удалось, пробуем послать синхронно
 	except:
-		send_letter(email, new_password, 'reset', 'reset_password.html')
+		send_letter([email], new_password, 'Восстановление пароля в приложении Family Planner',
+						  'reset_password.html')
 		logger.info("Celery and Redis was unavailable while sending mail.")
 
 	return {"detail": {"code": "HTTP_200_OK", "message": "Новый пароль успешно отправлен пользователю"}}, 200

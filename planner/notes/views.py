@@ -1,10 +1,14 @@
+import logging
+
+from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
+from django.template.loader import render_to_string
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status, mixins
-from rest_framework.decorators import action
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.decorators import action, api_view
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from django_filters import rest_framework as filters
 from rest_framework.response import Response
@@ -16,6 +20,8 @@ from .serializers import (NoteSerializer, TaskSerializer, ListSerializer, ListIt
     PlannerSharingSerializer, RecipeCategorySerializer, RecipeListSerializer, RecipeSerializer)
 from planner.permissions import NotesPermission, RecipeCategoryPermission
 from users.users_serializers import ErrorResponseSerializer
+
+logger = logging.getLogger('users')
 
 
 COMMON_RESPONSES = {
@@ -701,8 +707,9 @@ class PlannerSharingView(APIView):
                                                                                     status=status.HTTP_200_OK)
 
 
+
 def main_page(request):
-    """Главная страница - статичный лендинг"""
+    """ Главная страница - лендинг с формой """
     return render(request, 'index.html')
 
 

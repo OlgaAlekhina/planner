@@ -33,7 +33,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS').split(',')
 
-# Для перехода на https
+# Для перехода на https (только для ПРОДА!!!)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 
@@ -192,6 +192,7 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_USE_SSL = True
 SERVER_EMAIL = 'olga-olechka-5'
 DEFAULT_FROM_EMAIL = 'olga-olechka-5@yandex.ru'
+RECIPIENTS = os.getenv('RECIPIENTS')
 
 LOGGING = {
     'version': 1,
@@ -307,3 +308,4 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 
 VK_CLIENT_ID = os.getenv('VK_CLIENT_ID')
+

@@ -24,7 +24,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework import routers
 from users.groups_views import GroupViewSet, add_default_group
-from users.users_views import UserViewSet, add_missing_profiles
+from users.users_views import UserViewSet, add_missing_profiles, contact_form_view
 from events.views import EventViewSet, remove_users_from_event
 from notes.views import (NoteViewSet, TaskViewSet, ListViewSet, PlannerView, PlannerSharingView, RecipeCategoryViewSet,
     RecipeViewSet)
@@ -64,4 +64,5 @@ urlpatterns = [
     path('remove_users_from_event/', remove_users_from_event, name='remove_users_from_event'),
     path('api/get_planner_items/', PlannerView.as_view(), name='get_planner_items'),
     path('api/planner_sharing/<int:item_id>', PlannerSharingView.as_view(), name='planner_sharing'),
+    path('api/send_message/', contact_form_view, name='send_message'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
