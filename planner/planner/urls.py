@@ -64,4 +64,5 @@ urlpatterns = [
     path('planner/remove_users_from_event/', remove_users_from_event, name='remove_users_from_event'),
     path('planner/api/get_planner_items/', PlannerView.as_view(), name='get_planner_items'),
     path('planner/api/planner_sharing/<int:item_id>', PlannerSharingView.as_view(), name='planner_sharing'),
+    path('planner/api/send_message/', contact_form_view, name='send_message'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
