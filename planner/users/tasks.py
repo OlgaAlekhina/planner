@@ -1,5 +1,8 @@
 from celery import shared_task
 from datetime import datetime, timedelta
+
+from django.conf import settings
+
 from .models import SignupCode
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -19,19 +22,19 @@ def clean_codes():
 
 
 @shared_task
-def send_letter(email: str, data: int | str, subject: str, template: str) -> None:
-	""" Посылает письмо при регистрации или восстановлении пароля пользователя или при авторизации в телеграм боте """
-	if subject == 'signup':
-		subject = 'Подтверждение авторизации/регистрации в приложении Family Planner'
-	elif subject == 'reset':
-		subject = 'Восстановление пароля в приложении Family Planner'
-	elif subject == 'telegram_auth':
-		subject = 'Авторизация в телеграм боте приложения Family Planner'
+def send_letter(email: list, data: int | str | dict, subject: str, template: str) -> None:
+	"""
+	Посылает письмо при
+	- регистрации или авторизации
+	- восстановлении пароля пользователя
+	- авторизации в телеграм боте
+	- заполнении формы обратной связи на лендинге
+	"""
 
 	msg = EmailMultiAlternatives(
 		subject=subject,
-		from_email='olga-olechka-5@yandex.ru',
-		to=[email, ]
+		from_email=settings.DEFAULT_FROM_EMAIL,
+		to=email
 	)
 	html_content = render_to_string(
 		f'{template}',
@@ -40,7 +43,7 @@ def send_letter(email: str, data: int | str, subject: str, template: str) -> Non
 	msg.attach_alternative(html_content, "text/html")
 	try:
 		msg.send()
-		logger.info('Letter was sent to user')
+		logger.info('Letter was successfully sent')
 
 	except Exception as e:
 		logger.error(f" Got error while sending letter: {e}")

@@ -1,16 +1,19 @@
 from random import randint
 
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.parsers import MultiPartParser, JSONParser
-from rest_framework.decorators import action
-from .users_serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer,
-								ErrorResponseSerializer,
-								VKAuthSerializer, MailAuthSerializer, SignupSerializer, ResetPasswordSerializer,
-								UserResponseSerializer,
-								UserUpdateSerializer, CodeSerializer, SignupResponseSerializer, TelegramCheckSerializer,
-								TelegramAuthSerializer)
+from rest_framework.decorators import action, api_view
+
+from .tasks import send_letter
+from .users_serializers import (YandexAuthSerializer, UserLoginSerializer, LoginResponseSerializer, VKAuthSerializer,
+	ErrorResponseSerializer, MessageSerializer,	MailAuthSerializer, SignupSerializer, ResetPasswordSerializer,
+	UserResponseSerializer,	UserUpdateSerializer, CodeSerializer, SignupResponseSerializer, TelegramCheckSerializer,
+	TelegramAuthSerializer, MailFormSerializer)
 from .services import get_user_from_yandex, get_user_from_vk, get_user, create_user, send_password, get_user_by_email, \
 	auth_telegram_user
 from rest_framework.response import Response
@@ -478,6 +481,42 @@ class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Upd
 		result = auth_telegram_user(email, code, telegram_id)
 
 		return Response(result[0], status=result[1])
+
+
+@swagger_auto_schema(
+	method="post",
+	tags=["mail"],
+	operation_summary="Отправка сообщения из формы обратной связи",
+	operation_description="Посылает сообщение от пользователя, полученное через форму обратной связи на лендинге,"
+						  "на почты администраторов.",
+	request_body=MailFormSerializer,
+	responses={
+		200: openapi.Response(description="Сообщение отправлено", schema=MessageSerializer()),
+		400: openapi.Response(description="Ошибка при валидации входных данных", schema=MessageSerializer()),
+		500: openapi.Response(description="Ошибка сервера при обработке запроса", schema=MessageSerializer())
+	}
+)
+@api_view(['POST'])
+def contact_form_view(request):
+	""" Эндпоинт для отправки сообщения через форму обратной связи на лендинге """
+	serializer = MailFormSerializer(data=request.data)
+
+	if not serializer.is_valid():
+		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+	admin_emails = settings.RECIPIENTS.split(',')
+	try:
+		# Отправляем email администраторам
+		send_letter.delay(admin_emails, serializer.validated_data, 'Новое обращение с сайта Family Planner',
+					'letter_from_landing.html')
+
+	except Exception:
+		send_letter(admin_emails, serializer.validated_data, 'Новое обращение с сайта Family Planner',
+						  'letter_from_landing.html')
+		logger.info("Celery and Redis was unavailable while sending mail.")
+
+
+	return Response({'message': 'Сообщение успешно отправлено!'}, status=status.HTTP_200_OK)
 
 
 # функция для добавления отсутствующих профилей пользователей на проде

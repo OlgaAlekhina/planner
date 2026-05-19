@@ -4,6 +4,11 @@ from .validators import validate_password_symbols, validate_email
 from .models import SignupCode
 
 
+class MessageSerializer(serializers.Serializer):
+	""" Сериализатор для сообщения в ответе """
+	message = serializers.CharField()
+
+
 class DetailSerializer(serializers.Serializer):
 	""" Сериализатор для деталей ответа """
 	code = serializers.CharField()
@@ -134,4 +139,10 @@ class TelegramAuthSerializer(serializers.Serializer):
 	email = serializers.EmailField()
 	code = serializers.IntegerField()
 	telegram_id = serializers.IntegerField()
+
+
+class MailFormSerializer(serializers.Serializer):
+	""" Сериализатор для формы обратной связи на лендинге """
+	name = serializers.CharField(max_length=250)
+	text = serializers.CharField(max_length=5000)
 
