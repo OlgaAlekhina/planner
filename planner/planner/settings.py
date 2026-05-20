@@ -190,8 +190,8 @@ EMAIL_PORT = 465
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_USE_SSL = True
-SERVER_EMAIL = 'olga-olechka-5'
-DEFAULT_FROM_EMAIL = 'olga-olechka-5@yandex.ru'
+SERVER_EMAIL = 'familyplanner'
+DEFAULT_FROM_EMAIL = 'familyplanner@yandex.ru'
 RECIPIENTS = os.getenv('RECIPIENTS')
 
 LOGGING = {
