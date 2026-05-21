@@ -126,8 +126,18 @@ class Recipe(models.Model):
 
     def save(self, *args, **kwargs):
         """ Оптимизация изображения перед сохранением """
-        if self.image and self._state.adding:  # Только для новых записей
-            self.optimize_image()
+        # Для существующей записи проверяем, изменилось ли изображение
+        if self.pk:
+            try:
+                old_instance = Recipe.objects.get(pk=self.pk)
+                if old_instance.image != self.image:
+                    self.optimize_image()
+            except Recipe.DoesNotExist:
+                pass
+        else:  # Новая запись
+            if self.image:
+                self.optimize_image()
+
         super().save(*args, **kwargs)
 
     def optimize_image(self, quality=85, max_width=1200, max_height=1200):

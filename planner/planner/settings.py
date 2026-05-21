@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     'django_filters',
     'users',
     'events',
-    'notes'
+    'notes',
+    # django-cleanup должен быть последним
+    'django_cleanup.apps.CleanupConfig'
 ]
 
 MIDDLEWARE = [
