@@ -124,6 +124,22 @@ class RecipeSerializer(RecipeListSerializer):
         fields = RecipeListSerializer.Meta.fields + ['text', 'link', 'category_name']
         read_only_fields = ['link', 'default']
 
+    def validate_image(self, value):
+        """ Валидация загружаемого изображения """
+        # Максимальный размер - 5MB
+        max_size = 5 * 1024 * 1024
+        if value.size > max_size:
+            raise serializers.ValidationError(
+                f'Размер изображения не должен превышать 5MB. Текущий: {value.size / 1024 / 1024:.1f}MB')
+
+        # Проверка расширения
+        ext = value.name.split('.')[-1].lower()
+        allowed_extensions = ['jpg', 'jpeg', 'png', 'webp']
+        if ext not in allowed_extensions:
+            raise serializers.ValidationError(f'Поддерживаются только форматы: {", ".join(allowed_extensions)}')
+
+        return value
+
 
 ### СЕРИАЛИЗАТОРЫ ДЛЯ RESPONSE
 
