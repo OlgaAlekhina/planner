@@ -1,4 +1,8 @@
+from io import BytesIO
+
+from PIL import Image
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
@@ -112,10 +116,43 @@ class Recipe(models.Model):
     link = models.URLField('Ссылка на рецепт', blank=True, null=True)
     favorites = models.ManyToManyField(User, blank=True, verbose_name='В избранном', related_name='favorites')
 
-    def __str__(self):
-        return self.title
-
     class Meta:
         ordering = ['-update_at']
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        """ Оптимизация изображения перед сохранением """
+        if self.image and self._state.adding:  # Только для новых записей
+            self.optimize_image()
+        super().save(*args, **kwargs)
+
+    def optimize_image(self, quality=85, max_width=1200, max_height=1200):
+        """ Оптимизация размера и качества изображения """
+        try:
+            img = Image.open(self.image)
+
+            # Конвертация в RGB если нужно (для PNG с альфа-каналом)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGB')
+
+            # Изменение размера с сохранением пропорций
+            if img.width > max_width or img.height > max_height:
+                ratio = min(max_width / img.width, max_height / img.height)
+                new_size = (int(img.width * ratio), int(img.height * ratio))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+
+            # Сохранение оптимизированного изображения
+            output = BytesIO()
+            img.save(output, format='JPEG', quality=quality, optimize=True)
+            output.seek(0)
+
+            # Замена файла
+            name = self.image.name.rsplit('.', 1)[0] + '.jpg'
+            self.image.save(name, ContentFile(output.read()), save=False)
+
+        except Exception as e:
+            print(f"Ошибка оптимизации: {e}")
