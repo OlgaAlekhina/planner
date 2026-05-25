@@ -126,6 +126,11 @@ class RecipeSerializer(RecipeListSerializer):
 
     def validate_image(self, value):
         """ Валидация загружаемого изображения """
+
+        # Если изображение не передано, пропускаем валидацию
+        if value is None:
+            return value
+
         # Максимальный размер - 5MB
         max_size = 5 * 1024 * 1024
         if value.size > max_size:
