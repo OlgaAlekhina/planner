@@ -523,7 +523,7 @@ textarea {
     }
 
     .empty-block {
-        height: 50px;
+        height: 100px;
         display: block;
     }
 
@@ -610,7 +610,7 @@ textarea {
 
     .block-2-main {
         position: absolute;
-        top: -50px;
+        top: -100px;
         margin-left: 15px;
         padding-right: 70px;
     }
